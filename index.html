@@ -155,6 +155,19 @@
   .del{cursor:pointer;background:none;border:none;color:var(--txt-faint);font-size:15px;
     line-height:1;padding:3px 6px;border-radius:4px;transition:.12s}
   .del:hover{color:var(--red);background:rgba(240,83,63,.12)}
+  .edit{cursor:pointer;background:none;border:none;color:var(--txt-faint);font-size:14px;
+    line-height:1;padding:3px 6px;border-radius:4px;transition:.12s;margin-right:2px}
+  .edit:hover{color:var(--blue-soft);background:rgba(56,102,247,.14)}
+  .submit.editing{background:var(--green)}
+  .submit.editing:hover{background:#4cd166}
+  .cancel-edit{width:100%;cursor:pointer;background:none;border:1px solid var(--line);
+    color:var(--txt-dim);border-radius:6px;padding:9px;margin-top:8px;
+    font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;transition:.13s}
+  .cancel-edit:hover{border-color:var(--red);color:var(--red)}
+  .edit-banner{display:none;background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.4);
+    color:var(--green);border-radius:6px;padding:8px 10px;margin-bottom:14px;
+    font-size:11px;font-weight:600}
+  .edit-banner.on{display:block}
   .empty{padding:46px 20px;text-align:center;color:var(--txt-faint)}
   .empty .big{font-size:30px;margin-bottom:8px;opacity:.5}
   .empty .txt{font-family:'Poppins',sans-serif;font-size:11px;letter-spacing:1px}
@@ -274,6 +287,8 @@
         <div class="panel-head"><span class="tag">REG</span><h2>Novo Apontamento</h2></div>
         <form id="form" autocomplete="off">
 
+          <div class="edit-banner" id="edit-banner">✎ Editando um apontamento existente — altere os campos e salve</div>
+
           <div class="field">
             <label>Tipo de Apontamento <span class="req">*</span></label>
             <div class="seg c2" id="tipos">
@@ -322,6 +337,7 @@
           </div>
 
           <button type="submit" class="submit" id="submit-btn">Registrar Apontamento</button>
+          <button type="button" class="cancel-edit" id="cancel-edit" style="display:none">Cancelar edição</button>
           <div class="hint" id="hint"></div>
         </form>
       </div>
@@ -427,7 +443,7 @@ const FIREBASE_CONFIG = {
 const COLECAO = "apontamentos";   /* nome da coleção no Firestore */
 
 const KEY="sas-apontamentos";
-let registros=[],turno=null,tipo=null;
+let registros=[],turno=null,tipo=null,editingId=null;
 let backend="mem",idb=null,fb=null;
 
 /* ===== BANCO LOCAL (IndexedDB) — usado quando o Firebase não está configurado ===== */
@@ -527,13 +543,15 @@ async function commitChunks(ops){
     await batch.commit();
   }
 }
-async function persistAdd(reg){
+async function persistAdd(reg,isEdit){
   if(backend==="firebase"){
     try{await fb.collection(COLECAO).doc(String(reg.id)).set(reg);}
     catch(e){flash("Falha ao gravar no Firebase",false);}
     return;
   }
-  registros.unshift(reg);await dbSave();refreshStatus();render();
+  if(isEdit) registros=registros.map(x=>x.id===reg.id?reg:x);
+  else registros.unshift(reg);
+  await dbSave();refreshStatus();render();
 }
 async function persistDel(id){
   if(backend==="firebase"){
@@ -587,7 +605,8 @@ document.getElementById("tipos").addEventListener("click",e=>{
   document.getElementById("f-embalagem").classList.toggle("hide",tipo!=="lav");
   document.getElementById("f-total").classList.toggle("hide",tipo!=="lav");
   document.getElementById("f-motivo").classList.toggle("hide",tipo!=="par");
-  document.getElementById("submit-btn").textContent="Registrar "+TPLABEL[tipo];
+  document.getElementById("submit-btn").textContent=
+    editingId?"Salvar Alterações":"Registrar "+TPLABEL[tipo];
 });
 document.getElementById("turnos").addEventListener("click",e=>{
   const b=e.target.closest(".turno-btn");if(!b)return;
@@ -616,7 +635,7 @@ document.getElementById("form").addEventListener("submit",async e=>{
   if(!tipo)   return flash("Selecione o tipo de apontamento",false);
   if(!turno)  return flash("Selecione o turno",false);
   if(!hi||!hf)return flash("Informe hora inicial e final",false);
-  const reg={id:Date.now(),tipo,data,turno,hi,hf};
+  const reg={id:editingId||Date.now(),tipo,data,turno,hi,hf};
   if(tipo==="lav"){
     const emb=selEmb.value;
     const total=parseInt(document.getElementById("total").value,10);
@@ -629,13 +648,52 @@ document.getElementById("form").addEventListener("submit",async e=>{
     if(!motivo)return flash("Selecione o motivo da parada",false);
     reg.motivo=motivo;
   }
-  await persistAdd(reg);
-  flash(TPLABEL[tipo]+" registrada com sucesso",true);
+  const eraEdicao=!!editingId;
+  await persistAdd(reg,eraEdicao);
+  flash(eraEdicao?"Apontamento atualizado com sucesso"
+                 :TPLABEL[tipo]+" registrada com sucesso",true);
+  editingId=null; setEditMode(false);
+  limparCampos();
+});
+function limparCampos(){
   selEmb.selectedIndex=0;
   document.getElementById("motivo").selectedIndex=0;
   document.getElementById("hi").value="";
   document.getElementById("hf").value="";
   document.getElementById("total").value="";
+}
+function setEditMode(on){
+  const btn=document.getElementById("submit-btn");
+  document.getElementById("edit-banner").classList.toggle("on",on);
+  document.getElementById("cancel-edit").style.display=on?"block":"none";
+  btn.classList.toggle("editing",on);
+  btn.textContent = on ? "Salvar Alterações"
+                       : (tipo?("Registrar "+TPLABEL[tipo]):"Registrar Apontamento");
+}
+function editar(id){
+  const r=registros.find(x=>x.id===id);
+  if(!r)return;
+  /* tipo */
+  tipo=r.tipo;
+  document.querySelectorAll(".tipo-btn").forEach(x=>x.classList.toggle("on",x.dataset.tp===tipo));
+  document.getElementById("f-embalagem").classList.toggle("hide",tipo!=="lav");
+  document.getElementById("f-total").classList.toggle("hide",tipo!=="lav");
+  document.getElementById("f-motivo").classList.toggle("hide",tipo!=="par");
+  /* turno */
+  turno=r.turno;
+  document.querySelectorAll(".turno-btn").forEach(x=>x.classList.toggle("on",x.dataset.t===turno));
+  /* campos */
+  document.getElementById("data").value=r.data;
+  document.getElementById("hi").value=r.hi;
+  document.getElementById("hf").value=r.hf;
+  if(tipo==="lav"){selEmb.value=r.emb;document.getElementById("total").value=r.total;}
+  else{document.getElementById("motivo").value=r.motivo;}
+  editingId=id;
+  setEditMode(true);
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+document.getElementById("cancel-edit").addEventListener("click",()=>{
+  editingId=null; setEditMode(false); limparCampos();
 });
 function flash(msg,ok){
   const x=document.getElementById("hint");
@@ -643,7 +701,10 @@ function flash(msg,ok){
   if(ok)setTimeout(()=>{if(x.textContent===msg)x.textContent="";},3500);
 }
 
-async function excluir(id){await persistDel(id);}
+async function excluir(id){
+  if(editingId===id){editingId=null;setEditMode(false);limparCampos();}
+  await persistDel(id);
+}
 document.getElementById("btn-clear").addEventListener("click",async()=>{
   if(!registros.length)return;
   if(confirm("Apagar TODOS os apontamentos? Esta ação não pode ser desfeita.")){
@@ -802,7 +863,9 @@ function render(){
       '<td class="mono">'+r.hf+'</td>'+
       '<td class="mono" style="color:var(--txt-dim)">'+fmtMin(mins(r.hi,r.hf))+'</td>'+
       '<td class="mono qty">'+(r.tipo==="lav"?r.total.toLocaleString("pt-BR"):"—")+'</td>'+
-      '<td><button class="del" title="Excluir">✕</button></td>';
+      '<td><button class="edit" title="Editar">✎</button>'+
+      '<button class="del" title="Excluir">✕</button></td>';
+    tr.querySelector(".edit").addEventListener("click",()=>editar(r.id));
     tr.querySelector(".del").addEventListener("click",()=>excluir(r.id));
     tb.appendChild(tr);
   });
