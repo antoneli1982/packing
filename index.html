@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SAS · Lavadora de Embalagem — SESÉ</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- Firebase — sincroniza os apontamentos entre todos os computadores -->
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -167,7 +170,8 @@
   footer{margin-top:30px;text-align:center;font-family:'Poppins',sans-serif;
     font-size:10px;color:var(--txt-faint);letter-spacing:1px}
   .dbstat{font-weight:600}
-  .dbstat.idb{color:var(--green)}
+  .dbstat.firebase{color:var(--green)}
+  .dbstat.idb{color:var(--blue-soft)}
   .dbstat.storage{color:var(--blue-soft)}
   .dbstat.mem{color:var(--red)}
 </style>
@@ -337,11 +341,28 @@ const MOTIVOS=["Manutenção da máquina","Falta de energia","Falta de embalagem
 const TLABEL={"1":"1º Turno","2":"2º Turno","3":"3º Turno"};
 const TCOLOR={"1":"var(--t1)","2":"var(--t2)","3":"var(--t3)"};
 const TPLABEL={lav:"Lavagem de Embalagem",par:"Parada de Linha"};
+/* ===================================================================
+   CONFIGURAÇÃO DO FIREBASE
+   Cole abaixo os dados do SEU projeto Firebase (veja o GUIA passo a passo).
+   Enquanto os campos estiverem como "COLE_AQUI", a ferramenta salva
+   apenas neste computador. Depois de preencher corretamente, todos os
+   computadores que abrirem este arquivo compartilham os mesmos dados.
+   =================================================================== */
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyBXqcIcbOuhybsQOTQXqbXIiLE-I_w1iz4",
+  authDomain:        "packing-382ab.firebaseapp.com",
+  projectId:         "packing-382ab",
+  storageBucket:     "packing-382ab.firebasestorage.app",
+  messagingSenderId: "304980044451",
+  appId:             "1:304980044451:web:bd6a7dce7f9ac0f02a2d16"
+};
+const COLECAO = "apontamentos";   /* nome da coleção no Firestore */
+
 const KEY="sas-apontamentos";
 let registros=[],turno=null,tipo=null;
-let backend="mem",idb=null;
+let backend="mem",idb=null,fb=null;
 
-/* ===== BANCO DE DADOS LOCAL (IndexedDB) ===== */
+/* ===== BANCO LOCAL (IndexedDB) — usado quando o Firebase não está configurado ===== */
 function openIDB(){
   return new Promise((res,rej)=>{
     const req=indexedDB.open("sas_lavadora_db",1);
@@ -362,7 +383,23 @@ function idbSet(k,v){
     t.onsuccess=()=>res();t.onerror=()=>rej(t.error);
   });
 }
+
+/* ===== detecção e inicialização do backend ===== */
+function firebaseConfigurado(){
+  return typeof firebase!=="undefined" &&
+         FIREBASE_CONFIG.apiKey    && FIREBASE_CONFIG.apiKey.indexOf("COLE_")===-1 &&
+         FIREBASE_CONFIG.projectId && FIREBASE_CONFIG.projectId.indexOf("COLE_")===-1;
+}
 async function initDB(){
+  if(firebaseConfigurado()){
+    try{
+      firebase.initializeApp(FIREBASE_CONFIG);
+      fb=firebase.firestore();
+      try{await fb.enablePersistence({synchronizeTabs:true});}catch(e){}
+      backend="firebase";
+      return;
+    }catch(e){console.warn("Firebase:",e);}
+  }
   if(typeof indexedDB!=="undefined"){
     try{idb=await openIDB();backend="idb";return;}catch(e){}
   }
@@ -384,7 +421,8 @@ async function dbSave(){
   return false;
 }
 function statusTxt(){
-  if(backend==="idb")return "● Banco de dados local ativo — "+registros.length+" registro(s) salvos neste computador";
+  if(backend==="firebase")return "● Conectado ao Firebase — "+registros.length+" registro(s) sincronizados em todos os computadores";
+  if(backend==="idb")return "● Banco local ativo (Firebase ainda não configurado) — "+registros.length+" registro(s) neste computador";
   if(backend==="storage")return "● Armazenamento do aplicativo ativo — "+registros.length+" registro(s)";
   return "● Atenção: dados apenas nesta sessão — exporte para Excel antes de fechar";
 }
@@ -397,15 +435,66 @@ async function load(){
   const box=document.getElementById("state-box");
   box.innerHTML='<div class="loading">Carregando banco de dados…</div>';
   await initDB();
+  if(backend==="firebase"){
+    fb.collection(COLECAO).onSnapshot(snap=>{
+      registros=snap.docs.map(d=>d.data()).sort((a,b)=>b.id-a.id);
+      refreshStatus();render();
+      if(document.getElementById("view-dash").classList.contains("on"))renderDash();
+    },err=>{
+      console.warn(err);
+      flash("Sem conexão com o Firebase no momento — verifique a internet",false);
+    });
+    refreshStatus();render();
+    return;
+  }
   registros=await dbLoad();
-  refreshStatus();
-  render();
+  refreshStatus();render();
 }
-async function save(){
-  const ok=await dbSave();
-  if(!ok&&backend!=="mem")
-    flash("Falha ao gravar no banco — exporte para Excel por segurança",false);
-  refreshStatus();
+
+/* ===== gravação roteada conforme o backend ===== */
+async function commitChunks(ops){
+  for(let i=0;i<ops.length;i+=400){
+    const batch=fb.batch();
+    ops.slice(i,i+400).forEach(fn=>fn(batch));
+    await batch.commit();
+  }
+}
+async function persistAdd(reg){
+  if(backend==="firebase"){
+    try{await fb.collection(COLECAO).doc(String(reg.id)).set(reg);}
+    catch(e){flash("Falha ao gravar no Firebase",false);}
+    return;
+  }
+  registros.unshift(reg);await dbSave();refreshStatus();render();
+}
+async function persistDel(id){
+  if(backend==="firebase"){
+    try{await fb.collection(COLECAO).doc(String(id)).delete();}catch(e){}
+    return;
+  }
+  registros=registros.filter(r=>r.id!==id);await dbSave();refreshStatus();render();
+}
+async function persistClear(){
+  if(backend==="firebase"){
+    try{
+      const snap=await fb.collection(COLECAO).get();
+      await commitChunks(snap.docs.map(d=>b=>b.delete(d.ref)));
+    }catch(e){flash("Falha ao limpar no Firebase",false);}
+    return;
+  }
+  registros=[];await dbSave();refreshStatus();render();
+}
+async function persistReplace(novos){
+  if(backend==="firebase"){
+    try{
+      const snap=await fb.collection(COLECAO).get();
+      const ops=snap.docs.map(d=>b=>b.delete(d.ref))
+        .concat(novos.map(r=>b=>b.set(fb.collection(COLECAO).doc(String(r.id)),r)));
+      await commitChunks(ops);
+    }catch(e){flash("Falha ao importar para o Firebase",false);}
+    return;
+  }
+  registros=novos.sort((a,b)=>b.id-a.id);await dbSave();refreshStatus();render();
 }
 
 function tick(){
@@ -472,8 +561,7 @@ document.getElementById("form").addEventListener("submit",async e=>{
     if(!motivo)return flash("Selecione o motivo da parada",false);
     reg.motivo=motivo;
   }
-  registros.unshift(reg);
-  await save();render();
+  await persistAdd(reg);
   flash(TPLABEL[tipo]+" registrada com sucesso",true);
   selEmb.selectedIndex=0;
   document.getElementById("motivo").selectedIndex=0;
@@ -487,11 +575,11 @@ function flash(msg,ok){
   if(ok)setTimeout(()=>{if(x.textContent===msg)x.textContent="";},3500);
 }
 
-async function excluir(id){registros=registros.filter(r=>r.id!==id);await save();render();}
+async function excluir(id){await persistDel(id);}
 document.getElementById("btn-clear").addEventListener("click",async()=>{
   if(!registros.length)return;
   if(confirm("Apagar TODOS os apontamentos? Esta ação não pode ser desfeita.")){
-    registros=[];await save();render();
+    await persistClear();
   }
 });
 document.getElementById("f-tipo").addEventListener("change",render);
@@ -606,8 +694,7 @@ document.getElementById("imp-file").addEventListener("change",async e=>{
       return alert("Nenhum apontamento válido foi encontrado na planilha.");
     if(!confirm("Foram encontrados "+novos.length+" apontamento(s) no arquivo.\n\n"+
        "ATENÇÃO: isto vai SUBSTITUIR os "+registros.length+" registro(s) atuais do banco pelos do Excel.\n\nDeseja continuar?"))return;
-    registros=novos.sort((a,b)=>b.id-a.id);
-    await save();render();
+    await persistReplace(novos);
     flash(novos.length+" apontamentos importados para o banco de dados",true);
   }catch(err){
     alert("Não foi possível ler o arquivo: "+err.message);
