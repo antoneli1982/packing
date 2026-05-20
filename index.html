@@ -2,7 +2,13 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0e1116">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="SAS Lavadora">
+<meta name="format-detection" content="telephone=no">
 <title>SAS · Lavadora de Embalagem — SESÉ</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- Firebase — sincroniza os apontamentos entre todos os computadores -->
@@ -174,6 +180,52 @@
   .dbstat.idb{color:var(--blue-soft)}
   .dbstat.storage{color:var(--blue-soft)}
   .dbstat.mem{color:var(--red)}
+
+  /* ============ RESPONSIVO — celulares iOS e Android ============ */
+  html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+  @media(max-width:600px){
+    body{padding:14px 12px 48px}
+    header{padding-bottom:14px;margin-bottom:16px;gap:12px}
+    .brand{gap:12px}
+    .logo-chip{padding:9px 12px;border-radius:8px}
+    .logo-chip img{height:22px}
+    h1{font-size:16px}
+    .sub{font-size:8.5px;letter-spacing:1.2px;margin-top:4px}
+    .clock .time{font-size:18px}
+    .clock .date{font-size:8.5px}
+    .tabs{margin-bottom:16px}
+    .tabs .tab{flex:1;justify-content:center;padding:11px 6px;font-size:12px}
+    .grid{gap:16px}
+    .stats{grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:16px}
+    .stat{padding:11px 12px}
+    .stat .v{font-size:18px}
+    .big-kpi .v{font-size:20px}
+    .stat .k{font-size:8.5px}
+    form{padding:15px 13px 17px}
+    .panel-head{padding:11px 13px}
+    /* 16px nos campos evita o zoom automático ao tocar (iOS) */
+    input,select{font-size:16px;padding:11px}
+    .submit{font-size:14px;padding:14px}
+    .seg-btn{padding:13px 4px}
+    .toolbar{padding:10px 11px;gap:7px}
+    .toolbar .spacer{display:none}
+    .toolbar select{flex:1 1 46%;font-size:13px}
+    .btn-ghost{flex:1 1 46%;text-align:center;padding:9px 6px;font-size:11px}
+    .dash-grid{gap:16px}
+    .chart{padding:13px}
+    .bar-row{flex-wrap:wrap;gap:8px;margin:13px 0}
+    .bar-lbl{width:100%;text-align:left}
+    .bar-val{width:auto;min-width:48px}
+    thead th,tbody td{padding:9px 9px}
+    footer{font-size:9px;line-height:1.8}
+  }
+  @media(max-width:380px){
+    h1{font-size:15px}
+    .stat .v{font-size:16px}
+    .big-kpi .v{font-size:18px}
+    .seg.c3{gap:6px}
+    .seg-btn .l{font-size:8px}
+  }
 </style>
 </head>
 <body>
