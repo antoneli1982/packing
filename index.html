@@ -86,6 +86,8 @@
     font-family:'Poppins',sans-serif;transition:.13s}
   .seg-btn .n{font-size:17px;font-weight:600;line-height:1.05}
   .seg-btn .l{font-size:8.5px;letter-spacing:.8px;margin-top:5px;text-transform:uppercase}
+  .tipo-btn .l{font-size:12.5px;letter-spacing:.4px;margin-top:7px;line-height:1.25}
+  .tipo-btn .n{font-size:22px}
   .seg-btn:hover{border-color:var(--txt-faint)}
   .seg-btn.on{color:#fff;font-weight:600}
   .turno-btn.on[data-t="1"]{background:var(--t1);border-color:var(--t1)}
@@ -175,6 +177,8 @@
   .edit:hover{color:var(--blue-soft);background:rgba(56,102,247,.14)}
   .submit.editing{background:var(--green)}
   .submit.editing:hover{background:#4cd166}
+  .submit.lav{background:var(--green)}
+  .submit.lav:hover{background:#4cd166}
   .cancel-edit{width:100%;cursor:pointer;background:none;border:1px solid var(--line);
     color:var(--txt-dim);border-radius:6px;padding:9px;margin-top:8px;
     font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;transition:.13s}
@@ -237,6 +241,8 @@
     .seg-btn{padding:8px 3px}
     .seg-btn .n{font-size:14px}
     .seg-btn .l{font-size:7.5px;margin-top:3px}
+    .tipo-btn .l{font-size:10.5px;margin-top:5px;line-height:1.2}
+    .tipo-btn .n{font-size:18px}
     input,select{font-size:16px;padding:9px 10px}   /* 16px evita zoom no iOS */
     .row2{gap:8px}
     .submit{font-size:13px;padding:11px;margin-top:2px}
@@ -270,6 +276,7 @@
     .stat .v{font-size:15px}
     .big-kpi .v{font-size:16px}
     .seg-btn .l{font-size:7px}
+    .tipo-btn .l{font-size:9.5px}
   }
 </style>
 </head>
@@ -309,7 +316,7 @@
             <label>Tipo de Apontamento <span class="req">*</span></label>
             <div class="seg c2" id="tipos">
               <div class="seg-btn tipo-btn" data-tp="lav"><div class="n">🧼</div><div class="l">Lavagem de<br>Embalagem</div></div>
-              <div class="seg-btn tipo-btn" data-tp="par"><div class="n">⛔</div><div class="l">Parada de<br>Linha</div></div>
+              <div class="seg-btn tipo-btn" data-tp="par"><div class="n">⛔</div><div class="l">Parada de<br>Máquina</div></div>
             </div>
           </div>
 
@@ -379,7 +386,7 @@
             <select id="f-tipo">
               <option value="">Todos os tipos</option>
               <option value="lav">Lavagem de Embalagem</option>
-              <option value="par">Parada de Linha</option>
+              <option value="par">Parada de Máquina</option>
             </select>
             <select id="f-turno">
               <option value="">Todos os turnos</option>
@@ -446,7 +453,7 @@
         <div class="chart" id="chart-turno"></div>
       </div>
       <div class="panel">
-        <div class="panel-head"><span class="tag">02</span><h2>Parada de Linha por Motivo</h2></div>
+        <div class="panel-head"><span class="tag">02</span><h2>Parada de Máquina por Motivo</h2></div>
         <div class="chart" id="chart-motivo"></div>
       </div>
       <div class="panel" style="grid-column:1/-1">
@@ -471,7 +478,7 @@ const EMBALAGENS=[
 const MOTIVOS=["Manutenção geral (descreva na observação)","Abastecimento de água na máquina","Troca de filtro","Falta de energia","Falta de embalagem","Trabalho em outro setor"];
 const TLABEL={"1":"1º Turno","2":"2º Turno","3":"3º Turno"};
 const TCOLOR={"1":"var(--t1)","2":"var(--t2)","3":"var(--t3)"};
-const TPLABEL={lav:"Lavagem de Embalagem",par:"Parada de Linha"};
+const TPLABEL={lav:"Lavagem de Embalagem",par:"Parada de Máquina"};
 const TPSHORT={lav:"Lavagem",par:"Parada"};
 /* ===================================================================
    CONFIGURAÇÃO DO FIREBASE
@@ -666,6 +673,7 @@ document.getElementById("tipos").addEventListener("click",e=>{
   document.getElementById("f-obs").classList.toggle("hide",tipo!=="par");
   document.getElementById("submit-btn").textContent=
     editingId?"Salvar Alterações":"Registrar "+TPLABEL[tipo];
+  document.getElementById("submit-btn").classList.toggle("lav",tipo==="lav"&&!editingId);
 });
 document.getElementById("turnos").addEventListener("click",e=>{
   const b=e.target.closest(".turno-btn");if(!b)return;
@@ -731,6 +739,7 @@ function setEditMode(on){
   document.getElementById("edit-banner").classList.toggle("on",on);
   document.getElementById("cancel-edit").style.display=on?"block":"none";
   btn.classList.toggle("editing",on);
+  btn.classList.toggle("lav",!on&&tipo==="lav");
   btn.textContent = on ? "Salvar Alterações"
                        : (tipo?("Registrar "+TPLABEL[tipo]):"Registrar Apontamento");
 }
@@ -824,7 +833,7 @@ document.getElementById("btn-xls").addEventListener("click",()=>{
     const rs=registros.filter(r=>r.tipo==="lav"&&r.emb===e);
     res.push([e,rs.length,rs.reduce((a,r)=>a+r.total,0)]);
   });
-  res.push([],["PARADA DE LINHA POR MOTIVO"],["Motivo","Ocorrências","Tempo Parado"]);
+  res.push([],["PARADA DE MÁQUINA POR MOTIVO"],["Motivo","Ocorrências","Tempo Parado"]);
   MOTIVOS.forEach(mo=>{
     const rs=registros.filter(r=>r.tipo==="par"&&r.motivo===mo);
     res.push([mo,rs.length,fmtMin(rs.reduce((a,r)=>a+mins(r.hi,r.hf),0))]);
