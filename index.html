@@ -387,7 +387,7 @@
             </div>
           </div>
 
-          <div class="field">
+          <div class="field" id="f-cicloextra">
             <label>Ciclo Extra</label>
             <div class="seg c2" id="cicloExtras">
               <div class="seg-btn ciclo-btn on" data-ce="nao"><div class="n">🔄</div><div class="l">Não</div></div>
@@ -749,6 +749,7 @@ document.getElementById("tipos").addEventListener("click",e=>{
   document.getElementById("f-total").classList.toggle("hide",tipo!=="lav");
   document.getElementById("f-motivo").classList.toggle("hide",tipo!=="par");
   document.getElementById("f-obs").classList.toggle("hide",tipo!=="par");
+  document.getElementById("f-cicloextra").classList.toggle("hide",tipo!=="lav");
   document.getElementById("submit-btn").textContent=
     editingId?"Salvar Alterações":"Registrar "+TPLABEL[tipo];
   document.getElementById("submit-btn").classList.toggle("lav",tipo==="lav"&&!editingId);
@@ -846,7 +847,7 @@ function editar(id){
   document.getElementById("f-total").classList.toggle("hide",tipo!=="lav");
   document.getElementById("f-motivo").classList.toggle("hide",tipo!=="par");
   document.getElementById("f-obs").classList.toggle("hide",tipo!=="par");
-  /* turno */
+  document.getElementById("f-cicloextra").classList.toggle("hide",tipo!=="lav");
   turno=r.turno;
   document.querySelectorAll(".turno-btn").forEach(x=>x.classList.toggle("on",x.dataset.t===turno));
   /* campos */
