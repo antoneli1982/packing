@@ -278,6 +278,58 @@
     .seg-btn .l{font-size:7px}
     .tipo-btn .l{font-size:9.5px}
   }
+
+  /* ===== Hora com botão Agora ===== */
+  .time-wrap{display:flex;gap:6px;align-items:stretch}
+  .time-wrap input[type="time"]{flex:1;min-width:0}
+  .btn-agora{cursor:pointer;background:var(--panel-2);border:1px solid var(--line);
+    color:var(--txt-dim);border-radius:6px;padding:10px 9px;
+    font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;
+    white-space:nowrap;transition:.13s;flex-shrink:0;line-height:1.2}
+  .btn-agora:hover{border-color:var(--blue);color:var(--blue-soft);background:#1e2a38}
+  .btn-agora:active{transform:translateY(1px)}
+
+  /* ===== Ciclo Extra ===== */
+  .ciclo-btn.on[data-ce="sim"]{background:var(--green);border-color:var(--green);color:#fff}
+  .ciclo-btn.on[data-ce="nao"]{background:var(--txt-faint);border-color:var(--txt-faint);color:#fff}
+  .badge-ce{display:inline-block;font-family:'Poppins',sans-serif;font-size:9px;font-weight:700;
+    background:rgba(63,185,80,.2);color:var(--green);
+    border:1px solid rgba(63,185,80,.35);border-radius:4px;
+    padding:1px 5px;margin-left:5px;vertical-align:middle;letter-spacing:.4px;white-space:nowrap}
+
+  @media(max-width:600px){
+    .btn-agora{font-size:10px;padding:9px 7px}
+  }
+
+  /* ===== Sirene de Parada de Máquina ===== */
+  @keyframes siren-spin{
+    0%{transform:rotate(0deg)}
+    100%{transform:rotate(360deg)}
+  }
+  @keyframes siren-flash{
+    0%,49%{opacity:1;filter:drop-shadow(0 0 14px #f0533f) drop-shadow(0 0 30px #f0533f)}
+    50%,100%{opacity:.18;filter:none}
+  }
+  @keyframes siren-bg{
+    0%,49%{background:rgba(240,83,63,.13);border-color:rgba(240,83,63,.5)}
+    50%,100%{background:transparent;border-color:var(--line)}
+  }
+  #siren-banner{
+    display:none;align-items:center;gap:12px;
+    border:1px solid var(--line);border-radius:8px;
+    padding:12px 16px;margin-bottom:14px;
+    font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;
+    color:var(--red);letter-spacing:.4px;
+  }
+  #siren-banner.on{display:flex;animation:siren-bg .7s step-end infinite;}
+  .siren-icon{font-size:26px;animation:siren-flash .7s step-end infinite;flex-shrink:0;line-height:1}
+  .siren-txt{line-height:1.35}
+  .siren-sub{font-size:10px;font-weight:500;color:var(--txt-dim);letter-spacing:.3px;margin-top:2px}
+  @media(max-width:600px){
+    #siren-banner{padding:9px 12px;gap:9px}
+    .siren-icon{font-size:22px}
+    #siren-banner{font-size:11px}
+  }
 </style>
 </head>
 <body>
@@ -310,6 +362,12 @@
         <div class="panel-head"><span class="tag">REG</span><h2>Novo Apontamento</h2></div>
         <form id="form" autocomplete="off">
 
+          <div id="siren-banner">
+            <div class="siren-icon">🚨</div>
+            <div class="siren-txt">PARADA DE MÁQUINA
+              <div class="siren-sub">Preencha o motivo e registre o apontamento</div>
+            </div>
+          </div>
           <div class="edit-banner" id="edit-banner">✎ Editando um apontamento existente — altere os campos e salve</div>
 
           <div class="field">
@@ -326,6 +384,14 @@
               <div class="seg-btn turno-btn" data-t="1"><div class="n">1º</div><div class="l">Turno</div></div>
               <div class="seg-btn turno-btn" data-t="2"><div class="n">2º</div><div class="l">Turno</div></div>
               <div class="seg-btn turno-btn" data-t="3"><div class="n">3º</div><div class="l">Turno</div></div>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Ciclo Extra</label>
+            <div class="seg c2" id="cicloExtras">
+              <div class="seg-btn ciclo-btn on" data-ce="nao"><div class="n">🔄</div><div class="l">Não</div></div>
+              <div class="seg-btn ciclo-btn" data-ce="sim"><div class="n">➕</div><div class="l">Sim</div></div>
             </div>
           </div>
 
@@ -357,8 +423,20 @@
 
           <div class="field">
             <div class="row2">
-              <div><label>Hora Inicial <span class="req">*</span></label><input type="time" id="hi"></div>
-              <div><label>Hora Final <span class="req">*</span></label><input type="time" id="hf"></div>
+              <div>
+                <label>Hora Inicial <span class="req">*</span></label>
+                <div class="time-wrap">
+                  <input type="time" id="hi">
+                  <button type="button" class="btn-agora" id="btn-agora-hi" title="Marcar hora atual">⏱ Agora</button>
+                </div>
+              </div>
+              <div>
+                <label>Hora Final <span class="req">*</span></label>
+                <div class="time-wrap">
+                  <input type="time" id="hf">
+                  <button type="button" class="btn-agora" id="btn-agora-hf" title="Marcar hora atual">⏱ Agora</button>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -498,7 +576,7 @@ const FIREBASE_CONFIG = {
 const COLECAO = "apontamentos";   /* nome da coleção no Firestore */
 
 const KEY="sas-apontamentos";
-let registros=[],turno=null,tipo=null,editingId=null;
+let registros=[],turno=null,tipo=null,editingId=null,cicloExtra='nao';
 let backend="mem",idb=null,fb=null;
 
 /* ===== BANCO LOCAL (IndexedDB) — usado quando o Firebase não está configurado ===== */
@@ -674,12 +752,25 @@ document.getElementById("tipos").addEventListener("click",e=>{
   document.getElementById("submit-btn").textContent=
     editingId?"Salvar Alterações":"Registrar "+TPLABEL[tipo];
   document.getElementById("submit-btn").classList.toggle("lav",tipo==="lav"&&!editingId);
+  document.getElementById("siren-banner").classList.toggle("on",tipo==="par");
 });
 document.getElementById("turnos").addEventListener("click",e=>{
   const b=e.target.closest(".turno-btn");if(!b)return;
   document.querySelectorAll(".turno-btn").forEach(x=>x.classList.remove("on"));
   b.classList.add("on");turno=b.dataset.t;
 });
+document.getElementById("cicloExtras").addEventListener("click",e=>{
+  const b=e.target.closest(".ciclo-btn");if(!b)return;
+  document.querySelectorAll(".ciclo-btn").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");cicloExtra=b.dataset.ce;
+});
+function nowTime(){
+  const n=new Date();
+  return String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");
+}
+document.getElementById("btn-agora-hi").addEventListener("click",()=>{document.getElementById("hi").value=nowTime();});
+document.getElementById("btn-agora-hf").addEventListener("click",()=>{document.getElementById("hf").value=nowTime();});
+
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
   document.querySelectorAll(".view").forEach(x=>x.classList.remove("on"));
@@ -702,7 +793,7 @@ document.getElementById("form").addEventListener("submit",async e=>{
   if(!tipo)   return flash("Selecione o tipo de apontamento",false);
   if(!turno)  return flash("Selecione o turno",false);
   if(!hi||!hf)return flash("Informe hora inicial e final",false);
-  const reg={id:editingId||Date.now(),tipo,data,turno,hi,hf};
+  const reg={id:editingId||Date.now(),tipo,data,turno,hi,hf,cicloExtra:cicloExtra==='sim'};
   if(tipo==="lav"){
     const emb=selEmb.value;
     const total=parseInt(document.getElementById("total").value,10);
@@ -733,6 +824,8 @@ function limparCampos(){
   document.getElementById("hi").value="";
   document.getElementById("hf").value="";
   document.getElementById("total").value="";
+  cicloExtra="nao";
+  document.querySelectorAll(".ciclo-btn").forEach(x=>x.classList.toggle("on",x.dataset.ce==="nao"));
 }
 function setEditMode(on){
   const btn=document.getElementById("submit-btn");
@@ -762,6 +855,9 @@ function editar(id){
   document.getElementById("hf").value=r.hf;
   if(tipo==="lav"){selEmb.value=r.emb;document.getElementById("total").value=r.total;}
   else{document.getElementById("motivo").value=r.motivo;document.getElementById("obs").value=r.obs||"";}
+  /* ciclo extra */
+  cicloExtra=r.cicloExtra?"sim":"nao";
+  document.querySelectorAll(".ciclo-btn").forEach(x=>x.classList.toggle("on",x.dataset.ce===cicloExtra));
   editingId=id;
   setEditMode(true);
   window.scrollTo({top:0,behavior:"smooth"});
@@ -811,11 +907,11 @@ document.getElementById("btn-xls").addEventListener("click",()=>{
   if(!registros.length)return alert("Não há apontamentos para exportar.");
   if(typeof XLSX==="undefined")return exportCSV();
   const ord=[...registros].slice().reverse();
-  const dados=[["Data","Turno","Tipo","Embalagem / Motivo","Hora Inicial","Hora Final","Duração","Embalagens Lavadas"]];
+  const dados=[["Data","Turno","Tipo","Embalagem / Motivo","Hora Inicial","Hora Final","Duração","Embalagens Lavadas","Ciclo Extra"]];
   ord.forEach(r=>{
     const[y,m,d]=r.data.split("-");
     dados.push([d+"/"+m+"/"+y,TLABEL[r.turno],TPLABEL[r.tipo],detalhe(r),
-                r.hi,r.hf,fmtMin(mins(r.hi,r.hf)),r.tipo==="lav"?r.total:""]);
+                r.hi,r.hf,fmtMin(mins(r.hi,r.hf)),r.tipo==="lav"?r.total:"",r.cicloExtra?"Sim":"Não"]);
   });
   const wsD=XLSX.utils.aoa_to_sheet(dados);
   wsD["!cols"]=[{wch:12},{wch:11},{wch:20},{wch:28},{wch:12},{wch:12},{wch:11},{wch:20}];
@@ -849,11 +945,11 @@ document.getElementById("btn-xls").addEventListener("click",()=>{
 
 function exportCSV(){
   if(!registros.length)return alert("Não há apontamentos para exportar.");
-  const head=["Data","Turno","Tipo","Embalagem/Motivo","Hora Inicial","Hora Final","Duracao","Embalagens Lavadas"];
+  const head=["Data","Turno","Tipo","Embalagem/Motivo","Hora Inicial","Hora Final","Duracao","Embalagens Lavadas","Ciclo Extra"];
   const rows=[...registros].slice().reverse().map(r=>{
     const[y,m,d]=r.data.split("-");
     return[d+"/"+m+"/"+y,TLABEL[r.turno],TPLABEL[r.tipo],detalhe(r),
-           r.hi,r.hf,fmtMin(mins(r.hi,r.hf)),r.tipo==="lav"?r.total:""];
+           r.hi,r.hf,fmtMin(mins(r.hi,r.hf)),r.tipo==="lav"?r.total:"",r.cicloExtra?"Sim":"Não"];
   });
   const csv=[head,...rows].map(l=>l.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(";")).join("\r\n");
   const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
@@ -892,7 +988,7 @@ function render(){
       '<td class="mono">'+d+"/"+m+"/"+y.slice(2)+'</td>'+
       '<td><span class="pill" data-t="'+r.turno+'">'+r.turno+'º</span></td>'+
       '<td><span class="pill" data-tp="'+r.tipo+'">'+TPSHORT[r.tipo]+'</span></td>'+
-      '<td>'+detalhe(r)+'</td>'+
+      '<td>'+detalhe(r)+(r.cicloExtra?'<span class="badge-ce">+CICLO</span>':'')+'</td>'+
       '<td class="mono">'+r.hi+'</td>'+
       '<td class="mono">'+r.hf+'</td>'+
       '<td class="mono" style="color:var(--txt-dim)">'+fmtMin(mins(r.hi,r.hf))+'</td>'+
@@ -965,6 +1061,22 @@ function renderDash(){
 }
 
 load();
+
+/* ── Selecionar Lavagem de Embalagem por padrão ao abrir ── */
+(function selectLavDefault(){
+  const btn = document.querySelector('.tipo-btn[data-tp="lav"]');
+  if(!btn) return;
+  document.querySelectorAll('.tipo-btn').forEach(x=>x.classList.remove('on'));
+  btn.classList.add('on');
+  tipo = 'lav';
+  document.getElementById('f-embalagem').classList.remove('hide');
+  document.getElementById('f-total').classList.remove('hide');
+  document.getElementById('f-motivo').classList.add('hide');
+  document.getElementById('f-obs').classList.add('hide');
+  document.getElementById('siren-banner').classList.remove('on');
+  document.getElementById('submit-btn').textContent = 'Registrar ' + TPLABEL['lav'];
+  document.getElementById('submit-btn').classList.add('lav');
+})();
 </script>
 </body>
 </html>
