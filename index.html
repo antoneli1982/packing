@@ -455,6 +455,7 @@
         <div class="stats">
           <div class="stat" data-c="lav"><div class="v" id="s-emb">0</div><div class="k">Embalagens Lavadas</div></div>
           <div class="stat" data-c="lav"><div class="v" id="s-qtd">0</div><div class="k">Lavagens</div></div>
+          <div class="stat" data-c="lav"><div class="v" id="s-trab">0h00</div><div class="k">Tempo de Máquina Trabalhada</div></div>
           <div class="stat" data-c="par"><div class="v" id="s-par">0h00</div><div class="k">Tempo Parado</div></div>
           <div class="stat" data-c="par"><div class="v" id="s-pqt">0</div><div class="k">Paradas</div></div>
         </div>
@@ -522,6 +523,7 @@
     <div class="stats">
       <div class="stat big-kpi" data-c="lav"><div class="v" id="d-emb">0</div><div class="k">Embalagens Lavadas</div></div>
       <div class="stat big-kpi" data-c="lav"><div class="v" id="d-qtd">0</div><div class="k">Total de Lavagens</div></div>
+      <div class="stat big-kpi" data-c="lav"><div class="v" id="d-trab">0h00</div><div class="k">Tempo Total de Máquina Trabalhada</div></div>
       <div class="stat big-kpi" data-c="par"><div class="v" id="d-par">0h00</div><div class="k">Tempo Total de Parada</div></div>
       <div class="stat big-kpi"><div class="v" id="d-top" style="font-size:13px">—</div><div class="k">Embalagem Mais Lavada</div></div>
     </div>
@@ -917,12 +919,13 @@ document.getElementById("btn-xls").addEventListener("click",()=>{
   const wsD=XLSX.utils.aoa_to_sheet(dados);
   wsD["!cols"]=[{wch:12},{wch:11},{wch:20},{wch:28},{wch:12},{wch:12},{wch:11},{wch:20}];
 
-  const res=[["RESUMO POR TURNO"],["Turno","Lavagens","Embalagens Lavadas","Tempo Parado"]];
+  const res=[["RESUMO POR TURNO"],["Turno","Lavagens","Embalagens Lavadas","Tempo Trabalhado","Tempo Parado"]];
   ["1","2","3"].forEach(t=>{
     const rt=registros.filter(r=>r.turno===t);
     const lv=rt.filter(r=>r.tipo==="lav");
     const pr=rt.filter(r=>r.tipo==="par");
     res.push([TLABEL[t],lv.length,lv.reduce((a,r)=>a+r.total,0),
+              fmtMin(lv.reduce((a,r)=>a+mins(r.hi,r.hf),0)),
               fmtMin(pr.reduce((a,r)=>a+mins(r.hi,r.hf),0))]);
   });
   res.push([],["EMBALAGENS LAVADAS POR TIPO"],["Embalagem","Lavagens","Total Lavadas"]);
@@ -936,7 +939,7 @@ document.getElementById("btn-xls").addEventListener("click",()=>{
     res.push([mo,rs.length,fmtMin(rs.reduce((a,r)=>a+mins(r.hi,r.hf),0))]);
   });
   const wsR=XLSX.utils.aoa_to_sheet(res);
-  wsR["!cols"]=[{wch:28},{wch:14},{wch:18},{wch:14}];
+  wsR["!cols"]=[{wch:28},{wch:14},{wch:18},{wch:16},{wch:14}];
 
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,wsD,"Apontamentos");
@@ -967,10 +970,11 @@ function render(){
   const fd=document.getElementById("f-data").value;
   const view=registros.filter(r=>(!fp||r.tipo===fp)&&(!ft||r.turno===ft)&&(!fd||r.data===fd));
 
-  const lav=registros.filter(r=>r.tipo==="lav");
-  const par=registros.filter(r=>r.tipo==="par");
+  const lav=view.filter(r=>r.tipo==="lav");
+  const par=view.filter(r=>r.tipo==="par");
   document.getElementById("s-emb").textContent=lav.reduce((a,r)=>a+r.total,0).toLocaleString("pt-BR");
   document.getElementById("s-qtd").textContent=lav.length;
+  document.getElementById("s-trab").textContent=fmtMin(lav.reduce((a,r)=>a+mins(r.hi,r.hf),0));
   document.getElementById("s-par").textContent=fmtMin(par.reduce((a,r)=>a+mins(r.hi,r.hf),0));
   document.getElementById("s-pqt").textContent=par.length;
 
@@ -1041,6 +1045,7 @@ function renderDash(){
 
   document.getElementById("d-emb").textContent=lav.reduce((a,r)=>a+r.total,0).toLocaleString("pt-BR");
   document.getElementById("d-qtd").textContent=lav.length.toLocaleString("pt-BR");
+  document.getElementById("d-trab").textContent=fmtMin(lav.reduce((a,r)=>a+mins(r.hi,r.hf),0));
   document.getElementById("d-par").textContent=fmtMin(par.reduce((a,r)=>a+mins(r.hi,r.hf),0));
 
   const porEmb=EMBALAGENS.map(e=>({k:e,v:lav.filter(r=>r.emb===e).reduce((a,r)=>a+r.total,0)}));
