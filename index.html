@@ -342,6 +342,12 @@
   .range-field input[type=time]{width:72px}
   .range-sep{color:var(--txt-faint);font-size:13px;font-weight:600;flex-shrink:0;padding:0 2px}
 
+  /* ===== Filtros compartilhados ===== */
+  .shared-filters{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    padding:10px 14px;border-bottom:1px solid var(--line-soft)}
+  .shared-filters .spacer{flex:1}
+  .shared-filters select{width:auto;font-size:12px;padding:7px 26px 7px 10px}
+
   /* ===== Seções de filtro ===== */
   .filter-section{border-bottom:1px solid var(--line-soft)}
   .filter-section-head{display:flex;align-items:center;justify-content:space-between;
@@ -653,6 +659,26 @@
         <div class="panel">
           <div class="panel-head"><span class="tag">LOG</span><h2>Apontamentos Registrados</h2></div>
 
+          <!-- ── Filtros compartilhados (tipo + turno) ── -->
+          <div class="shared-filters">
+            <select id="f-tipo">
+              <option value="">Todos os tipos</option>
+              <option value="lav">Lavagem de Embalagem</option>
+              <option value="par">Parada de Máquina</option>
+            </select>
+            <select id="f-turno">
+              <option value="">Todos os turnos</option>
+              <option value="1">1º Turno</option>
+              <option value="2">2º Turno</option>
+              <option value="3">3º Turno</option>
+            </select>
+            <button class="btn-ghost" id="f-clear">✕ Limpar filtros</button>
+            <div class="spacer"></div>
+            <button class="btn-ghost xls" id="btn-xls">⤓ Exportar Excel</button>
+            <button class="btn-ghost" id="btn-csv">⤓ CSV</button>
+            <button class="btn-ghost danger" id="btn-clear">Limpar tudo</button>
+          </div>
+
           <!-- ── SEÇÃO 1: Busca por data ── -->
           <div class="filter-section">
             <div class="filter-section-head">
@@ -660,7 +686,7 @@
                 <span class="filter-icon">📅</span>
                 <div>
                   <div class="filter-title">Busca por Data</div>
-                  <div class="filter-sub">Selecione um dia — resumo separado por turno, tipo e embalagem</div>
+                  <div class="filter-sub">Selecione um dia — resumo por turno, tipo e embalagem</div>
                 </div>
               </div>
               <div class="filter-date-row">
@@ -700,17 +726,6 @@
             </div>
             <div class="adv-body" id="adv-body">
               <div style="padding:10px 14px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-                <select id="f-tipo">
-                  <option value="">Todos os tipos</option>
-                  <option value="lav">Lavagem de Embalagem</option>
-                  <option value="par">Parada de Máquina</option>
-                </select>
-                <select id="f-turno">
-                  <option value="">Todos os turnos</option>
-                  <option value="1">1º Turno</option>
-                  <option value="2">2º Turno</option>
-                  <option value="3">3º Turno</option>
-                </select>
                 <div class="range-group">
                   <div class="range-field">
                     <span class="range-lbl">De</span>
@@ -724,17 +739,8 @@
                     <input type="time" id="f-hora-ate" style="color-scheme:dark;width:88px">
                   </div>
                 </div>
-                <button class="btn-ghost" id="f-clear">✕ Limpar</button>
               </div>
             </div>
-          </div>
-
-          <!-- ── Barra de ações ── -->
-          <div class="toolbar-actions">
-            <button class="btn-ghost xls" id="btn-xls">⤓ Exportar Excel</button>
-            <button class="btn-ghost" id="btn-csv">⤓ CSV</button>
-            <div class="spacer"></div>
-            <button class="btn-ghost danger" id="btn-clear">Limpar tudo</button>
           </div>
           <div class="table-scroll">
             <table>
@@ -1462,23 +1468,28 @@ function recDT(r){return r.data+"T"+r.hi;}
 
 function render(){
   document.getElementById("state-box").innerHTML="";
-  /* Atualiza resumo por turno se há data selecionada */
-  const diaSel=document.getElementById("f-data-dia")?document.getElementById("f-data-dia").value:null;
+  const diaSel=document.getElementById("f-data-dia").value;
   if(diaSel) renderTurnoResumo(diaSel);
+
   const fp=document.getElementById("f-tipo").value;
   const ft=document.getElementById("f-turno").value;
   const fdDe=document.getElementById("f-data-de").value;
   const fhDe=document.getElementById("f-hora-de").value||"00:00";
   const fdAte=document.getElementById("f-data-ate").value;
   const fhAte=document.getElementById("f-hora-ate").value||"23:59";
-  const dtDe =fdDe  ? fdDe +"T"+fhDe  : null;
-  const dtAte=fdAte ? fdAte+"T"+fhAte : null;
-  const view=registros.filter(r=>
-    (!fp||r.tipo===fp)&&
-    (!ft||r.turno===ft)&&
-    (!dtDe ||recDT(r)>=dtDe)&&
-    (!dtAte||recDT(r)<=dtAte)
-  );
+  const dtDe =fdDe ? fdDe+"T"+fhDe : null;
+  const dtAte=fdAte? fdAte+"T"+fhAte: null;
+
+  const view=registros.filter(r=>{
+    if(fp && r.tipo!==fp) return false;
+    if(ft && r.turno!==ft) return false;
+    /* Busca por data simples — usa dataRef (âncora 06h) */
+    if(diaSel && !fdDe && !fdAte) return dataRef(r)===diaSel;
+    /* Busca por intervalo específico */
+    if(dtDe  && recDT(r)<dtDe)  return false;
+    if(dtAte && recDT(r)>dtAte) return false;
+    return true;
+  });
 
   const lav=view.filter(r=>r.tipo==="lav");
   const par=view.filter(r=>r.tipo==="par");
@@ -1604,20 +1615,32 @@ function renderTurnoResumo(data){
   const resumo=document.getElementById("turno-resumo");
   if(!data){resumo.style.display="none";return;}
 
+  const fp=document.getElementById("f-tipo").value;
+  const ft=document.getElementById("f-turno").value;
+  const turnos=ft?[ft]:["1","2","3"];
+
+  /* Oculta/mostra cards conforme filtro de turno */
   ["1","2","3"].forEach(t=>{
-    const regs=registros.filter(r=>dataRef(r)===data&&r.turno===t);
+    const card=document.querySelector(`.tr-card[data-t="${t}"]`);
+    if(card) card.style.display=ft&&ft!==t?"none":"block";
+  });
+
+  turnos.forEach(t=>{
+    const card=document.querySelector(`.tr-card[data-t="${t}"]`);
+    if(!card)return;
+    let regs=registros.filter(r=>dataRef(r)===data&&r.turno===t);
+    if(fp) regs=regs.filter(r=>r.tipo===fp);
+
     const lav=regs.filter(r=>r.tipo==="lav");
     const par=regs.filter(r=>r.tipo==="par");
     const tEmb=lav.reduce((a,r)=>a+r.total,0);
     const tTrab=lav.reduce((a,r)=>a+mins(r.hi,r.hf),0);
     const tPar=par.reduce((a,r)=>a+mins(r.hi,r.hf),0);
 
-    /* Breakdown por embalagem */
     const embMap={};
     lav.forEach(r=>{embMap[r.emb]=(embMap[r.emb]||0)+r.total;});
     const embRows=Object.entries(embMap).sort((a,b)=>b[1]-a[1]);
 
-    /* Breakdown paradas por motivo */
     const motMap={};
     par.forEach(r=>{motMap[r.motivo]=(motMap[r.motivo]||0)+mins(r.hi,r.hf);});
     const motRows=Object.entries(motMap).sort((a,b)=>b[1]-a[1]);
@@ -1625,57 +1648,48 @@ function renderTurnoResumo(data){
     const el=document.getElementById("trs-"+t);
     let html='<div class="tr-stats">';
 
-    /* Totais gerais */
-    html+=`<div class="tr-stat"><span class="k">Total Embalagens</span><span class="v${tEmb===0?" zero":""}">${tEmb.toLocaleString("pt-BR")}</span></div>`;
-    html+=`<div class="tr-stat"><span class="k">Lavagens</span><span class="v${lav.length===0?" zero":""}">${lav.length}</span></div>`;
-    html+=`<div class="tr-stat"><span class="k">Tempo Trabalhado</span><span class="v${tTrab===0?" zero":""}">${fmtMin(tTrab)}</span></div>`;
-    html+=`<div class="tr-stat"><span class="k">Tempo Parado</span><span class="v${tPar===0?" zero":""}">${fmtMin(tPar)}</span></div>`;
+    if((!fp||fp==="lav")){
+      html+=`<div class="tr-stat"><span class="k">Total Embalagens</span><span class="v${tEmb===0?" zero":""}">${tEmb.toLocaleString("pt-BR")}</span></div>`;
+      html+=`<div class="tr-stat"><span class="k">Lavagens</span><span class="v${lav.length===0?" zero":""}">${lav.length}</span></div>`;
+      html+=`<div class="tr-stat"><span class="k">Tempo Trabalhado</span><span class="v${tTrab===0?" zero":""}">${fmtMin(tTrab)}</span></div>`;
+    }
+    if((!fp||fp==="par")){
+      html+=`<div class="tr-stat"><span class="k">Tempo Parado</span><span class="v${tPar===0?" zero":""}">${fmtMin(tPar)}</span></div>`;
+      html+=`<div class="tr-stat"><span class="k">Paradas</span><span class="v${par.length===0?" zero":""}">${par.length}</span></div>`;
+    }
 
-    /* Por embalagem */
-    if(embRows.length){
+    if((!fp||fp==="lav")&&embRows.length){
       html+='<div class="tr-divider">Por Embalagem</div>';
       embRows.forEach(([emb,qty])=>{
         html+=`<div class="tr-stat tr-sub"><span class="k">↳ ${emb}</span><span class="v">${qty.toLocaleString("pt-BR")}</span></div>`;
       });
     }
-
-    /* Por motivo de parada */
-    if(motRows.length){
+    if((!fp||fp==="par")&&motRows.length){
       html+='<div class="tr-divider">Por Motivo de Parada</div>';
       motRows.forEach(([mot,m])=>{
         html+=`<div class="tr-stat tr-sub"><span class="k">↳ ${mot}</span><span class="v">${fmtMin(m)}</span></div>`;
       });
     }
-
-    if(regs.length===0){
-      html+='<div class="tr-empty">Nenhum registro</div>';
-    }
+    if(regs.length===0) html+='<div class="tr-empty">Nenhum registro</div>';
 
     html+='</div>';
     el.innerHTML=html;
   });
+
+  /* Ajusta grid conforme quantos cards visíveis */
+  const vis=turnos.length;
+  resumo.style.gridTemplateColumns=`repeat(${vis},1fr)`;
   resumo.style.display="grid";
 }
 
 document.getElementById("f-data-dia").addEventListener("change",function(){
   const data=this.value;
+  /* Limpa o range específico quando se usa busca por data */
+  document.getElementById("f-data-de").value="";
+  document.getElementById("f-hora-de").value="";
+  document.getElementById("f-data-ate").value="";
+  document.getElementById("f-hora-ate").value="";
   renderTurnoResumo(data||null);
-  /* Aplica filtro na tabela: mostra registros cujo dataRef == data */
-  if(data){
-    /* Usa 3º turno: começa dia anterior às 21:50, termina no dia às 06:00 */
-    const prev=new Date(data+"T12:00:00");prev.setDate(prev.getDate()-1);
-    const prevStr=toDateStr(prev);
-    document.getElementById("f-data-de").value=prevStr;
-    document.getElementById("f-hora-de").value="21:50";
-    document.getElementById("f-data-ate").value=data;
-    document.getElementById("f-hora-ate").value="23:59";
-    /* Abre seção avançada para mostrar o que foi preenchido, mas não obriga */
-  } else {
-    document.getElementById("f-data-de").value="";
-    document.getElementById("f-hora-de").value="";
-    document.getElementById("f-data-ate").value="";
-    document.getElementById("f-hora-ate").value="";
-  }
   render();
 });
 
