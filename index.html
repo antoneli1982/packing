@@ -683,7 +683,19 @@
           <option value="2">2º Turno</option>
           <option value="3">3º Turno</option>
         </select>
-        <input type="date" id="d-fdata" title="Filtrar por data">
+        <div class="range-group">
+          <div class="range-field">
+            <span class="range-lbl">De</span>
+            <input type="date" id="d-fdata-de" style="color-scheme:dark">
+            <input type="time" id="d-fhora-de" style="color-scheme:dark;width:88px">
+          </div>
+          <span class="range-sep">→</span>
+          <div class="range-field">
+            <span class="range-lbl">Até</span>
+            <input type="date" id="d-fdata-ate" style="color-scheme:dark">
+            <input type="time" id="d-fhora-ate" style="color-scheme:dark;width:88px">
+          </div>
+        </div>
         <div class="spacer"></div>
         <button class="btn-ghost" id="d-fglobal" title="Visão global — todos os apontamentos">↺ Global</button>
       </div>
@@ -901,12 +913,15 @@ const selEmb=document.getElementById("embalagem");
 EMBALAGENS.forEach(e=>selEmb.add(new Option(e,e)));
 const selDMod=document.getElementById("d-fmodelo");
 EMBALAGENS.forEach(e=>selDMod.add(new Option(e,e)));
-["d-fmodelo","d-fturno","d-fdata"].forEach(id=>
+["d-fmodelo","d-fturno","d-fdata-de","d-fhora-de","d-fdata-ate","d-fhora-ate"].forEach(id=>
   document.getElementById(id).addEventListener("change",renderDash));
 document.getElementById("d-fglobal").addEventListener("click",()=>{
   document.getElementById("d-fmodelo").value="";
   document.getElementById("d-fturno").value="";
-  document.getElementById("d-fdata").value="";
+  document.getElementById("d-fdata-de").value="";
+  document.getElementById("d-fhora-de").value="";
+  document.getElementById("d-fdata-ate").value="";
+  document.getElementById("d-fhora-ate").value="";
   renderDash();
 });
 const h=new Date();
@@ -1415,10 +1430,21 @@ function bars(el,rows){
 function renderDash(){
   const fm=document.getElementById("d-fmodelo").value;
   const ft=document.getElementById("d-fturno").value;
-  const fd=document.getElementById("d-fdata").value;
+  const fde=document.getElementById("d-fdata-de").value;
+  const fhde=document.getElementById("d-fhora-de").value||"00:00";
+  const fate=document.getElementById("d-fdata-ate").value;
+  const fhate=document.getElementById("d-fhora-ate").value||"23:59";
 
-  /* turno e data filtram tudo; o modelo filtra somente as lavagens */
-  const base=registros.filter(r=>(!ft||r.turno===ft)&&(!fd||r.data===fd));
+  /* Converte data+hora em número comparável YYYYMMDDHHMM */
+  function dt(data,hora){return parseInt(data.replace(/-/g,""))*10000+parseInt(hora.replace(":",""));}
+
+  /* turno e intervalo filtram tudo; o modelo filtra somente as lavagens */
+  const base=registros.filter(r=>{
+    if(ft&&r.turno!==ft)return false;
+    if(fde){const rv=dt(r.data,r.hi);if(rv<dt(fde,fhde))return false;}
+    if(fate){const rv=dt(r.data,r.hf);if(rv>dt(fate,fhate))return false;}
+    return true;
+  });
   const lav=base.filter(r=>r.tipo==="lav"&&(!fm||r.emb===fm));
   const par=base.filter(r=>r.tipo==="par");
 
@@ -1426,7 +1452,8 @@ function renderDash(){
   const partes=[];
   if(fm)partes.push("Modelo: "+fm);
   if(ft)partes.push(TLABEL[ft]);
-  if(fd){const[y,m,d]=fd.split("-");partes.push(d+"/"+m+"/"+y);}
+  if(fde){const[y,m,d]=fde.split("-");partes.push("De "+d+"/"+m+"/"+y+" "+fhde);}
+  if(fate){const[y,m,d]=fate.split("-");partes.push("Até "+d+"/"+m+"/"+y+" "+fhate);}
   document.getElementById("d-scope").textContent=
     partes.length?("Filtro ativo · "+partes.join(" · ")):"Visão global · todos os apontamentos";
 
