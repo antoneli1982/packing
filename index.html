@@ -390,11 +390,13 @@
         <div class="modal-date-field">
           <label>De</label>
           <input type="date" id="xls-de">
+          <input type="time" id="xls-hora-de" style="margin-top:6px;width:100%;background:transparent;border:none;color:var(--txt);font-family:'Poppins',sans-serif;font-size:13px;font-weight:500;padding:0;color-scheme:dark;outline:none" placeholder="00:00">
         </div>
         <div class="modal-date-sep">→</div>
         <div class="modal-date-field">
           <label>Até</label>
           <input type="date" id="xls-ate">
+          <input type="time" id="xls-hora-ate" style="margin-top:6px;width:100%;background:transparent;border:none;color:var(--txt);font-family:'Poppins',sans-serif;font-size:13px;font-weight:500;padding:0;color-scheme:dark;outline:none" placeholder="23:59">
         </div>
       </div>
       <div class="modal-hint">Deixe em branco para exportar todos os registros sem filtro de data.</div>
@@ -556,8 +558,10 @@
               <option value="3">3º Turno</option>
             </select>
             <input type="date" id="f-data-de" title="Data inicial" placeholder="De">
+            <input type="time" id="f-hora-de" title="Hora inicial" placeholder="00:00" style="width:auto;font-size:12px;padding:6px 9px;color-scheme:dark">
             <span style="color:var(--txt-dim);font-size:12px;align-self:center">até</span>
             <input type="date" id="f-data-ate" title="Data final" placeholder="Até">
+            <input type="time" id="f-hora-ate" title="Hora final" placeholder="23:59" style="width:auto;font-size:12px;padding:6px 9px;color-scheme:dark">
             <button class="btn-ghost" id="f-clear" title="Limpar pesquisa">✕ Limpar</button>
             <div class="spacer"></div>
             <button class="btn-ghost xls" id="btn-xls">⤓ Exportar Excel</button>
@@ -1107,12 +1111,16 @@ document.getElementById("btn-clear").addEventListener("click",async()=>{
 document.getElementById("f-tipo").addEventListener("change",render);
 document.getElementById("f-turno").addEventListener("change",render);
 document.getElementById("f-data-de").addEventListener("change",render);
+document.getElementById("f-hora-de").addEventListener("change",render);
 document.getElementById("f-data-ate").addEventListener("change",render);
+document.getElementById("f-hora-ate").addEventListener("change",render);
 document.getElementById("f-clear").addEventListener("click",()=>{
   document.getElementById("f-tipo").value="";
   document.getElementById("f-turno").value="";
   document.getElementById("f-data-de").value="";
+  document.getElementById("f-hora-de").value="";
   document.getElementById("f-data-ate").value="";
+  document.getElementById("f-hora-ate").value="";
   render();
 });
 
@@ -1122,13 +1130,15 @@ function detalhe(r){
 }
 
 /* ---- EXPORTAR EXCEL ---- */
-function gerarXLS(fdDe,fdAte){
+function gerarXLS(fdDe,fhDe,fdAte,fhAte){
   if(typeof XLSX==="undefined"){exportCSV();return;}
   const fp=document.getElementById("f-tipo").value;
   const ft=document.getElementById("f-turno").value;
+  const dtDe =fdDe  ? fdDe +"T"+(fhDe||"00:00")  : null;
+  const dtAte=fdAte ? fdAte+"T"+(fhAte||"23:59") : null;
   const filtrado=[...registros].filter(r=>
     (!fp||r.tipo===fp)&&(!ft||r.turno===ft)&&
-    (!fdDe||r.data>=fdDe)&&(!fdAte||r.data<=fdAte)
+    (!dtDe||recDT(r)>=dtDe)&&(!dtAte||recDT(r)<=dtAte)
   ).reverse();
   if(!filtrado.length){alert("Nenhum apontamento no período selecionado.");return;}
   const periodoLabel=(fdDe||fdAte)?` (${fdDe?fdDe.split("-").reverse().join("/"):"início"} a ${fdAte?fdAte.split("-").reverse().join("/"):"hoje"})`:"";
@@ -1193,7 +1203,9 @@ function gerarXLS(fdDe,fdAte){
 document.getElementById("btn-xls").addEventListener("click",()=>{
   if(!registros.length)return alert("Não há apontamentos para exportar.");
   document.getElementById("xls-de").value=document.getElementById("f-data-de").value||"";
+  document.getElementById("xls-hora-de").value=document.getElementById("f-hora-de").value||"";
   document.getElementById("xls-ate").value=document.getElementById("f-data-ate").value||"";
+  document.getElementById("xls-hora-ate").value=document.getElementById("f-hora-ate").value||"";
   document.getElementById("modal-export").classList.add("on");
 });
 document.getElementById("modal-cancel").addEventListener("click",()=>{
@@ -1205,20 +1217,26 @@ document.getElementById("modal-export").addEventListener("click",e=>{
 });
 document.getElementById("modal-confirm").addEventListener("click",()=>{
   const fdDe=document.getElementById("xls-de").value;
+  const fhDe=document.getElementById("xls-hora-de").value;
   const fdAte=document.getElementById("xls-ate").value;
+  const fhAte=document.getElementById("xls-hora-ate").value;
   document.getElementById("modal-export").classList.remove("on");
-  gerarXLS(fdDe,fdAte);
+  gerarXLS(fdDe,fhDe,fdAte,fhAte);
 });
 
 function exportCSV(){
   if(!registros.length)return alert("Não há apontamentos para exportar.");
   const fdDe=document.getElementById("f-data-de").value;
+  const fhDe=document.getElementById("f-hora-de").value||"00:00";
   const fdAte=document.getElementById("f-data-ate").value;
+  const fhAte=document.getElementById("f-hora-ate").value||"23:59";
+  const dtDe =fdDe  ? fdDe +"T"+fhDe  : null;
+  const dtAte=fdAte ? fdAte+"T"+fhAte : null;
   const fp=document.getElementById("f-tipo").value;
   const ft=document.getElementById("f-turno").value;
   const filtrado=[...registros].filter(r=>
     (!fp||r.tipo===fp)&&(!ft||r.turno===ft)&&
-    (!fdDe||r.data>=fdDe)&&(!fdAte||r.data<=fdAte)
+    (!dtDe||recDT(r)>=dtDe)&&(!dtAte||recDT(r)<=dtAte)
   ).reverse();
   if(!filtrado.length)return alert("Nenhum apontamento no período selecionado.");
   const head=["Data","Turno","Tipo","Embalagem/Motivo","Hora Inicial","Hora Final","Duracao","Embalagens Lavadas","Ciclo Extra"];
@@ -1237,17 +1255,24 @@ function exportCSV(){
 document.getElementById("btn-csv").addEventListener("click",exportCSV);
 
 
+/* Retorna o datetime de início do registro como string comparável "YYYY-MM-DDTHH:MM" */
+function recDT(r){return r.data+"T"+r.hi;}
+
 function render(){
   document.getElementById("state-box").innerHTML="";
   const fp=document.getElementById("f-tipo").value;
   const ft=document.getElementById("f-turno").value;
   const fdDe=document.getElementById("f-data-de").value;
+  const fhDe=document.getElementById("f-hora-de").value||"00:00";
   const fdAte=document.getElementById("f-data-ate").value;
+  const fhAte=document.getElementById("f-hora-ate").value||"23:59";
+  const dtDe =fdDe  ? fdDe +"T"+fhDe  : null;
+  const dtAte=fdAte ? fdAte+"T"+fhAte : null;
   const view=registros.filter(r=>
     (!fp||r.tipo===fp)&&
     (!ft||r.turno===ft)&&
-    (!fdDe||r.data>=fdDe)&&
-    (!fdAte||r.data<=fdAte)
+    (!dtDe ||recDT(r)>=dtDe)&&
+    (!dtAte||recDT(r)<=dtAte)
   );
 
   const lav=view.filter(r=>r.tipo==="lav");
