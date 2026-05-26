@@ -280,6 +280,20 @@
     .tipo-btn .l{font-size:9.5px}
   }
 
+  /* ===== Avisos de duração ===== */
+  input.dur-warn{border-color:var(--red)!important;background:rgba(240,83,63,.10)!important;}
+  .dur-alert{display:none;background:rgba(240,83,63,.13);border:1px solid rgba(240,83,63,.5);
+    color:var(--red);border-radius:6px;padding:9px 11px;margin-bottom:10px;
+    font-size:11px;font-weight:600;line-height:1.5}
+  .dur-alert.on{display:block}
+  .dur-confirm{display:flex;gap:8px;margin-top:8px}
+  .dur-confirm button{cursor:pointer;border-radius:5px;border:1px solid rgba(240,83,63,.5);
+    padding:5px 16px;font-family:'Poppins',sans-serif;font-size:11px;font-weight:700;transition:.13s}
+  .dur-confirm .btn-sim{background:var(--red);color:#fff;border-color:var(--red)}
+  .dur-confirm .btn-sim:hover{background:#d94432}
+  .dur-confirm .btn-nao{background:transparent;color:var(--red)}
+  .dur-confirm .btn-nao:hover{background:rgba(240,83,63,.15)}
+
   /* ===== Hora com botão Agora ===== */
   .time-wrap{display:flex;gap:6px;align-items:stretch}
   .time-wrap input[type="time"]{flex:1;min-width:0}
@@ -501,6 +515,15 @@
           <div class="field hide" id="f-total">
             <label>Total de Embalagens Lavadas <span class="req">*</span></label>
             <input type="number" id="total" min="1" step="1" placeholder="0">
+          </div>
+
+          <!-- Alerta de duração -->
+          <div class="dur-alert" id="dur-alert">
+            <span id="dur-alert-msg"></span>
+            <div class="dur-confirm" id="dur-confirm" style="display:none">
+              <button type="button" class="btn-sim" id="dur-sim">✔ Sim, está correto</button>
+              <button type="button" class="btn-nao" id="dur-nao">✕ Corrigir</button>
+            </div>
           </div>
 
           <button type="submit" class="submit" id="submit-btn">Registrar Apontamento</button>
@@ -844,8 +867,95 @@ function nowTime(){
   const n=new Date();
   return String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");
 }
-document.getElementById("btn-agora-hi").addEventListener("click",()=>{document.getElementById("hi").value=nowTime();});
-document.getElementById("btn-agora-hf").addEventListener("click",()=>{document.getElementById("hf").value=nowTime();});
+document.getElementById("btn-agora-hi").addEventListener("click",()=>{document.getElementById("hi").value=nowTime();checkDuracao();});
+document.getElementById("btn-agora-hf").addEventListener("click",()=>{document.getElementById("hf").value=nowTime();checkDuracao();});
+document.getElementById("hi").addEventListener("change",checkDuracao);
+document.getElementById("hf").addEventListener("change",checkDuracao);
+
+/* ===== Validação de duração ===== */
+let duracaoConfirmada=false; // usuário confirmou duração entre 1h30 e 7h
+
+function checkDuracao(){
+  const hi=document.getElementById("hi").value;
+  const hf=document.getElementById("hf").value;
+  const hiEl=document.getElementById("hi");
+  const hfEl=document.getElementById("hf");
+  const alert=document.getElementById("dur-alert");
+  const alertMsg=document.getElementById("dur-alert-msg");
+  const confirm=document.getElementById("dur-confirm");
+  const submitBtn=document.getElementById("submit-btn");
+
+  // Limpa estado anterior
+  hiEl.classList.remove("dur-warn");
+  hfEl.classList.remove("dur-warn");
+  alert.classList.remove("on");
+  confirm.style.display="none";
+  submitBtn.disabled=false;
+  submitBtn.style.opacity="";
+  duracaoConfirmada=false;
+
+  if(!hi||!hf) return;
+
+  const m=minsRaw(hi,hf);
+
+  if(m>7*60){
+    // Mais de 7h — bloquear totalmente
+    hiEl.classList.add("dur-warn");
+    hfEl.classList.add("dur-warn");
+    alert.classList.add("on");
+    alertMsg.textContent="⛔ Duração de "+fmtMin(m)+" — mais de 7 horas. Verifique os valores inseridos e corrija antes de continuar.";
+    confirm.style.display="none";
+    submitBtn.disabled=true;
+    submitBtn.style.opacity="0.4";
+    return;
+  }
+
+  if(m>90){
+    // Entre 1h30 e 7h — avisar e pedir confirmação
+    hiEl.classList.add("dur-warn");
+    hfEl.classList.add("dur-warn");
+    alert.classList.add("on");
+    alertMsg.textContent="⚠️ Duração de "+fmtMin(m)+" — superior a 1h30. Confira se o horário inserido está correto.";
+    confirm.style.display="flex";
+    submitBtn.disabled=true;
+    submitBtn.style.opacity="0.4";
+    return;
+  }
+}
+
+function minsRaw(hi,hf){
+  /* Igual a mins() mas sem descontar refeição — só para validação de duração bruta */
+  const[a,b]=hi.split(":").map(Number),[c,d]=hf.split(":").map(Number);
+  let m=(c*60+d)-(a*60+b);if(m<0)m+=1440;
+  return m;
+}
+
+document.getElementById("dur-sim").addEventListener("click",()=>{
+  duracaoConfirmada=true;
+  const alert=document.getElementById("dur-alert");
+  const confirm=document.getElementById("dur-confirm");
+  const submitBtn=document.getElementById("submit-btn");
+  const hiEl=document.getElementById("hi");
+  const hfEl=document.getElementById("hf");
+  hiEl.classList.remove("dur-warn");
+  hfEl.classList.remove("dur-warn");
+  alert.classList.remove("on");
+  confirm.style.display="none";
+  submitBtn.disabled=false;
+  submitBtn.style.opacity="";
+});
+
+document.getElementById("dur-nao").addEventListener("click",()=>{
+  document.getElementById("hi").value="";
+  document.getElementById("hf").value="";
+  document.getElementById("dur-alert").classList.remove("on");
+  document.getElementById("dur-confirm").style.display="none";
+  document.getElementById("hi").classList.remove("dur-warn");
+  document.getElementById("hf").classList.remove("dur-warn");
+  document.getElementById("submit-btn").disabled=false;
+  document.getElementById("submit-btn").style.opacity="";
+  duracaoConfirmada=false;
+});
 
 document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
@@ -874,6 +984,8 @@ function minsRef(hi,hf){
   return 0;
 }
 function fmtMin(m){return String(Math.floor(m/60)).padStart(2,"0")+"h"+String(m%60).padStart(2,"0");}
+/* Retorna string "HH:MM" para exportação Excel — o Excel reconhece como tempo calculável */
+function fmtMinXLS(m){return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");}
 
 document.getElementById("form").addEventListener("submit",async e=>{
   e.preventDefault();
@@ -883,6 +995,10 @@ document.getElementById("form").addEventListener("submit",async e=>{
   if(!tipo)   return flash("Selecione o tipo de apontamento",false);
   if(!turno)  return flash("Selecione o turno",false);
   if(!hi||!hf)return flash("Informe hora inicial e final",false);
+  /* Verificação de duração */
+  const mDur=minsRaw(hi,hf);
+  if(mDur>7*60) return flash("Duração superior a 7h — corrija os horários antes de salvar",false);
+  if(mDur>90&&!duracaoConfirmada){checkDuracao();return flash("Confirme se os horários estão corretos (duração: "+fmtMin(mDur)+")",false);}
   const reg={id:editingId||Date.now(),tipo,data,turno,hi,hf,cicloExtra:cicloExtra==='sim',cicloExtraCount:cicloExtraCount};
   if(tipo==="lav"){
     const emb=selEmb.value;
@@ -917,6 +1033,14 @@ function limparCampos(){
   cicloExtra="nao";cicloExtraCount=0;
   document.querySelectorAll(".ciclo-btn").forEach(x=>x.classList.toggle("on",x.dataset.ce==="nao"));
   document.getElementById("ciclo-count-display").textContent="➕";
+  // Limpa estado de validação de duração
+  document.getElementById("hi").classList.remove("dur-warn");
+  document.getElementById("hf").classList.remove("dur-warn");
+  document.getElementById("dur-alert").classList.remove("on");
+  document.getElementById("dur-confirm").style.display="none";
+  document.getElementById("submit-btn").disabled=false;
+  document.getElementById("submit-btn").style.opacity="";
+  duracaoConfirmada=false;
 }
 function setEditMode(on){
   const btn=document.getElementById("submit-btn");
@@ -1012,9 +1136,21 @@ function gerarXLS(fdDe,fdAte){
   filtrado.forEach(r=>{
     const[y,m,d]=r.data.split("-");
     dados.push([d+"/"+m+"/"+y,TLABEL[r.turno],TPLABEL[r.tipo],detalhe(r),
-                r.hi,r.hf,fmtMin(mins(r.hi,r.hf)),r.tipo==="lav"?r.total:"",r.cicloExtra?(r.cicloExtraCount||1):"Não"]);
+                r.hi,r.hf,fmtMinXLS(mins(r.hi,r.hf)),r.tipo==="lav"?r.total:"",r.cicloExtra?(r.cicloExtraCount||1):"Não"]);
   });
   const wsD=XLSX.utils.aoa_to_sheet(dados);
+  /* Formata coluna G (Duração, índice 6) como tempo hh:mm em todas as linhas de dados */
+  const durColIdx=6;
+  for(let i=1;i<dados.length;i++){
+    const cellAddr=XLSX.utils.encode_cell({r:i,c:durColIdx});
+    if(wsD[cellAddr]){
+      /* Converte "HH:MM" para fração decimal de dia que o Excel usa */
+      const parts=String(wsD[cellAddr].v).split(":");
+      const totalMins=parseInt(parts[0]||0)*60+parseInt(parts[1]||0);
+      wsD[cellAddr]={t:'n',v:totalMins/1440,z:'[h]:mm'};
+    }
+  }
+  /* Mesmo para resumo por turno — coluna Tempo Trabalhado (índice 3) e Parado (índice 4) */
   wsD["!cols"]=[{wch:12},{wch:11},{wch:20},{wch:28},{wch:12},{wch:12},{wch:11},{wch:20}];
   const res=[["RESUMO POR TURNO"+periodoLabel],["Turno","Lavagens","Embalagens Lavadas","Tempo Trabalhado","Tempo Parado"]];
   ["1","2","3"].forEach(t=>{
@@ -1022,8 +1158,8 @@ function gerarXLS(fdDe,fdAte){
     const lv=rt.filter(r=>r.tipo==="lav");
     const pr=rt.filter(r=>r.tipo==="par");
     res.push([TLABEL[t],lv.length,lv.reduce((a,r)=>a+r.total,0),
-              fmtMin(lv.reduce((a,r)=>a+mins(r.hi,r.hf),0)),
-              fmtMin(pr.reduce((a,r)=>a+mins(r.hi,r.hf),0))]);
+              fmtMinXLS(lv.reduce((a,r)=>a+mins(r.hi,r.hf),0)),
+              fmtMinXLS(pr.reduce((a,r)=>a+mins(r.hi,r.hf),0))]);
   });
   res.push([],["EMBALAGENS LAVADAS POR TIPO"],["Embalagem","Lavagens","Total Lavadas"]);
   EMBALAGENS.forEach(e=>{
@@ -1033,9 +1169,20 @@ function gerarXLS(fdDe,fdAte){
   res.push([],["PARADA DE MÁQUINA POR MOTIVO"],["Motivo","Ocorrências","Tempo Parado"]);
   MOTIVOS.forEach(mo=>{
     const rs=filtrado.filter(r=>r.tipo==="par"&&r.motivo===mo);
-    res.push([mo,rs.length,fmtMin(rs.reduce((a,r)=>a+mins(r.hi,r.hf),0))]);
+    res.push([mo,rs.length,fmtMinXLS(rs.reduce((a,r)=>a+mins(r.hi,r.hf),0))]);
   });
   const wsR=XLSX.utils.aoa_to_sheet(res);
+  /* Formata células de tempo no dashboard */
+  res.forEach((row,ri)=>{
+    row.forEach((cell,ci)=>{
+      if(typeof cell==='string'&&/^\d{2}:\d{2}$/.test(cell)){
+        const addr=XLSX.utils.encode_cell({r:ri,c:ci});
+        const parts=cell.split(":");
+        const totalMins=parseInt(parts[0])*60+parseInt(parts[1]);
+        wsR[addr]={t:'n',v:totalMins/1440,z:'[h]:mm'};
+      }
+    });
+  });
   wsR["!cols"]=[{wch:28},{wch:14},{wch:18},{wch:16},{wch:14}];
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,wsD,"Apontamentos");
