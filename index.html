@@ -1467,22 +1467,28 @@ document.getElementById("btn-csv").addEventListener("click",exportCSV);
 function recDT(r){return r.data+"T"+r.hi;}
 
 function render(){
-  document.getElementById("state-box").innerHTML="";
-  const diaSel=document.getElementById("f-data-dia").value;
-  if(diaSel) renderTurnoResumo(diaSel);
+  const stateBox=document.getElementById("state-box");
+  if(!stateBox) return;
+  stateBox.innerHTML="";
 
-  const fp=document.getElementById("f-tipo").value;
-  const ft=document.getElementById("f-turno").value;
-  const fdDe=document.getElementById("f-data-de").value;
-  const fhDe=document.getElementById("f-hora-de").value||"00:00";
-  const fdAte=document.getElementById("f-data-ate").value;
-  const fhAte=document.getElementById("f-hora-ate").value||"23:59";
+  const diaSel=(document.getElementById("f-data-dia")||{}).value||"";
+  if(diaSel) renderTurnoResumo(diaSel);
+  else { const tr=document.getElementById("turno-resumo"); if(tr) tr.style.display="none"; }
+
+  const fp=(document.getElementById("f-tipo")||{}).value||"";
+  const ft=(document.getElementById("f-turno")||{}).value||"";
+  const fdDe=(document.getElementById("f-data-de")||{}).value||"";
+  const fhDe=(document.getElementById("f-hora-de")||{}).value||"00:00";
+  const fdAte=(document.getElementById("f-data-ate")||{}).value||"";
+  const fhAte=(document.getElementById("f-hora-ate")||{}).value||"23:59";
   const dtDe =fdDe ? fdDe+"T"+fhDe : null;
   const dtAte=fdAte? fdAte+"T"+fhAte: null;
 
   const view=registros.filter(r=>{
     if(fp && r.tipo!==fp) return false;
     if(ft && r.turno!==ft) return false;
+    /* Nenhum filtro de data/hora — mostra tudo */
+    if(!diaSel && !fdDe && !fdAte) return true;
     /* Busca por data simples — usa dataRef (âncora 06h) */
     if(diaSel && !fdDe && !fdAte) return dataRef(r)===diaSel;
     /* Busca por intervalo específico */
@@ -1493,16 +1499,19 @@ function render(){
 
   const lav=view.filter(r=>r.tipo==="lav");
   const par=view.filter(r=>r.tipo==="par");
-  document.getElementById("s-emb").textContent=lav.reduce((a,r)=>a+r.total,0).toLocaleString("pt-BR");
-  document.getElementById("s-qtd").textContent=lav.length;
-  document.getElementById("s-trab").textContent=fmtMin(lav.reduce((a,r)=>a+mins(r.hi,r.hf),0));
-  document.getElementById("s-par").textContent=fmtMin(par.reduce((a,r)=>a+mins(r.hi,r.hf),0));
-  document.getElementById("s-pqt").textContent=par.length;
-  document.getElementById("s-ref").textContent=fmtMin([...lav,...par].reduce((a,r)=>a+minsRef(r.hi,r.hf),0));
+  const se=id=>document.getElementById(id);
+  if(se("s-emb")) se("s-emb").textContent=lav.reduce((a,r)=>a+r.total,0).toLocaleString("pt-BR");
+  if(se("s-qtd")) se("s-qtd").textContent=lav.length;
+  if(se("s-trab")) se("s-trab").textContent=fmtMin(lav.reduce((a,r)=>a+mins(r.hi,r.hf),0));
+  if(se("s-par"))  se("s-par").textContent=fmtMin(par.reduce((a,r)=>a+mins(r.hi,r.hf),0));
+  if(se("s-pqt"))  se("s-pqt").textContent=par.length;
+  if(se("s-ref"))  se("s-ref").textContent=fmtMin([...lav,...par].reduce((a,r)=>a+minsRef(r.hi,r.hf),0));
 
-  const tb=document.getElementById("tbody");tb.innerHTML="";
+  const tb=document.getElementById("tbody");
+  if(!tb) return;
+  tb.innerHTML="";
   if(!view.length){
-    document.getElementById("state-box").innerHTML=
+    stateBox.innerHTML=
       '<div class="empty"><div class="big">▦</div><div class="txt">'+
       (registros.length?"NENHUM RESULTADO PARA O FILTRO":"NENHUM APONTAMENTO REGISTRADO")+
       '</div></div>';
@@ -1589,8 +1598,7 @@ function renderDash(){
     porEmb.filter(r=>r.v>0).sort((a,b)=>b.v-a.v));
 }
 
-/* ===== Faixa de atalhos rápidos ===== */
-load();
+/* ===== Inicialização ===== */
 
 function toDateStr(d){
   return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -1723,6 +1731,9 @@ document.getElementById("f-dia-clear").addEventListener("click",()=>{
   document.getElementById('submit-btn').textContent = 'Registrar ' + TPLABEL['lav'];
   document.getElementById('submit-btn').classList.add('lav');
 })();
+
+/* ── Tudo definido — inicia o banco ── */
+load();
 </script>
 </body>
 </html>
