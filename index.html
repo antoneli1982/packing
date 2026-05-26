@@ -129,9 +129,12 @@
 
   .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:11px 14px;
     border-bottom:1px solid var(--line-soft)}
+  .toolbar-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;width:100%}
   .toolbar select{width:auto;font-size:12px;padding:7px 26px 7px 10px}
   .toolbar input[type=date]{width:auto;font-size:12px;padding:6px 9px;color-scheme:dark}
+  .toolbar input[type=time]{width:90px;font-size:12px;padding:6px 9px;color-scheme:dark}
   .toolbar .spacer{flex:1}
+  .dt-group{display:flex;align-items:center;gap:4px;flex-shrink:0}
   .btn-ghost{cursor:pointer;background:var(--panel-2);border:1px solid var(--line);
     color:var(--txt-dim);border-radius:6px;padding:7px 12px;
     font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;
@@ -258,7 +261,10 @@
     .stat .k{font-size:7.5px;margin-top:3px;letter-spacing:.6px}
     .toolbar{padding:9px 10px;gap:6px}
     .toolbar .spacer{display:none}
+    .toolbar-row{flex-wrap:wrap}
     .toolbar select,.toolbar input[type=date]{flex:1 1 46%;font-size:13px;padding:7px 9px}
+    .toolbar input[type=time]{font-size:13px;padding:7px 9px;width:80px}
+    .dt-group{flex:1 1 auto}
     .btn-ghost{flex:1 1 46%;text-align:center;padding:8px 5px;font-size:10px}
     .dash-grid{gap:12px}
     .chart{padding:11px}
@@ -279,6 +285,68 @@
     .seg-btn .l{font-size:7px}
     .tipo-btn .l{font-size:9.5px}
   }
+
+  /* ===== Faixa rolável de atalhos ===== */
+  .quick-strip-wrap{
+    border-bottom:1px solid var(--line-soft);
+    overflow:hidden;
+    position:relative;
+  }
+  .quick-strip-wrap::after{
+    content:"";position:absolute;right:0;top:0;bottom:0;width:32px;
+    background:linear-gradient(to right,transparent,var(--panel));
+    pointer-events:none;
+  }
+  .quick-strip{
+    display:flex;align-items:center;gap:6px;
+    padding:9px 14px;
+    overflow-x:auto;white-space:nowrap;
+    scrollbar-width:none;-ms-overflow-style:none;
+  }
+  .quick-strip::-webkit-scrollbar{display:none}
+  .qs-sep{
+    font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+    color:var(--txt-faint);flex-shrink:0;padding:0 2px;
+  }
+  .qs-btn{
+    cursor:pointer;border:1px solid var(--line);background:var(--panel-2);
+    color:var(--txt-dim);border-radius:20px;padding:5px 13px;
+    font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;
+    white-space:nowrap;flex-shrink:0;transition:.13s;
+  }
+  .qs-btn:hover{border-color:var(--blue-soft);color:var(--txt)}
+  .qs-btn.on{color:#fff}
+  #qt1.on{background:var(--t1);border-color:var(--t1)}
+  #qt2.on{background:var(--t2);border-color:var(--t2)}
+  #qt3.on{background:var(--t3);border-color:var(--t3)}
+  .qs-per.on{background:var(--blue);border-color:var(--blue)}
+  #qt1:not(.on):hover{border-color:var(--t1);color:var(--t1)}
+  #qt2:not(.on):hover{border-color:var(--t2);color:var(--t2)}
+  #qt3:not(.on):hover{border-color:var(--t3);color:var(--t3)}
+  .qs-per:not(.on):hover{border-color:var(--blue-soft);color:var(--blue-soft)}
+
+  /* ===== Grupo de datas De→Até numa linha ===== */
+  .range-group{
+    display:flex;align-items:center;gap:6px;
+    background:var(--panel-2);border:1px solid var(--line);
+    border-radius:7px;padding:5px 10px;flex-shrink:0;
+  }
+  .range-field{display:flex;align-items:center;gap:5px}
+  .range-lbl{font-size:9px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.9px;color:var(--txt-faint);flex-shrink:0}
+  .range-field input[type=date],.range-field input[type=time]{
+    background:transparent;border:none;outline:none;
+    color:var(--txt);font-family:'Poppins',sans-serif;font-size:12px;
+    padding:2px 3px;
+  }
+  .range-field input[type=time]{width:72px}
+  .range-sep{color:var(--txt-faint);font-size:13px;font-weight:600;flex-shrink:0;padding:0 2px}
+
+  /* ===== Botões de turno rápido (legado, mantido por compatibilidade) ===== */
+  .btn-turno-quick{cursor:pointer;border-radius:6px;padding:6px 11px;
+    font-family:'Poppins',sans-serif;font-size:11px;font-weight:700;letter-spacing:.4px;
+    border:1px solid var(--line);background:var(--panel-2);color:var(--txt-dim);
+    transition:.13s;white-space:nowrap;flex-shrink:0}
 
   /* ===== Avisos de duração ===== */
   input.dur-warn{border-color:var(--red)!important;background:rgba(240,83,63,.10)!important;}
@@ -545,28 +613,57 @@
         </div>
         <div class="panel">
           <div class="panel-head"><span class="tag">LOG</span><h2>Apontamentos Registrados</h2></div>
-          <div class="toolbar">
-            <select id="f-tipo">
-              <option value="">Todos os tipos</option>
-              <option value="lav">Lavagem de Embalagem</option>
-              <option value="par">Parada de Máquina</option>
-            </select>
-            <select id="f-turno">
-              <option value="">Todos os turnos</option>
-              <option value="1">1º Turno</option>
-              <option value="2">2º Turno</option>
-              <option value="3">3º Turno</option>
-            </select>
-            <input type="date" id="f-data-de" title="Data inicial" placeholder="De">
-            <input type="time" id="f-hora-de" title="Hora inicial" placeholder="00:00" style="width:auto;font-size:12px;padding:6px 9px;color-scheme:dark">
-            <span style="color:var(--txt-dim);font-size:12px;align-self:center">até</span>
-            <input type="date" id="f-data-ate" title="Data final" placeholder="Até">
-            <input type="time" id="f-hora-ate" title="Hora final" placeholder="23:59" style="width:auto;font-size:12px;padding:6px 9px;color-scheme:dark">
-            <button class="btn-ghost" id="f-clear" title="Limpar pesquisa">✕ Limpar</button>
-            <div class="spacer"></div>
-            <button class="btn-ghost xls" id="btn-xls">⤓ Exportar Excel</button>
-            <button class="btn-ghost" id="btn-csv">⤓ CSV</button>
-            <button class="btn-ghost danger" id="btn-clear">Limpar tudo</button>
+
+          <!-- Faixa rolável: Turnos rápidos + Períodos -->
+          <div class="quick-strip-wrap">
+            <div class="quick-strip" id="quick-strip">
+              <span class="qs-sep">Turno</span>
+              <button class="qs-btn" id="qt1" data-hi="06:00" data-hf="15:00" data-t="1">1º · 06:00–15:00</button>
+              <button class="qs-btn" id="qt2" data-hi="15:00" data-hf="23:45" data-t="2">2º · 15:00–23:45</button>
+              <button class="qs-btn" id="qt3" data-hi="21:50" data-hf="06:00" data-t="3">3º · 21:50–06:00</button>
+              <span class="qs-sep">Período</span>
+              <button class="qs-btn qs-per" data-dias="0">Hoje</button>
+              <button class="qs-btn qs-per" data-dias="1">1 dia anterior</button>
+              <button class="qs-btn qs-per" data-dias="2">2 dias anteriores</button>
+              <button class="qs-btn qs-per" data-dias="3">3 dias anteriores</button>
+              <button class="qs-btn qs-per" data-dias="7">1 semana anterior</button>
+            </div>
+          </div>
+
+          <!-- Linha de filtros -->
+          <div class="toolbar" style="flex-direction:column;align-items:stretch;gap:0">
+            <div class="toolbar-row" style="padding:10px 14px;gap:8px;flex-wrap:wrap">
+              <select id="f-tipo">
+                <option value="">Todos os tipos</option>
+                <option value="lav">Lavagem de Embalagem</option>
+                <option value="par">Parada de Máquina</option>
+              </select>
+              <select id="f-turno">
+                <option value="">Todos os turnos</option>
+                <option value="1">1º Turno</option>
+                <option value="2">2º Turno</option>
+                <option value="3">3º Turno</option>
+              </select>
+              <!-- De e Até na mesma linha com label -->
+              <div class="range-group">
+                <div class="range-field">
+                  <span class="range-lbl">De</span>
+                  <input type="date" id="f-data-de" style="color-scheme:dark">
+                  <input type="time" id="f-hora-de" style="color-scheme:dark;width:88px">
+                </div>
+                <span class="range-sep">→</span>
+                <div class="range-field">
+                  <span class="range-lbl">Até</span>
+                  <input type="date" id="f-data-ate" style="color-scheme:dark">
+                  <input type="time" id="f-hora-ate" style="color-scheme:dark;width:88px">
+                </div>
+              </div>
+              <button class="btn-ghost" id="f-clear">✕ Limpar</button>
+              <div class="spacer"></div>
+              <button class="btn-ghost xls" id="btn-xls">⤓ Exportar Excel</button>
+              <button class="btn-ghost" id="btn-csv">⤓ CSV</button>
+              <button class="btn-ghost danger" id="btn-clear">Limpar tudo</button>
+            </div>
           </div>
           <div class="table-scroll">
             <table>
@@ -1373,7 +1470,59 @@ function renderDash(){
     porEmb.filter(r=>r.v>0).sort((a,b)=>b.v-a.v));
 }
 
+/* ===== Faixa de atalhos rápidos ===== */
 load();
+(function(){
+  function toDateStr(d){
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+  function diasAtras(n){const d=new Date();d.setDate(d.getDate()-n);return d;}
+  function setRange(dataDe,horaDe,dataAte,horaAte){
+    document.getElementById("f-data-de").value=dataDe;
+    document.getElementById("f-hora-de").value=horaDe;
+    document.getElementById("f-data-ate").value=dataAte;
+    document.getElementById("f-hora-ate").value=horaAte;
+    render();
+  }
+  function clearAll(){
+    setRange("","","","");
+    document.querySelectorAll(".qs-btn").forEach(b=>b.classList.remove("on"));
+  }
+
+  /* Botões de turno */
+  ["qt1","qt2","qt3"].forEach(id=>{
+    const btn=document.getElementById(id);
+    btn.addEventListener("click",()=>{
+      const jaAtivo=btn.classList.contains("on");
+      clearAll();
+      if(jaAtivo)return;
+      btn.classList.add("on");
+      const hi=btn.dataset.hi, hf=btn.dataset.hf;
+      const hoje=new Date(), ontem=new Date(hoje);ontem.setDate(ontem.getDate()-1);
+      const cruza=hi>hf; // turno vira meia-noite
+      setRange(toDateStr(cruza?ontem:hoje),hi,toDateStr(hoje),hf);
+    });
+  });
+
+  /* Botões de período */
+  document.querySelectorAll(".qs-per").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      const jaAtivo=btn.classList.contains("on");
+      clearAll();
+      if(jaAtivo)return;
+      btn.classList.add("on");
+      const dias=parseInt(btn.dataset.dias);
+      const ate=new Date();
+      const de=diasAtras(dias);
+      setRange(toDateStr(de),"00:00",toDateStr(ate),"23:59");
+    });
+  });
+
+  /* Limpar também desmarca tudo */
+  document.getElementById("f-clear").addEventListener("click",()=>{
+    document.querySelectorAll(".qs-btn").forEach(b=>b.classList.remove("on"));
+  });
+})();
 
 /* ── Selecionar Lavagem de Embalagem por padrão ao abrir ── */
 (function selectLavDefault(){
