@@ -983,7 +983,7 @@ function minsRef(hi,hf){
   if(startMin<refEnd && endMin>refStart) return Math.min(endMin,refEnd)-Math.max(startMin,refStart);
   return 0;
 }
-function fmtMin(m){return String(Math.floor(m/60)).padStart(2,"0")+"h"+String(m%60).padStart(2,"0");}
+function fmtMin(m){return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");}
 /* Retorna string "HH:MM" para exportação Excel — o Excel reconhece como tempo calculável */
 function fmtMinXLS(m){return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");}
 
