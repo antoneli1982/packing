@@ -725,14 +725,14 @@
             <label>Motivo da Parada <span class="req">*</span></label>
             <select id="motivo">
               <option value="" disabled selected>Selecione o motivo…</option>
-              <option>Manutenção geral (descreva na observação)</option>
-              <option>Quebra de espinho</option>
-              <option>Parada por máquina</option>
               <option>Abastecimento de água na máquina</option>
-              <option>Troca de filtro</option>
-              <option>Falta de energia</option>
               <option>Falta de embalagem</option>
+              <option>Falta de energia</option>
+              <option>Manutenção geral (descreva na observação)</option>
+              <option>Parada por máquina</option>
+              <option>Quebra de espinho</option>
               <option>Trabalho em outro setor</option>
+              <option>Troca de filtro</option>
             </select>
           </div>
 
@@ -977,7 +977,7 @@ const EMBALAGENS=[
   "TAMPAS EKLT 64**","TAMPAS EKLT 4314","TAMPAS EKLT 3214",
   "COBERTURA CANOAS / TAMPA","DIVISÓRIAS EKLT","DIVISORIA USINAGEM",
   "DIVISÓRIA CABEÇOTE ROH","DIVISÓRIA CANOA","DIVISÓRIA VIRABREQUIM"];
-const MOTIVOS=["Manutenção geral (descreva na observação)","Quebra de espinho","Parada por máquina","Abastecimento de água na máquina","Troca de filtro","Falta de energia","Falta de embalagem","Trabalho em outro setor"];
+const MOTIVOS=["Abastecimento de água na máquina","Falta de embalagem","Falta de energia","Manutenção geral (descreva na observação)","Parada por máquina","Quebra de espinho","Trabalho em outro setor","Troca de filtro"];
 const TLABEL={"1":"1º Turno","2":"2º Turno","3":"3º Turno"};
 const TCOLOR={"1":"var(--t1)","2":"var(--t2)","3":"var(--t3)"};
 /* Horários reais dos turnos — usados para associar registro ao turno correto no calendário */
