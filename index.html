@@ -726,6 +726,8 @@
             <select id="motivo">
               <option value="" disabled selected>Selecione o motivo…</option>
               <option>Manutenção geral (descreva na observação)</option>
+              <option>Quebra de espinho</option>
+              <option>Parada por máquina</option>
               <option>Abastecimento de água na máquina</option>
               <option>Troca de filtro</option>
               <option>Falta de energia</option>
@@ -975,9 +977,15 @@ const EMBALAGENS=[
   "TAMPAS EKLT 64**","TAMPAS EKLT 4314","TAMPAS EKLT 3214",
   "COBERTURA CANOAS / TAMPA","DIVISÓRIAS EKLT","DIVISORIA USINAGEM",
   "DIVISÓRIA CABEÇOTE ROH","DIVISÓRIA CANOA","DIVISÓRIA VIRABREQUIM"];
-const MOTIVOS=["Manutenção geral (descreva na observação)","Abastecimento de água na máquina","Troca de filtro","Falta de energia","Falta de embalagem","Trabalho em outro setor"];
+const MOTIVOS=["Manutenção geral (descreva na observação)","Quebra de espinho","Parada por máquina","Abastecimento de água na máquina","Troca de filtro","Falta de energia","Falta de embalagem","Trabalho em outro setor"];
 const TLABEL={"1":"1º Turno","2":"2º Turno","3":"3º Turno"};
 const TCOLOR={"1":"var(--t1)","2":"var(--t2)","3":"var(--t3)"};
+/* Horários reais dos turnos — usados para associar registro ao turno correto no calendário */
+const TURNO_HORARIOS={
+  "1":{hi:"06:00",hf:"15:00",cruza:false},
+  "2":{hi:"15:00",hf:"23:45",cruza:false},
+  "3":{hi:"21:50",hf:"06:00",cruza:true}
+};
 const TPLABEL={lav:"Lavagem de Embalagem",par:"Parada de Máquina"};
 const TPSHORT={lav:"Lavagem",par:"Parada"};
 /* ===================================================================
@@ -1809,7 +1817,8 @@ function renderDash(){
     MOTIVOS.map(mo=>{
       const m=par.filter(r=>r.motivo===mo).reduce((a,r)=>a+mins(r.hi,r.hf),0);
       return{k:mo,v:m,disp:fmtMin(m),color:"var(--c-par)",motivo:mo};
-    }),{clickable:true, onClick:function(r){openMotivoDrilldown(r.motivo||r.k, currentPar);}});
+    }).sort((a,b)=>b.v-a.v),
+    {clickable:true, onClick:function(r){openMotivoDrilldown(r.motivo||r.k, currentPar);}});
 
   bars(document.getElementById("chart-emb"),
     porEmb.filter(r=>r.v>0).sort((a,b)=>b.v-a.v),{});
@@ -1874,6 +1883,30 @@ var _monthAnoSel=0, _monthMesSel=0;
 const DIASEM_PT=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
 
 /* ===== Renderiza gráfico mensal dia a dia COM valores, tooltip e clique ===== */
+/*
+ * dataEfetiva(r): para o 3º turno (cruza meia-noite), o registro com data
+ * "2026-05-26" hi="22:00" hf="02:00" pertence ao TURNO que começou dia 26,
+ * mas na visão de calendário a parte pós-meia-noite é dia 27.
+ * Convenção adotada: o registro pertence ao dia em que o turno COMEÇOU (r.data).
+ * Para registros do 3º turno com hi < hf (ex: hi="00:30" hf="06:00"),
+ * isso significa que o operador registrou com a data da madrugada,
+ * mas o turno na verdade começou no dia anterior.
+ * Retorna a data "de início do turno" como string YYYY-MM-DD.
+ */
+function dataInicioTurno(r){
+  /* Se é 3º turno e hi < hf (ambos antes de 06:00 = parte madrugada),
+     o turno começou no dia anterior */
+  if(r.turno==="3"){
+    const hiMin=parseInt(r.hi.split(":")[0])*60+parseInt(r.hi.split(":")[1]);
+    if(hiMin<360){ /* antes de 06:00 — era madrugada, turno começou ontem */
+      const d=new Date(r.data+"T12:00:00");
+      d.setDate(d.getDate()-1);
+      return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    }
+  }
+  return r.data;
+}
+
 function renderMonthChart(base){
   const sel=document.getElementById("d-fmes");
   const turnoSel=document.getElementById("d-fmes-turno").value;
@@ -1882,9 +1915,16 @@ function renderMonthChart(base){
   const[anoSel,mesSel]=mesVal.split("-").map(Number);
   _monthAnoSel=anoSel; _monthMesSel=mesSel;
 
-  /* filtra registros do mês selecionado */
+  /*
+   * Filtra registros que PERTENCEM ao mês selecionado.
+   * Para o 3º turno: um registro de data "dia 31" turno 3 com hi=22:00
+   * pertence ao dia 31 (início do turno). Um registro de data "dia 1"
+   * turno 3 com hi=01:00 (madrugada) pertence ao dia anterior (mês anterior).
+   * Usamos dataInicioTurno para determinar.
+   */
   const regsDoMes=base.filter(r=>{
-    const[y,m]=r.data.split("-").map(Number);
+    const dit=dataInicioTurno(r);
+    const[y,m]=dit.split("-").map(Number);
     if(y!==anoSel||m!==mesSel)return false;
     if(turnoSel&&r.turno!==turnoSel)return false;
     return true;
@@ -1898,7 +1938,8 @@ function renderMonthChart(base){
   for(let d=1;d<=diasNoMes;d++){
     const ds=String(d).padStart(2,"0");
     const dataStr=anoSel+"-"+String(mesSel).padStart(2,"0")+"-"+ds;
-    const regsDia=regsDoMes.filter(r=>r.data===dataStr);
+    /* Agrupa pelo dia de início do turno */
+    const regsDia=regsDoMes.filter(r=>dataInicioTurno(r)===dataStr);
     const mTrab=regsDia.filter(r=>r.tipo==="lav").reduce((a,r)=>a+mins(r.hi,r.hf),0);
     const mPar=regsDia.filter(r=>r.tipo==="par").reduce((a,r)=>a+mins(r.hi,r.hf),0);
     /* causas do dia */
