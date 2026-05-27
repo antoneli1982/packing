@@ -490,6 +490,28 @@
   .month-day-chart{padding:16px;overflow-x:auto}
   .day-bars-wrap{display:flex;align-items:flex-end;gap:3px;min-height:200px;
     padding-bottom:28px;padding-top:22px;position:relative}
+
+  /* ===== Linha de Meta Techno ===== */
+  .meta-line{position:absolute;left:0;right:0;pointer-events:none;z-index:5}
+  .meta-line-inner{position:relative;width:100%;height:0;
+    border-top:2px dashed rgba(0,255,170,.55);
+    box-shadow:0 0 8px rgba(0,255,170,.3),0 0 20px rgba(0,255,170,.12);
+    animation:metaPulse 2.5s ease-in-out infinite alternate}
+  @keyframes metaPulse{
+    0%{border-color:rgba(0,255,170,.4);box-shadow:0 0 6px rgba(0,255,170,.2),0 0 14px rgba(0,255,170,.06)}
+    100%{border-color:rgba(0,255,170,.7);box-shadow:0 0 12px rgba(0,255,170,.45),0 0 30px rgba(0,255,170,.15)}
+  }
+  .meta-label{position:absolute;right:0;top:-22px;
+    font-family:'Poppins',sans-serif;font-size:9px;font-weight:800;
+    letter-spacing:1.2px;text-transform:uppercase;
+    color:rgba(0,255,170,.85);
+    text-shadow:0 0 8px rgba(0,255,170,.5),0 0 20px rgba(0,255,170,.2);
+    background:var(--bg);padding:1px 8px;border-radius:3px;
+    border:1px solid rgba(0,255,170,.25);white-space:nowrap}
+  .meta-label-left{position:absolute;left:0;top:-22px;
+    font-family:'Poppins',sans-serif;font-size:8px;font-weight:700;
+    color:rgba(0,255,170,.5);letter-spacing:.5px;
+    background:var(--bg);padding:1px 6px;border-radius:3px}
   .day-col{display:flex;flex-direction:column;align-items:center;flex:1;min-width:20px;
     position:relative;cursor:pointer;border-radius:4px;transition:background .12s}
   .day-col:hover{background:rgba(255,255,255,.04)}
@@ -2106,6 +2128,22 @@ function renderMonthChart(base){
   chartEl.innerHTML='';
   const wrap=document.createElement("div");
   wrap.className="day-bars-wrap";
+
+  /* ===== Linha de META 20h ===== */
+  const META_MIN=20*60; /* 20 horas = 1200 minutos */
+  if(maxMinDia>0){
+    const metaPct=(META_MIN/maxMinDia)*100;
+    /* Só mostra se a meta cabe no gráfico (ou se está próximo) */
+    const metaBottom=Math.min(metaPct, 98); /* cap at 98% para não sair do gráfico */
+    const metaLine=document.createElement("div");
+    metaLine.className="meta-line";
+    metaLine.style.bottom="calc("+28+"px + "+(metaBottom/100)+" * (100% - 50px))";
+    metaLine.innerHTML='<div class="meta-line-inner">'+
+      '<span class="meta-label">META 20H</span>'+
+      '<span class="meta-label-left">20:00</span>'+
+      '</div>';
+    wrap.appendChild(metaLine);
+  }
 
   dadosDia.forEach(dd=>{
     const h1=Math.round(dd.porTurno["1"].min/maxMinDia*maxH);
