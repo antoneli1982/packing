@@ -1448,6 +1448,16 @@ document.getElementById("form").addEventListener("submit",async e=>{
                  :TPLABEL[tipo]+" registrada com sucesso",true);
   editingId=null; setEditMode(false);
   limparCampos();
+  /* Manter Lavagem de Embalagem selecionada para facilitar */
+  document.querySelectorAll('.tipo-btn').forEach(x=>x.classList.remove('on'));
+  document.querySelector('.tipo-btn[data-tp="lav"]').classList.add('on');
+  tipo='lav';
+  document.getElementById('f-embalagem').classList.remove('hide');
+  document.getElementById('f-motivo').classList.add('hide');
+  document.getElementById('f-obs').classList.add('hide');
+  document.getElementById('siren-banner').classList.remove('on');
+  document.getElementById('submit-btn').textContent='Registrar '+TPLABEL['lav'];
+  document.getElementById('submit-btn').classList.add('lav');
 });
 function limparCampos(){
   selEmb.selectedIndex=0;
@@ -1518,6 +1528,16 @@ function editar(id){
 }
 document.getElementById("cancel-edit").addEventListener("click",()=>{
   editingId=null; setEditMode(false); limparCampos();
+  /* Volta para Lavagem de Embalagem */
+  document.querySelectorAll('.tipo-btn').forEach(x=>x.classList.remove('on'));
+  document.querySelector('.tipo-btn[data-tp="lav"]').classList.add('on');
+  tipo='lav';
+  document.getElementById('f-embalagem').classList.remove('hide');
+  document.getElementById('f-motivo').classList.add('hide');
+  document.getElementById('f-obs').classList.add('hide');
+  document.getElementById('siren-banner').classList.remove('on');
+  document.getElementById('submit-btn').textContent='Registrar '+TPLABEL['lav'];
+  document.getElementById('submit-btn').classList.add('lav');
 });
 function flash(msg,ok){
   const x=document.getElementById("hint");
@@ -1560,8 +1580,9 @@ document.getElementById("f-clear").addEventListener("click",()=>{
 function detalhe(r){
   if(r.tipo==="lav"){
     if(r.itens&&r.itens.length>1){
-      return r.itens.map(it=>it.emb+' ('+it.total.toLocaleString("pt-BR")+')').join(" + ");
+      return r.itens.map(it=>it.emb+' <span style="color:var(--blue-soft);font-weight:700">('+it.total.toLocaleString("pt-BR")+')</span>').join(' <span style="color:var(--txt-faint)">+</span> ');
     }
+    if(r.itens&&r.itens.length===1) return r.itens[0].emb;
     return r.emb;
   }
   return r.obs?r.motivo+" — "+r.obs:r.motivo;
@@ -2203,9 +2224,18 @@ function openDayDrilldown(dataStr, dia, mes, ano, regsDia){
       return ha.localeCompare(hb);
     }).forEach(r=>{
       const tr=document.createElement("tr");
-      const detalheStr=r.tipo==="lav"?
-        (r.emb+' — '+r.total.toLocaleString("pt-BR")+' emb.'+(r.cicloExtra?' <span class="badge-ce">+CICLO</span>':'')):
-        (r.motivo+(r.obs?' — '+r.obs:''));
+      let detalheStr;
+      if(r.tipo==="lav"){
+        if(r.itens&&r.itens.length>1){
+          detalheStr=r.itens.map(it=>it.emb+' <b style="color:var(--blue-soft)">('+it.total.toLocaleString("pt-BR")+')</b>').join(' + ')+
+            ' — <b>'+r.total.toLocaleString("pt-BR")+' emb.</b>';
+        } else {
+          detalheStr=(r.itens?r.itens[0].emb:r.emb)+' — '+r.total.toLocaleString("pt-BR")+' emb.';
+        }
+        if(r.cicloExtra) detalheStr+=' <span class="badge-ce">+CICLO</span>';
+      } else {
+        detalheStr=r.motivo+(r.obs?' — '+r.obs:'');
+      }
       tr.innerHTML=
         '<td><span class="pill" data-t="'+r.turno+'">'+r.turno+'º</span></td>'+
         '<td><span class="pill" data-tp="'+r.tipo+'">'+TPSHORT[r.tipo]+'</span></td>'+
