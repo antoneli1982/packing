@@ -512,6 +512,26 @@
     font-family:'Poppins',sans-serif;font-size:8px;font-weight:700;
     color:rgba(0,255,170,.5);letter-spacing:.5px;
     background:var(--bg);padding:1px 6px;border-radius:3px}
+
+  /* ===== Lâmpada piscante de Parada ===== */
+  .day-seg.par{position:relative}
+  .siren-lamp{position:absolute;top:-8px;left:50%;transform:translateX(-50%);
+    width:14px;height:14px;border-radius:50%;
+    background:radial-gradient(circle at 40% 35%, #ff6b57 0%, #f0533f 50%, #c0392b 100%);
+    box-shadow:0 0 6px rgba(240,83,63,.6),0 0 14px rgba(240,83,63,.3);
+    animation:sirenBlink 1s ease-in-out infinite;
+    z-index:6;pointer-events:none}
+  .siren-lamp::after{content:"";position:absolute;inset:-4px;border-radius:50%;
+    background:radial-gradient(circle, rgba(240,83,63,.25) 0%, transparent 70%);
+    animation:sirenGlow 1s ease-in-out infinite}
+  @keyframes sirenBlink{
+    0%,100%{opacity:1;box-shadow:0 0 6px rgba(240,83,63,.7),0 0 16px rgba(240,83,63,.35),0 0 30px rgba(240,83,63,.15)}
+    50%{opacity:.25;box-shadow:0 0 2px rgba(240,83,63,.2),0 0 4px rgba(240,83,63,.1)}
+  }
+  @keyframes sirenGlow{
+    0%,100%{transform:scale(1);opacity:.8}
+    50%{transform:scale(1.8);opacity:0}
+  }
   .day-col{display:flex;flex-direction:column;align-items:center;flex:1;min-width:20px;
     position:relative;cursor:pointer;border-radius:4px;transition:background .12s}
   .day-col:hover{background:rgba(255,255,255,.04)}
@@ -2123,33 +2143,33 @@ function renderMonthChart(base){
 
   /* renderiza barras dia a dia — segmentadas por turno */
   const chartEl=document.getElementById("month-day-chart");
-  const maxH=150;
+  const maxH=180;
+  const META_MIN=20*60; /* 20 horas = 1200 minutos */
+  /* maxMinDia precisa ser >= META_MIN para a linha ficar proporcional */
+  if(META_MIN>maxMinDia) maxMinDia=META_MIN;
   maxMinDia=maxMinDia||1;
+  /* Adicionar margem de 8% acima para o label não cortar */
+  const maxMinScale=Math.ceil(maxMinDia*1.08);
   chartEl.innerHTML='';
   const wrap=document.createElement("div");
   wrap.className="day-bars-wrap";
 
   /* ===== Linha de META 20h ===== */
-  const META_MIN=20*60; /* 20 horas = 1200 minutos */
-  if(maxMinDia>0){
-    const metaPct=(META_MIN/maxMinDia)*100;
-    /* Só mostra se a meta cabe no gráfico (ou se está próximo) */
-    const metaBottom=Math.min(metaPct, 98); /* cap at 98% para não sair do gráfico */
-    const metaLine=document.createElement("div");
-    metaLine.className="meta-line";
-    metaLine.style.bottom="calc("+28+"px + "+(metaBottom/100)+" * (100% - 50px))";
-    metaLine.innerHTML='<div class="meta-line-inner">'+
-      '<span class="meta-label">META 20H</span>'+
-      '<span class="meta-label-left">20:00</span>'+
-      '</div>';
-    wrap.appendChild(metaLine);
-  }
+  const metaH=Math.round(META_MIN/maxMinScale*maxH);
+  const metaLine=document.createElement("div");
+  metaLine.className="meta-line";
+  metaLine.style.bottom=(28+metaH)+"px";
+  metaLine.innerHTML='<div class="meta-line-inner">'+
+    '<span class="meta-label">⚡ META 20H</span>'+
+    '<span class="meta-label-left">20h00</span>'+
+    '</div>';
+  wrap.appendChild(metaLine);
 
   dadosDia.forEach(dd=>{
-    const h1=Math.round(dd.porTurno["1"].min/maxMinDia*maxH);
-    const h2=Math.round(dd.porTurno["2"].min/maxMinDia*maxH);
-    const h3=Math.round(dd.porTurno["3"].min/maxMinDia*maxH);
-    const hPar=Math.round(dd.mPar/maxMinDia*maxH);
+    const h1=Math.round(dd.porTurno["1"].min/maxMinScale*maxH);
+    const h2=Math.round(dd.porTurno["2"].min/maxMinScale*maxH);
+    const h3=Math.round(dd.porTurno["3"].min/maxMinScale*maxH);
+    const hPar=Math.round(dd.mPar/maxMinScale*maxH);
     const hasData=(dd.mTrab+dd.mPar)>0;
     const totalDia=fmtMin(dd.mTrab+dd.mPar);
 
@@ -2174,6 +2194,12 @@ function renderMonthChart(base){
       seg.style.height="0px";seg.dataset.h=h;
       seg.style.background=bg;
       seg.style.borderRadius="2px";
+      /* Lâmpada piscante na parada */
+      if(cls==="par"&&h>0){
+        const lamp=document.createElement("div");
+        lamp.className="siren-lamp";
+        seg.appendChild(lamp);
+      }
       stack.appendChild(seg);
       return seg;
     }
