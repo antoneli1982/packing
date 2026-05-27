@@ -187,6 +187,37 @@
     color:var(--txt-dim);border-radius:6px;padding:9px;margin-top:8px;
     font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;transition:.13s}
   .cancel-edit:hover{border-color:var(--red);color:var(--red)}
+
+  /* ===== Multi-embalagem por ciclo ===== */
+  .emb-add-row{display:flex;gap:8px;align-items:flex-end}
+  .emb-add-row>*:first-child{flex:1;min-width:0}
+  .emb-add-row>*:nth-child(2){width:90px;flex-shrink:0}
+  .emb-add-row>*:nth-child(3){flex-shrink:0}
+  .btn-add-emb{cursor:pointer;background:var(--green);border:none;color:#fff;
+    border-radius:6px;padding:10px 13px;font-family:'Poppins',sans-serif;font-size:16px;
+    font-weight:800;line-height:1;transition:.13s;flex-shrink:0}
+  .btn-add-emb:hover{background:#4cd166}
+  .btn-add-emb:active{transform:translateY(1px)}
+  .emb-list{margin-top:10px}
+  .emb-list:empty{display:none}
+  .emb-item{display:flex;align-items:center;gap:8px;padding:7px 10px;
+    background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;
+    margin-bottom:5px;font-family:'Poppins',sans-serif;font-size:12px;
+    animation:embItemIn .2s ease}
+  @keyframes embItemIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+  .emb-item .emb-nome{flex:1;color:var(--txt);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .emb-item .emb-qtd{color:var(--blue-soft);font-weight:700;font-size:13px;min-width:40px;text-align:right}
+  .emb-item .emb-del{cursor:pointer;background:none;border:none;color:var(--txt-faint);
+    font-size:14px;padding:2px 5px;border-radius:4px;transition:.12s;line-height:1}
+  .emb-item .emb-del:hover{color:var(--red);background:rgba(240,83,63,.12)}
+  .emb-total-bar{display:flex;align-items:center;justify-content:space-between;
+    padding:8px 10px;background:rgba(56,102,247,.08);border:1px solid rgba(56,102,247,.2);
+    border-radius:6px;margin-top:6px;font-family:'Poppins',sans-serif}
+  .emb-total-bar:empty{display:none}
+  .emb-total-bar .etb-label{font-size:10px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.8px;color:var(--txt-dim)}
+  .emb-total-bar .etb-value{font-size:15px;font-weight:800;color:var(--blue-soft)}
+
   .edit-banner{display:none;background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.4);
     color:var(--green);border-radius:6px;padding:8px 10px;margin-bottom:14px;
     font-size:11px;font-weight:600}
@@ -717,8 +748,18 @@
           <div class="field"><label>Data</label><input type="date" id="data"></div>
 
           <div class="field hide" id="f-embalagem">
-            <label>Embalagem <span class="req">*</span></label>
-            <select id="embalagem"><option value="" disabled selected>Selecione a embalagem…</option></select>
+            <label>Embalagens do Ciclo <span class="req">*</span></label>
+            <div class="emb-add-row">
+              <div>
+                <select id="embalagem"><option value="" disabled selected>Selecione…</option></select>
+              </div>
+              <div>
+                <input type="number" id="total" min="1" step="1" placeholder="Qtd">
+              </div>
+              <button type="button" class="btn-add-emb" id="btn-add-emb" title="Adicionar embalagem ao ciclo">+</button>
+            </div>
+            <div class="emb-list" id="emb-list"></div>
+            <div class="emb-total-bar" id="emb-total-bar"></div>
           </div>
 
           <div class="field hide" id="f-motivo">
@@ -759,11 +800,6 @@
                 </div>
               </div>
             </div>
-          </div>
-
-          <div class="field hide" id="f-total">
-            <label>Total de Embalagens Lavadas <span class="req">*</span></label>
-            <input type="number" id="total" min="1" step="1" placeholder="0">
           </div>
 
           <!-- Alerta de duração -->
@@ -1008,6 +1044,8 @@ const COLECAO = "apontamentos";   /* nome da coleção no Firestore */
 const KEY="sas-apontamentos";
 let registros=[],turno=null,tipo=null,editingId=null,cicloExtra='nao',cicloExtraCount=0;
 let backend="mem",idb=null,fb=null;
+/* Multi-embalagem por ciclo */
+let embItens=[];  /* [{emb:"EKLT3214", total:50}, ...] */
 
 /* ===== BANCO LOCAL (IndexedDB) — usado quando o Firebase não está configurado ===== */
 function openIDB(){
@@ -1157,6 +1195,39 @@ tick();setInterval(tick,15000);
 
 const selEmb=document.getElementById("embalagem");
 EMBALAGENS.forEach(e=>selEmb.add(new Option(e,e)));
+
+/* ===== Multi-embalagem: botão +, lista, total ===== */
+function renderEmbList(){
+  const list=document.getElementById("emb-list");
+  const bar=document.getElementById("emb-total-bar");
+  list.innerHTML="";bar.innerHTML="";
+  if(!embItens.length)return;
+  embItens.forEach((it,i)=>{
+    const div=document.createElement("div");div.className="emb-item";
+    div.innerHTML='<span class="emb-nome">'+it.emb+'</span>'+
+      '<span class="emb-qtd">'+it.total.toLocaleString("pt-BR")+'</span>'+
+      '<button type="button" class="emb-del" title="Remover">✕</button>';
+    div.querySelector(".emb-del").addEventListener("click",()=>{
+      embItens.splice(i,1);renderEmbList();
+    });
+    list.appendChild(div);
+  });
+  const soma=embItens.reduce((a,it)=>a+it.total,0);
+  bar.innerHTML='<span class="etb-label">Total do ciclo: '+embItens.length+' tipo'+(embItens.length>1?'s':'')+'</span>'+
+    '<span class="etb-value">'+soma.toLocaleString("pt-BR")+' emb.</span>';
+}
+document.getElementById("btn-add-emb").addEventListener("click",()=>{
+  const emb=selEmb.value;
+  const totalEl=document.getElementById("total");
+  const total=parseInt(totalEl.value,10);
+  if(!emb)return flash("Selecione a embalagem",false);
+  if(!total||total<1)return flash("Informe a quantidade",false);
+  embItens.push({emb:emb,total:total});
+  selEmb.selectedIndex=0;totalEl.value="";
+  renderEmbList();
+  flash("",true); /* limpa msg de erro */
+});
+
 const selDMod=document.getElementById("d-fmodelo");
 EMBALAGENS.forEach(e=>selDMod.add(new Option(e,e)));
 ["d-fmodelo","d-fturno","d-fdata-de","d-fhora-de","d-fdata-ate","d-fhora-ate"].forEach(id=>
@@ -1179,7 +1250,7 @@ document.getElementById("tipos").addEventListener("click",e=>{
   document.querySelectorAll(".tipo-btn").forEach(x=>x.classList.remove("on"));
   b.classList.add("on");tipo=b.dataset.tp;
   document.getElementById("f-embalagem").classList.toggle("hide",tipo!=="lav");
-  document.getElementById("f-total").classList.toggle("hide",tipo!=="lav");
+  
   document.getElementById("f-motivo").classList.toggle("hide",tipo!=="par");
   document.getElementById("f-obs").classList.toggle("hide",tipo!=="par");
   document.getElementById("f-cicloextra").classList.toggle("hide",tipo!=="lav");
@@ -1347,11 +1418,20 @@ document.getElementById("form").addEventListener("submit",async e=>{
   if(mDur>90&&!duracaoConfirmada){checkDuracao();return flash("Confirme se os horários estão corretos (duração: "+fmtMin(mDur)+")",false);}
   const reg={id:editingId||Date.now(),tipo,data,turno,hi,hf,cicloExtra:cicloExtra==='sim',cicloExtraCount:cicloExtraCount};
   if(tipo==="lav"){
-    const emb=selEmb.value;
-    const total=parseInt(document.getElementById("total").value,10);
-    if(!emb)            return flash("Selecione a embalagem",false);
-    if(!total||total<1)return flash("Informe o total de embalagens lavadas",false);
-    reg.emb=emb;reg.total=total;
+    /* Se o operador adicionou itens na lista, usar a lista.
+       Se não (digitou direto sem clicar +), pegar do select+input */
+    if(embItens.length===0){
+      const emb=selEmb.value;
+      const total=parseInt(document.getElementById("total").value,10);
+      if(!emb)            return flash("Selecione a embalagem e clique + para adicionar",false);
+      if(!total||total<1)return flash("Informe a quantidade e clique + para adicionar",false);
+      embItens.push({emb:emb,total:total});
+      renderEmbList();
+    }
+    /* Salvar array de itens + manter emb/total para retrocompatibilidade */
+    reg.itens=embItens.map(it=>({emb:it.emb,total:it.total}));
+    reg.emb=embItens.map(it=>it.emb).join(", ");
+    reg.total=embItens.reduce((a,it)=>a+it.total,0);
   }
   if(tipo==="par"){
     const motivo=document.getElementById("motivo").value;
@@ -1371,11 +1451,12 @@ document.getElementById("form").addEventListener("submit",async e=>{
 });
 function limparCampos(){
   selEmb.selectedIndex=0;
+  document.getElementById("total").value="";
+  embItens=[];renderEmbList();
   document.getElementById("motivo").selectedIndex=0;
   document.getElementById("obs").value="";
   document.getElementById("hi").value="";
   document.getElementById("hf").value="";
-  document.getElementById("total").value="";
   cicloExtra="nao";cicloExtraCount=0;
   document.querySelectorAll(".ciclo-btn").forEach(x=>x.classList.toggle("on",x.dataset.ce==="nao"));
   document.getElementById("ciclo-count-display").textContent="➕";
@@ -1404,7 +1485,7 @@ function editar(id){
   tipo=r.tipo;
   document.querySelectorAll(".tipo-btn").forEach(x=>x.classList.toggle("on",x.dataset.tp===tipo));
   document.getElementById("f-embalagem").classList.toggle("hide",tipo!=="lav");
-  document.getElementById("f-total").classList.toggle("hide",tipo!=="lav");
+  
   document.getElementById("f-motivo").classList.toggle("hide",tipo!=="par");
   document.getElementById("f-obs").classList.toggle("hide",tipo!=="par");
   document.getElementById("f-cicloextra").classList.toggle("hide",tipo!=="lav");
@@ -1414,7 +1495,17 @@ function editar(id){
   document.getElementById("data").value=r.data;
   document.getElementById("hi").value=r.hi;
   document.getElementById("hf").value=r.hf;
-  if(tipo==="lav"){selEmb.value=r.emb;document.getElementById("total").value=r.total;}
+  if(tipo==="lav"){
+    /* Carregar multi-embalagem */
+    if(r.itens&&r.itens.length){
+      embItens=r.itens.map(it=>({emb:it.emb,total:it.total}));
+    } else {
+      /* Retrocompat: registro antigo com emb/total simples */
+      embItens=[{emb:r.emb,total:r.total}];
+    }
+    renderEmbList();
+    selEmb.selectedIndex=0;document.getElementById("total").value="";
+  }
   else{document.getElementById("motivo").value=r.motivo;document.getElementById("obs").value=r.obs||"";}
   /* ciclo extra */
   cicloExtra=r.cicloExtra?"sim":"nao";
@@ -1467,7 +1558,12 @@ document.getElementById("f-clear").addEventListener("click",()=>{
 });
 
 function detalhe(r){
-  if(r.tipo==="lav")return r.emb;
+  if(r.tipo==="lav"){
+    if(r.itens&&r.itens.length>1){
+      return r.itens.map(it=>it.emb+' ('+it.total.toLocaleString("pt-BR")+')').join(" + ");
+    }
+    return r.emb;
+  }
   return r.obs?r.motivo+" — "+r.obs:r.motivo;
 }
 
@@ -1515,10 +1611,15 @@ function gerarXLS(fdDe,fhDe,fdAte,fhAte){
               fmtMinXLS(lv.reduce((a,r)=>a+mins(r.hi,r.hf),0)),
               fmtMinXLS(pr.reduce((a,r)=>a+mins(r.hi,r.hf),0))]);
   });
-  res.push([],["EMBALAGENS LAVADAS POR TIPO"],["Embalagem","Lavagens","Total Lavadas"]);
+  res.push([],["EMBALAGENS LAVADAS POR TIPO"],["Embalagem","Ciclos","Total Lavadas"]);
   EMBALAGENS.forEach(e=>{
-    const rs=filtrado.filter(r=>r.tipo==="lav"&&r.emb===e);
-    res.push([e,rs.length,rs.reduce((a,r)=>a+r.total,0)]);
+    let ciclos=0,totalE=0;
+    filtrado.filter(r=>r.tipo==="lav").forEach(r=>{
+      if(r.itens&&r.itens.length){
+        r.itens.forEach(it=>{if(it.emb===e){ciclos++;totalE+=it.total;}});
+      } else if(r.emb===e){ciclos++;totalE+=r.total;}
+    });
+    res.push([e,ciclos,totalE]);
   });
   res.push([],["PARADA DE MÁQUINA POR MOTIVO"],["Motivo","Ocorrências","Tempo Parado"]);
   MOTIVOS.forEach(mo=>{
@@ -1804,7 +1905,16 @@ function renderDash(){
     document.getElementById("d-mce").textContent="0,00";
   }
 
-  const porEmb=EMBALAGENS.map(e=>({k:e,v:lav.filter(r=>r.emb===e).reduce((a,r)=>a+r.total,0)}));
+  /* Conta embalagens considerando multi-embalagem por ciclo */
+  const porEmb=EMBALAGENS.map(e=>{
+    let v=0;
+    lav.forEach(r=>{
+      if(r.itens&&r.itens.length){
+        r.itens.forEach(it=>{if(it.emb===e)v+=it.total;});
+      } else if(r.emb===e){v+=r.total;}
+    });
+    return{k:e,v:v};
+  });
   const top=[...porEmb].sort((a,b)=>b.v-a.v)[0];
   document.getElementById("d-top").textContent=(top&&top.v>0)?top.k:"—";
 
@@ -2215,7 +2325,7 @@ load();
   btn.classList.add('on');
   tipo = 'lav';
   document.getElementById('f-embalagem').classList.remove('hide');
-  document.getElementById('f-total').classList.remove('hide');
+  
   document.getElementById('f-motivo').classList.add('hide');
   document.getElementById('f-obs').classList.add('hide');
   document.getElementById('siren-banner').classList.remove('on');
