@@ -501,13 +501,6 @@
     0%{border-color:rgba(0,255,170,.4);box-shadow:0 0 6px rgba(0,255,170,.2),0 0 14px rgba(0,255,170,.06)}
     100%{border-color:rgba(0,255,170,.7);box-shadow:0 0 12px rgba(0,255,170,.45),0 0 30px rgba(0,255,170,.15)}
   }
-  .meta-label{position:absolute;right:0;top:-22px;
-    font-family:'Poppins',sans-serif;font-size:9px;font-weight:800;
-    letter-spacing:1.2px;text-transform:uppercase;
-    color:rgba(0,255,170,.85);
-    text-shadow:0 0 8px rgba(0,255,170,.5),0 0 20px rgba(0,255,170,.2);
-    background:var(--bg);padding:1px 8px;border-radius:3px;
-    border:1px solid rgba(0,255,170,.25);white-space:nowrap}
   .meta-label-left{position:absolute;left:0;top:-22px;
     font-family:'Poppins',sans-serif;font-size:8px;font-weight:700;
     color:rgba(0,255,170,.5);letter-spacing:.5px;
@@ -532,6 +525,37 @@
     0%,100%{transform:scale(1);opacity:.8}
     50%{transform:scale(1.8);opacity:0}
   }
+
+  /* ===== Botão Lâmpada Toggle ===== */
+  .lamp-btn{cursor:pointer;display:flex;align-items:center;gap:7px;
+    background:none;border:1px solid var(--line);border-radius:20px;
+    padding:4px 12px 4px 6px;font-family:'Poppins',sans-serif;font-size:10px;
+    font-weight:600;color:var(--txt-faint);transition:all .25s;margin-left:6px}
+  .lamp-btn:hover{border-color:var(--c-par)}
+  .lamp-bulb{width:18px;height:18px;border-radius:50%;position:relative;
+    background:var(--panel);border:2px solid var(--line);
+    transition:all .3s}
+  .lamp-bulb::after{content:"";position:absolute;inset:3px;border-radius:50%;
+    background:var(--panel-2);transition:all .3s}
+  /* Estado ON — lâmpada acesa */
+  .lamp-btn.on{border-color:rgba(240,83,63,.5);color:var(--c-par)}
+  .lamp-btn.on .lamp-bulb{background:var(--c-par);border-color:var(--c-par);
+    box-shadow:0 0 8px rgba(240,83,63,.5),0 0 18px rgba(240,83,63,.2);
+    animation:lampPulse 1.5s ease-in-out infinite alternate}
+  .lamp-btn.on .lamp-bulb::after{background:radial-gradient(circle at 40% 35%, #ff8a7a 0%, #f0533f 100%)}
+  @keyframes lampPulse{
+    0%{box-shadow:0 0 6px rgba(240,83,63,.4),0 0 14px rgba(240,83,63,.15)}
+    100%{box-shadow:0 0 12px rgba(240,83,63,.7),0 0 24px rgba(240,83,63,.3)}
+  }
+  /* Estado OFF — lâmpada apagada */
+  .lamp-btn:not(.on) .lamp-bulb{background:var(--panel-2);border-color:var(--line)}
+  .lamp-btn:not(.on) .lamp-bulb::after{background:var(--panel)}
+  .lamp-btn:not(.on){opacity:.5}
+  .lamp-btn:not(.on):hover{opacity:.8}
+
+  /* Paradas ocultas no gráfico */
+  .day-bars-wrap.hide-paradas .day-seg.par{height:0!important;min-height:0!important;overflow:hidden}
+  .day-bars-wrap.hide-paradas .siren-lamp{display:none}
   .day-col{display:flex;flex-direction:column;align-items:center;flex:1;min-width:20px;
     position:relative;cursor:pointer;border-radius:4px;transition:background .12s}
   .day-col:hover{background:rgba(255,255,255,.04)}
@@ -1008,7 +1032,10 @@
           <div class="day-legend-item"><div class="day-legend-dot" style="background:var(--t1)"></div>1º Turno</div>
           <div class="day-legend-item"><div class="day-legend-dot" style="background:var(--t2)"></div>2º Turno</div>
           <div class="day-legend-item"><div class="day-legend-dot" style="background:var(--t3)"></div>3º Turno</div>
-          <div class="day-legend-item"><div class="day-legend-dot par"></div>Paradas</div>
+          <button class="lamp-btn on" id="lamp-paradas" title="Mostrar/ocultar paradas no gráfico">
+            <div class="lamp-bulb"></div>
+            <span>Paradas</span>
+          </button>
         </div>
         <div class="month-summary-row" id="month-summary-row">
           <div class="month-summary-item"><div class="ms-v trab" id="ms-trab-total">00:00</div><div class="ms-k">Total Trabalhadas no Mês</div></div>
@@ -2160,7 +2187,6 @@ function renderMonthChart(base){
   metaLine.className="meta-line";
   metaLine.style.bottom=(28+metaH)+"px";
   metaLine.innerHTML='<div class="meta-line-inner">'+
-    '<span class="meta-label">⚡ META 20H</span>'+
     '<span class="meta-label-left">20h00</span>'+
     '</div>';
   wrap.appendChild(metaLine);
@@ -2498,6 +2524,15 @@ openMotivoDrilldown=function(motivo,filteredParadas){
       if(document.getElementById("view-dash").classList.contains("on"))renderDash();}
   });
 })();
+
+/* ===== Botão Lâmpada — Toggle Paradas no gráfico ===== */
+let showParadas=true;
+document.getElementById("lamp-paradas").addEventListener("click",function(){
+  showParadas=!showParadas;
+  this.classList.toggle("on",showParadas);
+  const wrap=document.querySelector(".day-bars-wrap");
+  if(wrap) wrap.classList.toggle("hide-paradas",!showParadas);
+});
 
 /* ===== Faixa de atalhos rápidos ===== */
 load();
