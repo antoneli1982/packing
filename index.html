@@ -414,6 +414,132 @@
     #siren-banner{font-size:11px}
   }
 
+  /* ===== Seletor de Mês e Gráficos Mensais ===== */
+  .month-nav{display:flex;align-items:center;gap:10px;padding:12px 16px;
+    border-bottom:1px solid var(--line-soft)}
+  .month-nav select{width:auto;font-size:12px;padding:7px 26px 7px 10px}
+  .month-label{font-family:'Poppins',sans-serif;font-size:11px;font-weight:700;
+    text-transform:uppercase;letter-spacing:1px;color:var(--txt-faint)}
+  .month-btn{cursor:pointer;background:var(--panel-2);border:1px solid var(--line);
+    color:var(--txt-dim);border-radius:6px;padding:6px 10px;
+    font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;transition:.13s;line-height:1}
+  .month-btn:hover{border-color:var(--blue);color:var(--blue-soft)}
+
+  .turno-hours-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;
+    padding:16px}
+  .turno-hours-card{background:var(--panel-2);border:1px solid var(--line-soft);border-radius:8px;
+    padding:14px;position:relative;overflow:hidden}
+  .turno-hours-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px}
+  .turno-hours-card[data-t="1"]::before{background:var(--t1)}
+  .turno-hours-card[data-t="2"]::before{background:var(--t2)}
+  .turno-hours-card[data-t="3"]::before{background:var(--t3)}
+  .turno-hours-card .th-turno{font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;
+    text-transform:uppercase;letter-spacing:1px;color:var(--txt-faint);margin-bottom:10px}
+  .turno-hours-card .th-row{display:flex;align-items:center;justify-content:space-between;
+    margin-bottom:6px}
+  .turno-hours-card .th-label{font-family:'Poppins',sans-serif;font-size:11px;color:var(--txt-dim)}
+  .turno-hours-card .th-value{font-family:'Poppins',sans-serif;font-size:14px;font-weight:700}
+  .turno-hours-card .th-value.trab{color:var(--blue-soft)}
+  .turno-hours-card .th-value.par{color:var(--c-par)}
+  .turno-hours-card .th-bar{height:6px;border-radius:3px;background:var(--panel);
+    overflow:hidden;margin-top:4px;display:flex}
+  .turno-hours-card .th-bar-fill{height:100%;transition:width .5s cubic-bezier(.2,.7,.2,1)}
+  .turno-hours-card .th-bar-fill.trab{background:var(--blue);border-radius:3px 0 0 3px}
+  .turno-hours-card .th-bar-fill.par{background:var(--c-par);border-radius:0 3px 3px 0}
+
+  .month-day-chart{padding:16px;overflow-x:auto}
+  .day-bars-wrap{display:flex;align-items:flex-end;gap:3px;min-height:160px;padding-bottom:24px;position:relative}
+  .day-col{display:flex;flex-direction:column;align-items:center;flex:1;min-width:16px;position:relative}
+  .day-col .day-stack{width:100%;display:flex;flex-direction:column-reverse;gap:1px;min-height:2px}
+  .day-col .day-seg{border-radius:2px;min-height:0;transition:height .4s cubic-bezier(.2,.7,.2,1)}
+  .day-col .day-seg.trab{background:var(--blue)}
+  .day-col .day-seg.par{background:var(--c-par)}
+  .day-col .day-lbl{font-family:'Poppins',sans-serif;font-size:8px;color:var(--txt-faint);
+    margin-top:6px;position:absolute;bottom:-20px}
+  .day-col:hover .day-seg.trab{background:var(--blue-soft)}
+  .day-col:hover .day-seg.par{background:#ff6b57}
+  .day-legend{display:flex;align-items:center;gap:16px;padding:0 16px 12px}
+  .day-legend-item{display:flex;align-items:center;gap:6px;
+    font-family:'Poppins',sans-serif;font-size:10px;color:var(--txt-dim);font-weight:600}
+  .day-legend-dot{width:10px;height:10px;border-radius:3px}
+  .day-legend-dot.trab{background:var(--blue)}
+  .day-legend-dot.par{background:var(--c-par)}
+
+  .month-summary-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+    padding:0 16px 14px}
+  .month-summary-item{background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;
+    padding:10px 12px;text-align:center}
+  .month-summary-item .ms-v{font-family:'Poppins',sans-serif;font-size:18px;font-weight:700}
+  .month-summary-item .ms-v.trab{color:var(--blue-soft)}
+  .month-summary-item .ms-v.par{color:var(--c-par)}
+  .month-summary-item .ms-k{font-family:'Poppins',sans-serif;font-size:8.5px;
+    text-transform:uppercase;letter-spacing:.8px;color:var(--txt-faint);margin-top:3px}
+
+  @media(max-width:600px){
+    .turno-hours-grid{grid-template-columns:minmax(0,1fr);gap:8px;padding:11px}
+    .turno-hours-card .th-value{font-size:13px}
+    .day-col{min-width:10px}
+    .day-col .day-lbl{font-size:7px}
+    .month-nav{flex-wrap:wrap;gap:6px;padding:9px 12px}
+    .month-summary-row{padding:0 11px 10px}
+    .month-summary-item .ms-v{font-size:15px}
+  }
+
+  /* ===== Overlay de Detalhe (Drill-down) ===== */
+  .detail-overlay{
+    display:none;position:fixed;inset:0;z-index:1000;
+    background:var(--bg);
+    overflow-y:auto;
+    animation:detailSlideIn .32s cubic-bezier(.22,.68,0,1);
+  }
+  .detail-overlay.on{display:block}
+  @keyframes detailSlideIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
+  .detail-wrap{max-width:1140px;margin:0 auto;padding:26px 20px 60px}
+  .detail-topbar{display:flex;align-items:center;gap:14px;margin-bottom:22px;
+    border-bottom:2px solid var(--line);padding-bottom:16px}
+  .detail-back{cursor:pointer;background:var(--panel);border:1px solid var(--line);
+    color:var(--txt-dim);border-radius:8px;padding:9px 16px;
+    font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;
+    letter-spacing:.4px;transition:.13s;display:flex;align-items:center;gap:7px;flex-shrink:0}
+  .detail-back:hover{border-color:var(--blue);color:var(--blue-soft)}
+  .detail-back:active{transform:translateY(1px)}
+  .detail-title-area{flex:1;min-width:0}
+  .detail-title-area h2{font-size:17px;font-weight:700;letter-spacing:-.2px;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .detail-title-area .detail-sub{font-size:10px;color:var(--txt-faint);text-transform:uppercase;
+    letter-spacing:1.5px;margin-top:4px}
+  .detail-stats-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:22px}
+  .detail-stats-row .stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;
+    padding:13px 14px;position:relative;overflow:hidden}
+  .detail-stats-row .stat::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--c-par)}
+  .detail-stats-row .stat .v{font-family:'Poppins',sans-serif;font-size:22px;font-weight:600;line-height:1}
+  .detail-stats-row .stat .k{font-family:'Poppins',sans-serif;font-size:9.5px;color:var(--txt-dim);
+    text-transform:uppercase;letter-spacing:1px;margin-top:5px}
+  .detail-table{width:100%;border-collapse:collapse;font-size:12px}
+  .detail-table thead th{font-family:'Poppins',sans-serif;font-size:9px;font-weight:600;
+    text-transform:uppercase;letter-spacing:.5px;color:var(--txt-faint);text-align:left;
+    padding:10px 10px;border-bottom:1px solid var(--line)}
+  .detail-table tbody td{padding:10px 10px;border-bottom:1px solid var(--line-soft);
+    word-break:break-word;vertical-align:middle}
+  .detail-table tbody tr:hover{background:var(--panel-2)}
+  .detail-table .mono{font-family:'Poppins',sans-serif;white-space:nowrap}
+  .detail-count-badge{display:inline-flex;align-items:center;justify-content:center;
+    background:rgba(240,83,63,.15);color:var(--c-par);border:1px solid rgba(240,83,63,.3);
+    border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700;letter-spacing:.3px;margin-left:10px}
+  .bar-row.clickable{cursor:pointer;border-radius:6px;padding:2px 6px;margin-left:-6px;margin-right:-6px;transition:background .15s}
+  .bar-row.clickable:hover{background:rgba(240,83,63,.08)}
+  .bar-row.clickable .bar-lbl{text-decoration:underline;text-decoration-color:rgba(240,83,63,.3);text-underline-offset:3px}
+  @media(max-width:600px){
+    .detail-wrap{padding:10px 10px 36px}
+    .detail-topbar{padding-bottom:10px;margin-bottom:12px;gap:8px}
+    .detail-title-area h2{font-size:14px}
+    .detail-stats-row{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;margin-bottom:12px}
+    .detail-stats-row .stat .v{font-size:16px}
+    .detail-stats-row .stat .k{font-size:7.5px}
+    .detail-table thead th{font-size:8.5px;padding:7px 8px}
+    .detail-table tbody td{font-size:11.5px;padding:7px 8px}
+  }
+
   /* ===== Modal Exportar ===== */
   .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:999;align-items:center;justify-content:center;backdrop-filter:blur(3px)}
   .modal-overlay.on{display:flex}
@@ -721,6 +847,65 @@
       <div class="panel" style="grid-column:1/-1">
         <div class="panel-head"><span class="tag">03</span><h2>Embalagens Lavadas por Tipo</h2></div>
         <div class="chart" id="chart-emb"></div>
+      </div>
+
+      <!-- Horas Trabalhadas vs Paradas por Turno -->
+      <div class="panel" style="grid-column:1/-1">
+        <div class="panel-head"><span class="tag">04</span><h2>Horas Trabalhadas × Paradas por Turno</h2></div>
+        <div class="turno-hours-grid" id="turno-hours-grid"></div>
+      </div>
+
+      <!-- Visão Mensal: dia a dia -->
+      <div class="panel" style="grid-column:1/-1">
+        <div class="panel-head"><span class="tag">05</span><h2>Visão Mensal — Horas por Dia</h2></div>
+        <div class="month-nav">
+          <span class="month-label">Mês:</span>
+          <button class="month-btn" id="month-prev">◀</button>
+          <select id="d-fmes"></select>
+          <button class="month-btn" id="month-next">▶</button>
+          <div class="spacer"></div>
+          <select id="d-fmes-turno">
+            <option value="">Todos os turnos</option>
+            <option value="1">1º Turno</option>
+            <option value="2">2º Turno</option>
+            <option value="3">3º Turno</option>
+          </select>
+        </div>
+        <div class="day-legend">
+          <div class="day-legend-item"><div class="day-legend-dot trab"></div>Trabalhadas</div>
+          <div class="day-legend-item"><div class="day-legend-dot par"></div>Paradas</div>
+        </div>
+        <div class="month-summary-row" id="month-summary-row">
+          <div class="month-summary-item"><div class="ms-v trab" id="ms-trab-total">00:00</div><div class="ms-k">Total Trabalhadas no Mês</div></div>
+          <div class="month-summary-item"><div class="ms-v par" id="ms-par-total">00:00</div><div class="ms-k">Total Paradas no Mês</div></div>
+        </div>
+        <div class="month-day-chart" id="month-day-chart"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ OVERLAY: DETALHE OCORRÊNCIAS ============ -->
+  <div class="detail-overlay" id="detail-overlay">
+    <div class="detail-wrap">
+      <div class="detail-topbar">
+        <button class="detail-back" id="detail-back">← Voltar</button>
+        <div class="detail-title-area">
+          <h2 id="detail-title">Ocorrências</h2>
+          <div class="detail-sub" id="detail-sub-scope"></div>
+        </div>
+      </div>
+      <div class="detail-stats-row" id="detail-stats-row"></div>
+      <div class="panel">
+        <div class="panel-head"><span class="tag" style="background:var(--c-par)">LOG</span><h2>Registros Detalhados</h2></div>
+        <div class="table-scroll">
+          <table class="detail-table">
+            <thead><tr>
+              <th>Data</th><th>Turno</th><th>Início</th><th>Fim</th><th>Duração</th><th>Observação</th>
+            </tr></thead>
+            <tbody id="detail-tbody"></tbody>
+          </table>
+        </div>
+        <div id="detail-empty"></div>
       </div>
     </div>
   </div>
@@ -1408,7 +1593,8 @@ function render(){
   });
 }
 
-function bars(el,rows){
+function bars(el,rows,opts){
+  opts=opts||{};
   const max=Math.max(1,...rows.map(r=>r.v));
   if(!rows.length){
     el.innerHTML='<div class="empty"><div class="big">▦</div><div class="txt">SEM DADOS</div></div>';
@@ -1417,16 +1603,78 @@ function bars(el,rows){
   el.innerHTML="";
   rows.forEach(r=>{
     const row=document.createElement("div");row.className="bar-row";
+    if(opts.clickable)row.classList.add("clickable");
     row.innerHTML=
       '<div class="bar-lbl" title="'+r.k+'">'+r.k+'</div>'+
       '<div class="bar-track"><div class="bar-fill"></div></div>'+
       '<div class="bar-val">'+(r.disp||r.v.toLocaleString("pt-BR"))+'</div>';
     const fill=row.querySelector(".bar-fill");
     fill.style.background=r.color||"var(--blue)";
+    if(opts.clickable&&opts.onClick){
+      row.addEventListener("click",()=>opts.onClick(r));
+    }
     el.appendChild(row);
     requestAnimationFrame(()=>{fill.style.width=(r.v/max*100)+"%";});
   });
 }
+
+/* ===== Drill-down: mostra ocorrências de um motivo ===== */
+function openMotivoDrilldown(motivo, filteredParadas){
+  const regs=filteredParadas.filter(r=>r.motivo===motivo);
+  const overlay=document.getElementById("detail-overlay");
+  document.getElementById("detail-title").innerHTML=
+    motivo+'<span class="detail-count-badge">'+regs.length+' ocorrência'+(regs.length!==1?'s':'')+'</span>';
+
+  /* scope label */
+  const fde=document.getElementById("d-fdata-de").value;
+  const fate=document.getElementById("d-fdata-ate").value;
+  const ft=document.getElementById("d-fturno").value;
+  const partes=[];
+  if(ft)partes.push(TLABEL[ft]);
+  if(fde){const[y,m,d]=fde.split("-");partes.push("De "+d+"/"+m+"/"+y);}
+  if(fate){const[y,m,d]=fate.split("-");partes.push("Até "+d+"/"+m+"/"+y);}
+  document.getElementById("detail-sub-scope").textContent=
+    partes.length?partes.join(" · "):"Todos os registros";
+
+  /* stats */
+  const totalMin=regs.reduce((a,r)=>a+mins(r.hi,r.hf),0);
+  const avgMin=regs.length?Math.round(totalMin/regs.length):0;
+  document.getElementById("detail-stats-row").innerHTML=
+    '<div class="stat"><div class="v">'+regs.length+'</div><div class="k">Ocorrências</div></div>'+
+    '<div class="stat"><div class="v">'+fmtMin(totalMin)+'</div><div class="k">Tempo Total Parado</div></div>'+
+    '<div class="stat"><div class="v">'+fmtMin(avgMin)+'</div><div class="k">Duração Média</div></div>';
+
+  /* table */
+  const tb=document.getElementById("detail-tbody");tb.innerHTML="";
+  const emptyBox=document.getElementById("detail-empty");emptyBox.innerHTML="";
+  if(!regs.length){
+    emptyBox.innerHTML='<div class="empty"><div class="big">▦</div><div class="txt">NENHUMA OCORRÊNCIA ENCONTRADA</div></div>';
+  } else {
+    regs.sort((a,b)=>b.id-a.id).forEach(r=>{
+      const tr=document.createElement("tr");
+      const[y,m,d]=r.data.split("-");
+      tr.innerHTML=
+        '<td class="mono">'+d+"/"+m+"/"+y.slice(2)+'</td>'+
+        '<td><span class="pill" data-t="'+r.turno+'">'+r.turno+'º</span></td>'+
+        '<td class="mono">'+r.hi+'</td>'+
+        '<td class="mono">'+r.hf+'</td>'+
+        '<td class="mono" style="color:var(--c-par)">'+fmtMin(mins(r.hi,r.hf))+'</td>'+
+        '<td>'+(r.obs||'<span style="color:var(--txt-faint)">—</span>')+'</td>';
+      tb.appendChild(tr);
+    });
+  }
+
+  overlay.classList.add("on");
+  overlay.scrollTop=0;
+}
+document.getElementById("detail-back").addEventListener("click",()=>{
+  document.getElementById("detail-overlay").classList.remove("on");
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&document.getElementById("detail-overlay").classList.contains("on")){
+    document.getElementById("detail-overlay").classList.remove("on");
+  }
+});
 function renderDash(){
   const fm=document.getElementById("d-fmodelo").value;
   const ft=document.getElementById("d-fturno").value;
@@ -1469,17 +1717,152 @@ function renderDash(){
 
   bars(document.getElementById("chart-turno"),
     ["1","2","3"].map(t=>({k:TLABEL[t],
-      v:lav.filter(r=>r.turno===t).reduce((a,r)=>a+r.total,0),color:TCOLOR[t]})));
+      v:lav.filter(r=>r.turno===t).reduce((a,r)=>a+r.total,0),color:TCOLOR[t]})),{});
 
+  const currentPar=par; /* capture for closure */
   bars(document.getElementById("chart-motivo"),
     MOTIVOS.map(mo=>{
       const m=par.filter(r=>r.motivo===mo).reduce((a,r)=>a+mins(r.hi,r.hf),0);
-      return{k:mo,v:m,disp:fmtMin(m),color:"var(--c-par)"};
-    }));
+      return{k:mo,v:m,disp:fmtMin(m),color:"var(--c-par)",motivo:mo};
+    }),{clickable:true, onClick:function(r){openMotivoDrilldown(r.motivo||r.k, currentPar);}});
 
   bars(document.getElementById("chart-emb"),
-    porEmb.filter(r=>r.v>0).sort((a,b)=>b.v-a.v));
+    porEmb.filter(r=>r.v>0).sort((a,b)=>b.v-a.v),{});
+
+  /* ===== Painel 04: Horas Trabalhadas × Paradas por Turno ===== */
+  renderTurnoHours(lav,par);
+
+  /* ===== Painel 05: Visão Mensal ===== */
+  renderMonthChart(base);
 }
+
+/* ===== Renderiza cards de horas por turno ===== */
+function renderTurnoHours(lav,par){
+  const grid=document.getElementById("turno-hours-grid");
+  grid.innerHTML="";
+  const allMins=[]; // para calcular max e proporcionalizar as barras
+  ["1","2","3"].forEach(t=>{
+    const mTrab=lav.filter(r=>r.turno===t).reduce((a,r)=>a+mins(r.hi,r.hf),0);
+    const mPar=par.filter(r=>r.turno===t).reduce((a,r)=>a+mins(r.hi,r.hf),0);
+    allMins.push(mTrab+mPar);
+  });
+  const maxTotal=Math.max(1,...allMins);
+  ["1","2","3"].forEach((t,i)=>{
+    const mTrab=lav.filter(r=>r.turno===t).reduce((a,r)=>a+mins(r.hi,r.hf),0);
+    const mPar=par.filter(r=>r.turno===t).reduce((a,r)=>a+mins(r.hi,r.hf),0);
+    const total=mTrab+mPar||1;
+    const pTrab=Math.round(mTrab/total*100);
+    const pPar=100-pTrab;
+    const card=document.createElement("div");
+    card.className="turno-hours-card";card.dataset.t=t;
+    card.innerHTML=
+      '<div class="th-turno">'+TLABEL[t]+'</div>'+
+      '<div class="th-row"><span class="th-label">Trabalhadas</span><span class="th-value trab">'+fmtMin(mTrab)+'</span></div>'+
+      '<div class="th-row"><span class="th-label">Paradas</span><span class="th-value par">'+fmtMin(mPar)+'</span></div>'+
+      '<div class="th-bar"><div class="th-bar-fill trab" style="width:0%"></div><div class="th-bar-fill par" style="width:0%"></div></div>';
+    grid.appendChild(card);
+    requestAnimationFrame(()=>{
+      card.querySelector(".th-bar-fill.trab").style.width=pTrab+"%";
+      card.querySelector(".th-bar-fill.par").style.width=pPar+"%";
+    });
+  });
+}
+
+/* ===== Renderiza gráfico mensal dia a dia ===== */
+function renderMonthChart(base){
+  const sel=document.getElementById("d-fmes");
+  const turnoSel=document.getElementById("d-fmes-turno").value;
+  const mesVal=sel.value;
+  if(!mesVal)return;
+  const[anoSel,mesSel]=mesVal.split("-").map(Number);
+
+  /* filtra registros do mês selecionado */
+  const regsDoMes=base.filter(r=>{
+    const[y,m]=r.data.split("-").map(Number);
+    if(y!==anoSel||m!==mesSel)return false;
+    if(turnoSel&&r.turno!==turnoSel)return false;
+    return true;
+  });
+
+  const diasNoMes=new Date(anoSel,mesSel,0).getDate();
+  const dadosDia=[];
+  let maxMinDia=0;
+  let totalTrab=0, totalPar=0;
+  for(let d=1;d<=diasNoMes;d++){
+    const ds=String(d).padStart(2,"0");
+    const dataStr=anoSel+"-"+String(mesSel).padStart(2,"0")+"-"+ds;
+    const regsDia=regsDoMes.filter(r=>r.data===dataStr);
+    const mTrab=regsDia.filter(r=>r.tipo==="lav").reduce((a,r)=>a+mins(r.hi,r.hf),0);
+    const mPar=regsDia.filter(r=>r.tipo==="par").reduce((a,r)=>a+mins(r.hi,r.hf),0);
+    totalTrab+=mTrab; totalPar+=mPar;
+    if(mTrab+mPar>maxMinDia) maxMinDia=mTrab+mPar;
+    dadosDia.push({dia:d,ds:ds,mTrab:mTrab,mPar:mPar});
+  }
+
+  /* sumário */
+  document.getElementById("ms-trab-total").textContent=fmtMin(totalTrab);
+  document.getElementById("ms-par-total").textContent=fmtMin(totalPar);
+
+  /* renderiza barras dia a dia */
+  const chartEl=document.getElementById("month-day-chart");
+  const maxH=140;
+  maxMinDia=maxMinDia||1;
+  let html='<div class="day-bars-wrap">';
+  dadosDia.forEach(dd=>{
+    const hTrab=Math.round(dd.mTrab/maxMinDia*maxH);
+    const hPar=Math.round(dd.mPar/maxMinDia*maxH);
+    const tipTrab=fmtMin(dd.mTrab);
+    const tipPar=fmtMin(dd.mPar);
+    html+='<div class="day-col" title="Dia '+dd.dia+' — Trab: '+tipTrab+' / Par: '+tipPar+'">';
+    html+='<div class="day-stack">';
+    html+='<div class="day-seg trab" style="height:0px" data-h="'+hTrab+'"></div>';
+    html+='<div class="day-seg par" style="height:0px" data-h="'+hPar+'"></div>';
+    html+='</div>';
+    html+='<div class="day-lbl">'+dd.dia+'</div>';
+    html+='</div>';
+  });
+  html+='</div>';
+  chartEl.innerHTML=html;
+  /* animar */
+  requestAnimationFrame(()=>{
+    chartEl.querySelectorAll(".day-seg").forEach(seg=>{
+      seg.style.height=seg.dataset.h+"px";
+    });
+  });
+}
+
+/* ===== Inicializar seletor de mês ===== */
+(function initMonthSelector(){
+  const sel=document.getElementById("d-fmes");
+  const now=new Date();
+  const MESES_PT=["","Janeiro","Fevereiro","Março","Abril","Maio","Junho",
+    "Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  /* preencher últimos 12 meses */
+  for(let i=0;i<12;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const val=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+    const label=MESES_PT[d.getMonth()+1]+" / "+d.getFullYear();
+    sel.add(new Option(label,val));
+  }
+  sel.value=now.getFullYear()+"-"+String(now.getMonth()+1).padStart(2,"0");
+
+  sel.addEventListener("change",()=>{
+    if(document.getElementById("view-dash").classList.contains("on"))renderDash();
+  });
+  document.getElementById("d-fmes-turno").addEventListener("change",()=>{
+    if(document.getElementById("view-dash").classList.contains("on"))renderDash();
+  });
+  document.getElementById("month-prev").addEventListener("click",()=>{
+    const idx=sel.selectedIndex;
+    if(idx<sel.options.length-1){sel.selectedIndex=idx+1;
+      if(document.getElementById("view-dash").classList.contains("on"))renderDash();}
+  });
+  document.getElementById("month-next").addEventListener("click",()=>{
+    const idx=sel.selectedIndex;
+    if(idx>0){sel.selectedIndex=idx-1;
+      if(document.getElementById("view-dash").classList.contains("on"))renderDash();}
+  });
+})();
 
 /* ===== Faixa de atalhos rápidos ===== */
 load();
