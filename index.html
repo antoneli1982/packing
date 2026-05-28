@@ -2441,6 +2441,32 @@ function openDayDrilldown(dataStr, dia, mes, ano, regsDia){
         html+='</div>';
       }
 
+      /* Média de ciclos extras por embalagem neste turno
+         (soma dos ciclos extras dos ciclos em que a embalagem aparece ÷ nº de ciclos) */
+      const ceqEmb={};
+      lavT.forEach(r=>{
+        const ce=r.cicloExtraCount||0;
+        const embs=(r.itens&&r.itens.length)?r.itens.map(it=>it.emb):[r.emb];
+        embs.forEach(emb=>{
+          if(!ceqEmb[emb]) ceqEmb[emb]={soma:0,ciclos:0};
+          ceqEmb[emb].soma+=ce;
+          ceqEmb[emb].ciclos++;
+        });
+      });
+      const ceqKeys=Object.keys(ceqEmb).filter(e=>ceqEmb[e].soma>0);
+      if(ceqKeys.length>0){
+        html+='<div style="border-top:1px solid var(--line-soft);padding-top:7px;margin-bottom:6px">'+
+          '<div style="font-family:Poppins,sans-serif;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--txt-faint);margin-bottom:5px">Média Ciclo Extra / Emb.</div>';
+        ceqKeys.sort((a,b)=>(ceqEmb[b].soma/ceqEmb[b].ciclos)-(ceqEmb[a].soma/ceqEmb[a].ciclos)).forEach(e=>{
+          const media=ceqEmb[e].soma/ceqEmb[e].ciclos;
+          html+='<div style="display:flex;align-items:center;justify-content:space-between;padding:2px 0;font-family:Poppins,sans-serif;font-size:10px">'+
+            '<span style="color:var(--txt-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;padding-right:8px" title="'+e+'">'+e+'</span>'+
+            '<span style="color:var(--green);font-weight:700;white-space:nowrap">'+media.toLocaleString("pt-BR",{minimumFractionDigits:1,maximumFractionDigits:1})+'</span>'+
+            '<span style="color:var(--txt-faint);font-weight:600;font-size:9px;min-width:42px;text-align:right;margin-left:6px">'+ceqEmb[e].soma+' extra'+(ceqEmb[e].soma>1?'s':'')+'</span></div>';
+        });
+        html+='</div>';
+      }
+
       /* Motivos de parada */
       const motKeys=Object.keys(motPorTipo);
       if(motKeys.length>0){
