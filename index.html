@@ -788,6 +788,14 @@
     background:var(--panel);border:1px solid var(--line);
     border-radius:14px;width:500px;max-width:95vw;
     overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.5);
+    pointer-events:all;position:relative;z-index:10000;
+  }
+  .ticker-modal *{pointer-events:all;}
+  .ticker-textarea{
+    pointer-events:all !important;
+    user-select:text !important;
+    -webkit-user-select:text !important;
+    cursor:text !important;
   }
   .ticker-modal-header{
     padding:18px 22px;border-bottom:1px solid var(--line-soft);
@@ -826,6 +834,10 @@
     font-family:'Poppins',sans-serif;font-size:13px;
     padding:12px;resize:vertical;min-height:90px;
     transition:.13s;line-height:1.6;
+    pointer-events:all !important;
+    user-select:text !important;
+    -webkit-user-select:text !important;
+    cursor:text !important;
   }
   .ticker-textarea:focus{outline:none;border-color:var(--blue);background:#212a35}
   .ticker-preview-wrap{margin-top:12px}
@@ -910,52 +922,6 @@
       </div>
     </div>
     <button type="button" class="ticker-edit-btn" id="ticker-edit-btn" title="Editar mensagem">✏️</button>
-  </div>
-
-  <!-- ===== MODAL EDITAR TICKER ===== -->
-  <div class="ticker-modal-overlay" id="ticker-modal-overlay">
-    <div class="ticker-modal">
-      <div class="ticker-modal-header">
-        <h3><span class="tm-icon">📢</span> Mensagem do Ticker</h3>
-        <button type="button" class="ticker-modal-close" id="ticker-modal-close">✕</button>
-      </div>
-      <div class="ticker-modal-body">
-        <div class="ticker-modal-label">Formatação</div>
-        <div class="ticker-modal-toolbar">
-          <select class="tm-sel" id="tm-font" title="Fonte">
-            <option value="'Poppins',sans-serif">Poppins</option>
-            <option value="'Courier New',monospace">Mono</option>
-            <option value="Georgia,serif">Serif</option>
-            <option value="Arial,sans-serif">Arial</option>
-          </select>
-          <select class="tm-sel" id="tm-size" title="Tamanho">
-            <option value="11px">11px</option>
-            <option value="12px" selected>12px</option>
-            <option value="14px">14px</option>
-            <option value="16px">16px</option>
-            <option value="18px">18px</option>
-          </select>
-          <div class="tm-color-wrap">
-            <span class="tm-color-lbl">Cor</span>
-            <span class="tm-color on" data-color="#e8edf2" style="background:#e8edf2" title="Branco"></span>
-            <span class="tm-color" data-color="#5b82ff" style="background:#5b82ff" title="Azul"></span>
-            <span class="tm-color" data-color="#3fb950" style="background:#3fb950" title="Verde"></span>
-            <span class="tm-color" data-color="#f0953f" style="background:#f0953f" title="Laranja"></span>
-            <span class="tm-color" data-color="#f0533f" style="background:#f0533f" title="Vermelho"></span>
-            <span class="tm-color" data-color="#9a6cf0" style="background:#9a6cf0" title="Roxo"></span>
-          </div>
-        </div>
-        <textarea class="ticker-textarea" id="ticker-textarea" placeholder="Digite a mensagem que irá aparecer no ticker...">Bem-vindo ao Sistema de Apontamento SAS · Lavadora de Embalagem — SESÉ · Registre seu apontamento utilizando o formulário ao lado</textarea>
-        <div class="ticker-preview-wrap">
-          <div class="ticker-preview-label">Pré-visualização</div>
-          <div class="ticker-preview-box" id="ticker-preview">—</div>
-        </div>
-      </div>
-      <div class="ticker-modal-footer">
-        <button type="button" class="mbtn cancel" id="ticker-cancel">Cancelar</button>
-        <button type="button" class="mbtn confirm" id="ticker-save">💾 Salvar</button>
-      </div>
-    </div>
   </div>
   <div class="view on" id="view-apont">
     <div class="grid">
@@ -2864,7 +2830,7 @@ load();
 })();
 
 /* ===== TICKER CNN ===== */
-document.addEventListener('DOMContentLoaded', function initTicker(){
+(function initTicker(){
   const STORAGE_KEY = 'sas_ticker_cfg';
 
   // Config padrão
@@ -2935,6 +2901,8 @@ document.addEventListener('DOMContentLoaded', function initTicker(){
     activeDot = document.querySelector('.tm-color.on') || colorDots[0];
     updatePreview();
     overlay.classList.add('on');
+    // Focar no textarea após o modal aparecer
+    setTimeout(()=>{ textarea.focus(); textarea.select(); }, 50);
   }
   function closeModal(){ overlay.classList.remove('on'); }
 
@@ -2971,7 +2939,7 @@ document.addEventListener('DOMContentLoaded', function initTicker(){
     buildTicker();
     closeModal();
   });
-});
+})();
 
 
 (function selectLavDefault(){
@@ -2989,5 +2957,51 @@ document.addEventListener('DOMContentLoaded', function initTicker(){
   document.getElementById('submit-btn').classList.add('lav');
 })();
 </script>
+
+<!-- ===== MODAL EDITAR TICKER — fora de qualquer form/wrap ===== -->
+<div class="ticker-modal-overlay" id="ticker-modal-overlay">
+  <div class="ticker-modal">
+    <div class="ticker-modal-header">
+      <h3><span class="tm-icon">📢</span> Mensagem do Ticker</h3>
+      <button type="button" class="ticker-modal-close" id="ticker-modal-close">✕</button>
+    </div>
+    <div class="ticker-modal-body">
+      <div class="ticker-modal-label">Formatação</div>
+      <div class="ticker-modal-toolbar">
+        <select class="tm-sel" id="tm-font" title="Fonte">
+          <option value="'Poppins',sans-serif">Poppins</option>
+          <option value="'Courier New',monospace">Mono</option>
+          <option value="Georgia,serif">Serif</option>
+          <option value="Arial,sans-serif">Arial</option>
+        </select>
+        <select class="tm-sel" id="tm-size" title="Tamanho">
+          <option value="11px">11px</option>
+          <option value="12px" selected>12px</option>
+          <option value="14px">14px</option>
+          <option value="16px">16px</option>
+          <option value="18px">18px</option>
+        </select>
+        <div class="tm-color-wrap">
+          <span class="tm-color-lbl">Cor</span>
+          <span class="tm-color on" data-color="#e8edf2" style="background:#e8edf2" title="Branco"></span>
+          <span class="tm-color" data-color="#5b82ff" style="background:#5b82ff" title="Azul"></span>
+          <span class="tm-color" data-color="#3fb950" style="background:#3fb950" title="Verde"></span>
+          <span class="tm-color" data-color="#f0953f" style="background:#f0953f" title="Laranja"></span>
+          <span class="tm-color" data-color="#f0533f" style="background:#f0533f" title="Vermelho"></span>
+          <span class="tm-color" data-color="#9a6cf0" style="background:#9a6cf0" title="Roxo"></span>
+        </div>
+      </div>
+      <textarea class="ticker-textarea" id="ticker-textarea" placeholder="Digite a mensagem que irá aparecer no ticker..."></textarea>
+      <div class="ticker-preview-wrap">
+        <div class="ticker-preview-label">Pré-visualização</div>
+        <div class="ticker-preview-box" id="ticker-preview">—</div>
+      </div>
+    </div>
+    <div class="ticker-modal-footer">
+      <button type="button" class="mbtn cancel" id="ticker-cancel">Cancelar</button>
+      <button type="button" class="mbtn confirm" id="ticker-save">💾 Salvar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
