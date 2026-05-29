@@ -3148,11 +3148,10 @@ function atualizarTickerVelocidade(){
     if(saved){ const p=JSON.parse(saved); msgs=p.msgs||msgs; font=p.font||font; size=p.size||size; speed=p.speed||speed; }
   } catch(e){}
 
-  const marquee = document.getElementById('ticker-marquee');
+  let marquee = document.getElementById('ticker-marquee');
 
   function buildTicker(){
     if(!marquee) return;
-    marquee.setAttribute('scrollamount', speed);
     let html = '';
     msgs.forEach((m)=>{
       if(!m.txt.trim()) return;
@@ -3160,7 +3159,18 @@ function atualizarTickerVelocidade(){
         m.txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span>';
       html += '<span style="color:rgba(255,255,255,.3);margin-right:50px;font-size:14px">◆</span>';
     });
-    marquee.innerHTML = html || '<span style="color:#8b97a5">Sem mensagens</span>';
+    const content = html || '<span style="color:#8b97a5">Sem mensagens</span>';
+    // Recriar o marquee para que scrollamount seja aplicado de verdade
+    const track = marquee.parentElement;
+    const newMarquee = document.createElement('marquee');
+    newMarquee.id = 'ticker-marquee';
+    newMarquee.setAttribute('behavior', 'scroll');
+    newMarquee.setAttribute('direction', 'left');
+    newMarquee.setAttribute('scrollamount', speed);
+    newMarquee.style.cssText = marquee.style.cssText;
+    newMarquee.innerHTML = content;
+    track.replaceChild(newMarquee, marquee);
+    marquee = newMarquee;
   }
 
   buildTicker();
