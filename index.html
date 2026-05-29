@@ -799,6 +799,81 @@
   .ticker-global-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt-dim);white-space:nowrap}
   .tm-sel{background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:5px;padding:5px 8px;font-family:'Poppins',sans-serif;font-size:12px;cursor:pointer;transition:.13s}
   .tm-sel:focus{outline:none;border-color:var(--blue)}
+
+  /* ===== EDITOR WORD ===== */
+  .word-editor-wrap{display:flex;flex-direction:column;height:calc(100vh - 180px);min-height:500px}
+  .word-toolbar{
+    display:flex;align-items:center;gap:4px;flex-wrap:wrap;
+    background:var(--panel);border:1px solid var(--line);
+    border-radius:8px 8px 0 0;padding:8px 12px;
+    position:sticky;top:0;z-index:10;
+  }
+  .word-toolbar-group{display:flex;align-items:center;gap:3px}
+  .word-toolbar-sep{width:1px;height:22px;background:var(--line);margin:0 4px;flex-shrink:0}
+  .word-sel{
+    background:var(--panel-2);border:1px solid var(--line);color:var(--txt);
+    border-radius:5px;padding:4px 7px;font-family:'Poppins',sans-serif;font-size:12px;
+    cursor:pointer;transition:.13s;height:30px;
+  }
+  .word-sel:focus{outline:none;border-color:var(--blue)}
+  .word-sel-sm{width:58px}
+  .word-btn{
+    cursor:pointer;background:var(--panel-2);border:1px solid var(--line);
+    color:var(--txt);border-radius:5px;padding:0 9px;height:30px;
+    font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;
+    transition:.13s;white-space:nowrap;display:flex;align-items:center;gap:4px;
+  }
+  .word-btn:hover{border-color:var(--blue);color:var(--blue-soft);background:rgba(56,102,247,.1)}
+  .word-btn.active{background:rgba(56,102,247,.2);border-color:var(--blue);color:var(--blue-soft)}
+  .word-btn-danger{color:var(--txt-faint)}
+  .word-btn-danger:hover{border-color:var(--red)!important;color:var(--red)!important;background:rgba(240,83,63,.1)!important}
+  .word-btn-primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  .word-btn-primary:hover{background:var(--blue-soft)!important;border-color:var(--blue-soft)!important;color:#fff!important}
+  .word-color-btn-wrap{
+    position:relative;cursor:pointer;
+    background:var(--panel-2);border:1px solid var(--line);
+    border-radius:5px;width:34px;height:30px;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:1px;overflow:hidden;transition:.13s;
+  }
+  .word-color-btn-wrap:hover{border-color:var(--blue)}
+  .word-color-icon{font-size:14px;font-weight:800;line-height:1;color:var(--txt);pointer-events:none}
+  .word-color-bar{display:block;width:22px;height:4px;border-radius:2px;pointer-events:none}
+  .word-color-btn-wrap input[type=color]{
+    position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;
+  }
+  .word-page-area{
+    flex:1;overflow-y:auto;
+    background:#4a5568;
+    padding:30px 20px;
+    border:1px solid var(--line);border-top:none;border-radius:0 0 8px 8px;
+  }
+  .word-page{
+    background:#fff;color:#1a1a1a;
+    width:794px;max-width:100%;
+    min-height:1123px;
+    margin:0 auto;
+    padding:72px 80px;
+    border-radius:2px;
+    box-shadow:0 4px 32px rgba(0,0,0,.4);
+    font-family:'Poppins',sans-serif;font-size:12px;line-height:1.7;
+    outline:none;
+    word-wrap:break-word;
+  }
+  .word-page:focus{box-shadow:0 4px 32px rgba(0,0,0,.4),0 0 0 3px rgba(56,102,247,.3)}
+  .word-page p{margin:0 0 8px}
+  .word-page h1,.word-page h2,.word-page h3{margin:12px 0 6px;color:#1a1a1a}
+  .word-page ul,.word-page ol{padding-left:24px;margin:4px 0 8px}
+  @media print{
+    .word-toolbar,.word-page-area{display:none}
+    .word-page{
+      width:100%!important;padding:0!important;
+      box-shadow:none!important;margin:0!important;
+      color:#000!important;background:#fff!important;
+    }
+    body *:not(.word-page):not(.word-page *){display:none!important}
+    .word-page{display:block!important}
+  }
   .msg-section-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--txt-dim);margin-bottom:10px}
   .msg-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
   .msg-item{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
@@ -885,6 +960,7 @@
   <div class="tabs">
     <div class="tab on" data-view="apont"><span class="dot"></span>Apontamento</div>
     <div class="tab" data-view="dash"><span class="dot"></span>Dashboard</div>
+    <div class="tab" data-view="editor"><span class="dot"></span>📄 Editor</div>
   </div>
 
   <!-- ===== TICKER CNN ===== -->
@@ -1195,6 +1271,98 @@
           </table>
         </div>
         <div id="detail-empty"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== VIEW: EDITOR WORD ===== -->
+  <div class="view" id="view-editor">
+    <div class="word-editor-wrap">
+      <!-- Toolbar -->
+      <div class="word-toolbar">
+        <div class="word-toolbar-group">
+          <select class="word-sel" id="wd-font" title="Fonte" onchange="applyFont()">
+            <option value="'Poppins',sans-serif">Poppins</option>
+            <option value="Arial,sans-serif">Arial</option>
+            <option value="Georgia,serif">Georgia</option>
+            <option value="'Times New Roman',serif">Times New Roman</option>
+            <option value="'Courier New',monospace">Courier New</option>
+            <option value="Verdana,sans-serif">Verdana</option>
+            <option value="Tahoma,sans-serif">Tahoma</option>
+            <option value="Impact,sans-serif">Impact</option>
+          </select>
+          <select class="word-sel word-sel-sm" id="wd-size" title="Tamanho" onchange="applySize()">
+            <option value="10px">10</option>
+            <option value="11px">11</option>
+            <option value="12px" selected>12</option>
+            <option value="14px">14</option>
+            <option value="16px">16</option>
+            <option value="18px">18</option>
+            <option value="20px">20</option>
+            <option value="24px">24</option>
+            <option value="28px">28</option>
+            <option value="32px">32</option>
+            <option value="36px">36</option>
+            <option value="48px">48</option>
+            <option value="72px">72</option>
+          </select>
+        </div>
+        <div class="word-toolbar-sep"></div>
+        <div class="word-toolbar-group">
+          <button type="button" class="word-btn" id="wd-bold" title="Negrito (Ctrl+B)" onclick="execCmd('bold')"><b>B</b></button>
+          <button type="button" class="word-btn" id="wd-italic" title="Itálico (Ctrl+I)" onclick="execCmd('italic')"><i>I</i></button>
+          <button type="button" class="word-btn" id="wd-underline" title="Sublinhado (Ctrl+U)" onclick="execCmd('underline')"><u>S</u></button>
+          <button type="button" class="word-btn" id="wd-strike" title="Tachado" onclick="execCmd('strikeThrough')"><s>S</s></button>
+        </div>
+        <div class="word-toolbar-sep"></div>
+        <div class="word-toolbar-group">
+          <button type="button" class="word-btn" title="Alinhar esquerda" onclick="execCmd('justifyLeft')">⬅</button>
+          <button type="button" class="word-btn" title="Centralizar" onclick="execCmd('justifyCenter')">☰</button>
+          <button type="button" class="word-btn" title="Alinhar direita" onclick="execCmd('justifyRight')">➡</button>
+          <button type="button" class="word-btn" title="Justificar" onclick="execCmd('justifyFull')">≡</button>
+        </div>
+        <div class="word-toolbar-sep"></div>
+        <div class="word-toolbar-group">
+          <button type="button" class="word-btn" title="Lista com marcadores" onclick="execCmd('insertUnorderedList')">• —</button>
+          <button type="button" class="word-btn" title="Lista numerada" onclick="execCmd('insertOrderedList')">1.</button>
+        </div>
+        <div class="word-toolbar-sep"></div>
+        <div class="word-toolbar-group word-color-group">
+          <div class="word-color-btn-wrap" title="Cor do texto">
+            <span class="word-color-icon">A</span>
+            <span class="word-color-bar" id="wd-txtcolor-bar" style="background:#e8edf2"></span>
+            <input type="color" id="wd-txtcolor" value="#e8edf2" title="Cor do texto" oninput="applyTxtColor(this.value)">
+          </div>
+          <div class="word-color-btn-wrap" title="Cor de fundo do texto">
+            <span class="word-color-icon" style="font-size:13px">🖊</span>
+            <span class="word-color-bar" id="wd-bgcolor-bar" style="background:#3866f7"></span>
+            <input type="color" id="wd-bgcolor" value="#3866f7" title="Cor de fundo" oninput="applyBgColor(this.value)">
+          </div>
+        </div>
+        <div class="word-toolbar-sep"></div>
+        <div class="word-toolbar-group">
+          <button type="button" class="word-btn" title="Desfazer" onclick="execCmd('undo')">↩</button>
+          <button type="button" class="word-btn" title="Refazer" onclick="execCmd('redo')">↪</button>
+        </div>
+        <div class="word-toolbar-sep"></div>
+        <div class="word-toolbar-group">
+          <button type="button" class="word-btn word-btn-danger" title="Limpar formatação" onclick="execCmd('removeFormat')">✖ Fmt</button>
+          <button type="button" class="word-btn word-btn-danger" title="Limpar tudo" onclick="clearEditor()">🗑 Tudo</button>
+        </div>
+        <div style="flex:1"></div>
+        <div class="word-toolbar-group">
+          <button type="button" class="word-btn word-btn-primary" title="Imprimir" onclick="printDoc()">🖨 Imprimir</button>
+        </div>
+      </div>
+      <!-- Página -->
+      <div class="word-page-area">
+        <div class="word-page" id="wd-page" contenteditable="true" spellcheck="true"
+          oninput="onEditorInput()"
+          onkeyup="updateToolbarState()"
+          onmouseup="updateToolbarState()"
+          onselectionchange="updateToolbarState()">
+          <p>Digite aqui o seu texto...</p>
+        </div>
       </div>
     </div>
   </div>
@@ -2803,131 +2971,70 @@ load();
   });
 })();
 
-/* ===== TICKER CNN ===== */
-(function initTicker(){
-  const STORAGE_KEY = 'sas_ticker_cfg2';
-  const CORES = ['#e8edf2','#5b82ff','#3fb950','#f0953f','#f0533f','#9a6cf0','#00b8a3','#f7d550'];
 
-  let msgs = [
-    { txt: '⚠️ ATENÇÃO: CASO O COLABORADOR SAIR DA MÁQUINA PARA TRABALHAR EM OUTRO DEPARTAMENTO, APONTAR "TRABALHO EM OUTRO SETOR"', color: '#f0953f' }
-  ];
-  let font = "'Poppins',sans-serif";
-  let size = '12px';
-
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if(saved){ const p=JSON.parse(saved); msgs=p.msgs||msgs; font=p.font||font; size=p.size||size; }
-  } catch(e){}
-
-  const marquee = document.getElementById('ticker-marquee');
-
-  function buildTicker(){
-    if(!marquee) return;
-    let html = '';
-    msgs.forEach((m, i)=>{
-      if(!m.txt.trim()) return;
-      html += '<span style="color:'+m.color+';font-family:'+font+';font-size:'+size+';font-weight:600;margin-right:50px">'+
-        m.txt.replace(/</g,'&lt;')+'</span>';
-      html += '<span style="color:rgba(255,255,255,.3);margin-right:50px;font-size:14px">◆</span>';
-    });
-    marquee.innerHTML = html || '<span style="color:#8b97a5">Sem mensagens</span>';
+/* ===== EDITOR WORD ===== */
+function execCmd(cmd, val){
+  document.getElementById('wd-page').focus();
+  document.execCommand(cmd, false, val||null);
+  updateToolbarState();
+}
+function applyFont(){
+  const f = document.getElementById('wd-font').value;
+  execCmd('fontName', f);
+}
+function applySize(){
+  const sz = document.getElementById('wd-size').value;
+  const sel = window.getSelection();
+  if(!sel || !sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  if(range.collapsed) return;
+  const span = document.createElement('span');
+  span.style.fontSize = sz;
+  try{ range.surroundContents(span); }catch(e){}
+}
+function applyTxtColor(val){
+  document.getElementById('wd-txtcolor-bar').style.background = val;
+  execCmd('foreColor', val);
+}
+function applyBgColor(val){
+  document.getElementById('wd-bgcolor-bar').style.background = val;
+  execCmd('hiliteColor', val);
+}
+function clearEditor(){
+  if(confirm('Apagar todo o conteúdo do editor?')){
+    document.getElementById('wd-page').innerHTML = '<p>Digite aqui o seu texto...</p>';
+    try{ localStorage.removeItem('sas_editor_content'); }catch(e){}
   }
-
-  buildTicker();
-
-  // ── Modal ──
-  const overlay  = document.getElementById('ticker-modal-overlay');
-  const editBtn  = document.getElementById('ticker-edit-btn');
-  const closeBtn = document.getElementById('ticker-modal-close');
-  const cancelBtn= document.getElementById('ticker-cancel');
-  const saveBtn  = document.getElementById('ticker-save');
-  const msgList  = document.getElementById('tm-msg-list');
-  const addBtn   = document.getElementById('tm-add-msg');
-  const fontSel  = document.getElementById('tm-font');
-  const sizeSel  = document.getElementById('tm-size');
-
-  function colorDots(color){
-    return CORES.map(c=>
-      '<span class="mc'+(c===color?' on':'')+'" data-c="'+c+'" style="background:'+c+'" title="'+c+'"></span>'
-    ).join('');
-  }
-
-  function renderMsgList(list){
-    msgList.innerHTML = '';
-    list.forEach((m, i)=>{
-      const item = document.createElement('div');
-      item.className = 'msg-item';
-      item.dataset.idx = i;
-      item.innerHTML =
-        '<div class="msg-item-row">'+
-          '<span class="msg-num">'+(i+1)+'</span>'+
-          '<input class="msg-input" type="text" value="'+m.txt.replace(/"/g,'&quot;')+'" placeholder="Digite a mensagem..." spellcheck="false">'+
-          (list.length>1?'<button type="button" class="msg-del" title="Remover">✕</button>':'')+
-        '</div>'+
-        '<div class="msg-color-row">'+
-          '<span class="msg-color-lbl">Cor:</span>'+
-          colorDots(m.color)+
-        '</div>';
-      // eventos
-      item.querySelector('.msg-input').addEventListener('input', function(){
-        list[i].txt = this.value;
-      });
-      const del = item.querySelector('.msg-del');
-      if(del) del.addEventListener('click', ()=>{ list.splice(i,1); renderMsgList(list); });
-      item.querySelectorAll('.mc').forEach(dot=>{
-        dot.addEventListener('click', ()=>{
-          list[i].color = dot.dataset.c;
-          item.querySelectorAll('.mc').forEach(d=>d.classList.remove('on'));
-          dot.classList.add('on');
-        });
-      });
-      msgList.appendChild(item);
-    });
-  }
-
-  let editList = [];
-
-  function openModal(){
-    editList = msgs.map(m=>({...m}));
-    fontSel.value = font;
-    sizeSel.value = size;
-    renderMsgList(editList);
-    overlay.classList.add('on');
-    setTimeout(()=>{ const f=msgList.querySelector('.msg-input'); if(f){f.focus();f.select();} }, 60);
-  }
-  function closeModal(){ overlay.classList.remove('on'); }
-
-  addBtn.addEventListener('click', ()=>{
-    editList.push({ txt:'', color:'#e8edf2' });
-    renderMsgList(editList);
-    setTimeout(()=>{
-      const inputs = msgList.querySelectorAll('.msg-input');
-      const last = inputs[inputs.length-1];
-      if(last) last.focus();
-    }, 30);
+}
+function printDoc(){
+  const page = document.getElementById('wd-page');
+  const win = window.open('','_blank','width=900,height=700');
+  win.document.write(
+    '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Documento</title>'+
+    '<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">'+
+    '<style>body{margin:0;padding:40px;font-family:Poppins,sans-serif;font-size:12px;color:#1a1a1a;line-height:1.7}p{margin:0 0 8px}ul,ol{padding-left:24px;margin:4px 0 8px}</style></head>'+
+    '<body>'+page.innerHTML+'</body></html>'
+  );
+  win.document.close();
+  win.focus();
+  setTimeout(()=>{ win.print(); }, 400);
+}
+function updateToolbarState(){
+  const map = {bold:'wd-bold',italic:'wd-italic',underline:'wd-underline',strikeThrough:'wd-strike'};
+  Object.entries(map).forEach(([cmd,id])=>{
+    const btn = document.getElementById(id);
+    if(btn) btn.classList.toggle('active', document.queryCommandState(cmd));
   });
-
-  editBtn.addEventListener('click', openModal);
-  closeBtn.addEventListener('click', closeModal);
-  cancelBtn.addEventListener('click', closeModal);
-  overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
-
-  saveBtn.addEventListener('click', ()=>{
-    // ler valores atuais dos inputs (caso o usuário não tenha saído do campo)
-    msgList.querySelectorAll('.msg-item').forEach((item, i)=>{
-      const inp = item.querySelector('.msg-input');
-      if(inp && editList[i]) editList[i].txt = inp.value;
-    });
-    msgs = editList.filter(m=>m.txt.trim());
-    if(!msgs.length) msgs = [{ txt:'Sem mensagens', color:'#8b97a5' }];
-    font = fontSel.value;
-    size = sizeSel.value;
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({msgs, font, size})); }catch(e){}
-    buildTicker();
-    closeModal();
-  });
+}
+function onEditorInput(){
+  try{ localStorage.setItem('sas_editor_content', document.getElementById('wd-page').innerHTML); }catch(e){}
+}
+(function restoreEditor(){
+  try{
+    const saved = localStorage.getItem('sas_editor_content');
+    if(saved){ const p=document.getElementById('wd-page'); if(p) p.innerHTML=saved; }
+  }catch(e){}
 })();
-
 
 (function selectLavDefault(){
   const btn = document.querySelector('.tipo-btn[data-tp="lav"]');
@@ -2980,5 +3087,131 @@ load();
     </div>
   </div>
 </div>
+
+<script>
+/* ===== TICKER CNN ===== */
+(function initTicker(){
+  const STORAGE_KEY = 'sas_ticker_cfg2';
+  const CORES = ['#e8edf2','#5b82ff','#3fb950','#f0953f','#f0533f','#9a6cf0','#00b8a3','#f7d550'];
+
+  let msgs = [
+    { txt: '⚠️ ATENÇÃO: CASO O COLABORADOR SAIR DA MÁQUINA PARA TRABALHAR EM OUTRO DEPARTAMENTO, APONTAR "TRABALHO EM OUTRO SETOR"', color: '#f0953f' }
+  ];
+  let font = "'Poppins',sans-serif";
+  let size = '12px';
+
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if(saved){ const p=JSON.parse(saved); msgs=p.msgs||msgs; font=p.font||font; size=p.size||size; }
+  } catch(e){}
+
+  const marquee = document.getElementById('ticker-marquee');
+
+  function buildTicker(){
+    if(!marquee) return;
+    let html = '';
+    msgs.forEach((m)=>{
+      if(!m.txt.trim()) return;
+      html += '<span style="color:'+m.color+';font-family:'+font+';font-size:'+size+';font-weight:600;margin-right:50px">'+
+        m.txt.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')+'</span>';
+      html += '<span style="color:rgba(255,255,255,.3);margin-right:50px;font-size:14px">◆</span>';
+    });
+    marquee.innerHTML = html || '<span style="color:#8b97a5">Sem mensagens</span>';
+  }
+
+  buildTicker();
+
+  const overlay  = document.getElementById('ticker-modal-overlay');
+  const editBtn  = document.getElementById('ticker-edit-btn');
+  const closeBtn = document.getElementById('ticker-modal-close');
+  const cancelBtn= document.getElementById('ticker-cancel');
+  const saveBtn  = document.getElementById('ticker-save');
+  const msgList  = document.getElementById('tm-msg-list');
+  const addBtn   = document.getElementById('tm-add-msg');
+  const fontSel  = document.getElementById('tm-font');
+  const sizeSel  = document.getElementById('tm-size');
+
+  function colorDots(color){
+    return CORES.map(c=>
+      '<span class="mc'+(c===color?' on':'')+'" data-c="'+c+'" style="background:'+c+';width:18px;height:18px;border-radius:50%;display:inline-block;cursor:pointer;border:2px solid '+(c===color?'#fff':'transparent')+';margin-right:4px;transition:.13s" title="'+c+'"></span>'
+    ).join('');
+  }
+
+  function renderMsgList(list){
+    msgList.innerHTML = '';
+    list.forEach((m, i)=>{
+      const item = document.createElement('div');
+      item.className = 'msg-item';
+      item.innerHTML =
+        '<div class="msg-item-row">'+
+          '<span class="msg-num">'+(i+1)+'</span>'+
+          '<input class="msg-input" type="text" value="'+m.txt.replace(/&/g,'&amp;').replace(/"/g,'&quot;')+'" placeholder="Digite a mensagem...">'+
+          (list.length>1?'<button type="button" class="msg-del">✕</button>':'')+
+        '</div>'+
+        '<div class="msg-color-row">'+
+          '<span class="msg-color-lbl">Cor:</span>'+
+          colorDots(m.color)+
+        '</div>';
+
+      item.querySelector('.msg-input').addEventListener('input', function(){ list[i].txt = this.value; });
+
+      const del = item.querySelector('.msg-del');
+      if(del) del.addEventListener('click', ()=>{ list.splice(i,1); renderMsgList(list); });
+
+      item.querySelectorAll('.mc, span[data-c]').forEach(dot=>{
+        dot.addEventListener('click', ()=>{
+          list[i].color = dot.dataset.c;
+          item.querySelectorAll('span[data-c]').forEach(d=>{
+            d.style.border = '2px solid '+(d.dataset.c===dot.dataset.c?'#fff':'transparent');
+          });
+        });
+      });
+
+      msgList.appendChild(item);
+    });
+  }
+
+  let editList = [];
+
+  function openModal(){
+    editList = msgs.map(m=>({...m}));
+    fontSel.value = font;
+    sizeSel.value = size;
+    renderMsgList(editList);
+    overlay.classList.add('on');
+    setTimeout(()=>{ const f=msgList.querySelector('.msg-input'); if(f) f.focus(); }, 80);
+  }
+
+  function closeModal(){ overlay.classList.remove('on'); }
+
+  editBtn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  cancelBtn.addEventListener('click', closeModal);
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
+
+  addBtn.addEventListener('click', ()=>{
+    editList.push({ txt:'', color:'#e8edf2' });
+    renderMsgList(editList);
+    setTimeout(()=>{
+      const all = msgList.querySelectorAll('.msg-input');
+      if(all.length) all[all.length-1].focus();
+    }, 40);
+  });
+
+  saveBtn.addEventListener('click', ()=>{
+    msgList.querySelectorAll('.msg-item').forEach((item,i)=>{
+      const inp = item.querySelector('.msg-input');
+      if(inp && editList[i]) editList[i].txt = inp.value;
+    });
+    msgs = editList.filter(m=>m.txt.trim());
+    if(!msgs.length) msgs = [{txt:'Sem mensagens', color:'#8b97a5'}];
+    font = fontSel.value;
+    size = sizeSel.value;
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({msgs,font,size})); }catch(e){}
+    buildTicker();
+    closeModal();
+  });
+})();
+</script>
 </body>
 </html>
