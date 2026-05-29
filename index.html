@@ -776,72 +776,56 @@
   .ticker-modal-overlay.on{display:flex}
   .ticker-modal{
     background:var(--panel);border:1px solid var(--line);
-    border-radius:14px;width:500px;max-width:95vw;
-    overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.5);
+    border-radius:14px;width:620px;max-width:97vw;max-height:88vh;
+    overflow:hidden;display:flex;flex-direction:column;
+    box-shadow:0 24px 64px rgba(0,0,0,.5);
     pointer-events:all;position:relative;z-index:10000;
   }
   .ticker-modal *{pointer-events:all;}
-  .ticker-textarea{
-    pointer-events:all !important;
-    user-select:text !important;
-    -webkit-user-select:text !important;
-    cursor:text !important;
-  }
   .ticker-modal-header{
-    padding:18px 22px;border-bottom:1px solid var(--line-soft);
-    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 20px;border-bottom:1px solid var(--line-soft);
+    display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
   }
   .ticker-modal-header h3{font-size:14px;font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:8px}
-  .ticker-modal-header h3 span.tm-icon{font-size:16px}
   .ticker-modal-close{cursor:pointer;background:none;border:none;color:var(--txt-faint);font-size:20px;line-height:1;padding:2px 6px;border-radius:5px;transition:.13s}
   .ticker-modal-close:hover{color:var(--txt);background:var(--panel-2)}
-  .ticker-modal-body{padding:20px 22px}
-  .ticker-modal-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--txt-dim);margin-bottom:8px}
-  .ticker-modal-toolbar{
-    display:flex;align-items:center;gap:8px;
-    flex-wrap:wrap;
-    background:var(--panel-2);border:1px solid var(--line);
-    border-radius:6px 6px 0 0;padding:9px 12px;
-    border-bottom:none;
-  }
-  .tm-sel{
-    background:var(--panel);border:1px solid var(--line);
-    color:var(--txt);border-radius:5px;padding:5px 8px;
-    font-family:'Poppins',sans-serif;font-size:12px;
-    cursor:pointer;transition:.13s;
-  }
-  .tm-sel:focus{outline:none;border-color:var(--blue)}
-  .tm-color-wrap{display:flex;align-items:center;gap:6px}
-  .tm-color-lbl{font-size:10px;color:var(--txt-faint);font-weight:600;letter-spacing:.8px;text-transform:uppercase}
-  .tm-color{
-    width:22px;height:22px;border-radius:50%;border:2px solid var(--line);
-    cursor:pointer;transition:.13s;flex-shrink:0;
-  }
-  .tm-color:hover,.tm-color.on{border-color:#fff;transform:scale(1.18)}
-  .ticker-textarea{
-    width:100%;background:var(--panel-2);border:1px solid var(--line);
-    border-radius:0 0 6px 6px;color:var(--txt);
-    font-family:'Poppins',sans-serif;font-size:13px;
-    padding:12px;resize:vertical;min-height:90px;
-    transition:.13s;line-height:1.6;
-    pointer-events:all !important;
-    user-select:text !important;
-    -webkit-user-select:text !important;
-    cursor:text !important;
-  }
-  .ticker-textarea:focus{outline:none;border-color:var(--blue);background:#212a35}
-  .ticker-preview-wrap{margin-top:12px}
-  .ticker-preview-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt-faint);margin-bottom:6px}
-  .ticker-preview-box{
-    background:var(--panel-2);border:1px solid var(--line-soft);
-    border-radius:6px;padding:10px 14px;
-    font-family:'Poppins',sans-serif;font-size:12px;
-    color:var(--txt);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
-  }
+  .ticker-modal-body{padding:16px 20px;overflow-y:auto;flex:1}
   .ticker-modal-footer{
-    padding:14px 22px;border-top:1px solid var(--line-soft);
-    display:flex;gap:8px;justify-content:flex-end;background:var(--panel-2);
+    padding:12px 20px;border-top:1px solid var(--line-soft);
+    display:flex;gap:8px;justify-content:space-between;align-items:center;
+    background:var(--panel-2);flex-shrink:0;
   }
+  .ticker-global-row{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line-soft)}
+  .ticker-global-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt-dim);white-space:nowrap}
+  .tm-sel{background:var(--panel);border:1px solid var(--line);color:var(--txt);border-radius:5px;padding:5px 8px;font-family:'Poppins',sans-serif;font-size:12px;cursor:pointer;transition:.13s}
+  .tm-sel:focus{outline:none;border-color:var(--blue)}
+  .msg-section-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--txt-dim);margin-bottom:10px}
+  .msg-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+  .msg-item{background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+  .msg-item-row{display:flex;align-items:center;gap:8px}
+  .msg-num{font-size:9px;font-weight:800;color:var(--txt-faint);min-width:18px;text-align:center;flex-shrink:0}
+  .msg-input{
+    flex:1;background:var(--panel);border:1px solid var(--line);
+    color:var(--txt);border-radius:5px;padding:8px 10px;
+    font-family:'Poppins',sans-serif;font-size:12px;transition:.13s;
+    pointer-events:all !important;cursor:text !important;
+    user-select:text !important;-webkit-user-select:text !important;
+  }
+  .msg-input:focus{outline:none;border-color:var(--blue);background:#212a35}
+  .msg-color-row{display:flex;align-items:center;gap:6px;padding-left:26px}
+  .msg-color-lbl{font-size:9px;color:var(--txt-faint);font-weight:600;text-transform:uppercase;letter-spacing:.8px;flex-shrink:0}
+  .mc{width:18px;height:18px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:.13s;flex-shrink:0}
+  .mc:hover{border-color:rgba(255,255,255,.5);transform:scale(1.2)}
+  .mc.on{border-color:#fff !important;transform:scale(1.28)}
+  .msg-del{cursor:pointer;background:none;border:none;color:var(--txt-faint);font-size:15px;padding:3px 5px;border-radius:4px;transition:.12s;flex-shrink:0;margin-left:2px}
+  .msg-del:hover{color:var(--red);background:rgba(240,83,63,.12)}
+  .btn-add-msg{
+    width:100%;cursor:pointer;background:rgba(56,102,247,.1);
+    border:1px dashed rgba(56,102,247,.35);color:var(--blue-soft);
+    border-radius:7px;padding:9px;font-family:'Poppins',sans-serif;
+    font-size:12px;font-weight:600;transition:.13s;
+  }
+  .btn-add-msg:hover{background:rgba(56,102,247,.2);border-color:var(--blue)}
 </style>
 </head>
 <body>
@@ -2821,95 +2805,124 @@ load();
 
 /* ===== TICKER CNN ===== */
 (function initTicker(){
-  const STORAGE_KEY = 'sas_ticker_cfg';
+  const STORAGE_KEY = 'sas_ticker_cfg2';
+  const CORES = ['#e8edf2','#5b82ff','#3fb950','#f0953f','#f0533f','#9a6cf0','#00b8a3','#f7d550'];
 
-  // Config padrão
-  let cfg = {
-    msg: '⚠️ ATENÇÃO: CASO O COLABORADOR SAIR DA MÁQUINA PARA TRABALHAR EM OUTRO DEPARTAMENTO, APONTAR "TRABALHO EM OUTRO SETOR"',
-    font: "'Poppins',sans-serif",
-    size: '12px',
-    color: '#f0953f'
-  };
+  let msgs = [
+    { txt: '⚠️ ATENÇÃO: CASO O COLABORADOR SAIR DA MÁQUINA PARA TRABALHAR EM OUTRO DEPARTAMENTO, APONTAR "TRABALHO EM OUTRO SETOR"', color: '#f0953f' }
+  ];
+  let font = "'Poppins',sans-serif";
+  let size = '12px';
 
-  // Carregar do localStorage se existir
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if(saved) cfg = {...cfg, ...JSON.parse(saved)};
+    if(saved){ const p=JSON.parse(saved); msgs=p.msgs||msgs; font=p.font||font; size=p.size||size; }
   } catch(e){}
 
   const marquee = document.getElementById('ticker-marquee');
-  const labelEl = document.getElementById('ticker-label-el');
 
   function buildTicker(){
-    const txt = cfg.msg;
-    const repeat = txt + ' &nbsp;&nbsp;&nbsp;&nbsp;◆&nbsp;&nbsp;&nbsp;&nbsp; ' + txt;
-    marquee.innerHTML = repeat;
-    marquee.style.fontFamily = cfg.font;
-    marquee.style.fontSize = cfg.size;
-    marquee.style.color = cfg.color;
+    if(!marquee) return;
+    let html = '';
+    msgs.forEach((m, i)=>{
+      if(!m.txt.trim()) return;
+      html += '<span style="color:'+m.color+';font-family:'+font+';font-size:'+size+';font-weight:600;margin-right:50px">'+
+        m.txt.replace(/</g,'&lt;')+'</span>';
+      html += '<span style="color:rgba(255,255,255,.3);margin-right:50px;font-size:14px">◆</span>';
+    });
+    marquee.innerHTML = html || '<span style="color:#8b97a5">Sem mensagens</span>';
   }
 
   buildTicker();
 
-  // — Modal —
-  const overlay = document.getElementById('ticker-modal-overlay');
-  const editBtn = document.getElementById('ticker-edit-btn');
+  // ── Modal ──
+  const overlay  = document.getElementById('ticker-modal-overlay');
+  const editBtn  = document.getElementById('ticker-edit-btn');
   const closeBtn = document.getElementById('ticker-modal-close');
-  const cancelBtn = document.getElementById('ticker-cancel');
-  const saveBtn = document.getElementById('ticker-save');
-  const textarea = document.getElementById('ticker-textarea');
-  const fontSel = document.getElementById('tm-font');
-  const sizeSel = document.getElementById('tm-size');
-  const colorDots = document.querySelectorAll('.tm-color');
-  const preview = document.getElementById('ticker-preview');
+  const cancelBtn= document.getElementById('ticker-cancel');
+  const saveBtn  = document.getElementById('ticker-save');
+  const msgList  = document.getElementById('tm-msg-list');
+  const addBtn   = document.getElementById('tm-add-msg');
+  const fontSel  = document.getElementById('tm-font');
+  const sizeSel  = document.getElementById('tm-size');
 
-  let activeDot = document.querySelector('.tm-color.on');
+  function colorDots(color){
+    return CORES.map(c=>
+      '<span class="mc'+(c===color?' on':'')+'" data-c="'+c+'" style="background:'+c+'" title="'+c+'"></span>'
+    ).join('');
+  }
+
+  function renderMsgList(list){
+    msgList.innerHTML = '';
+    list.forEach((m, i)=>{
+      const item = document.createElement('div');
+      item.className = 'msg-item';
+      item.dataset.idx = i;
+      item.innerHTML =
+        '<div class="msg-item-row">'+
+          '<span class="msg-num">'+(i+1)+'</span>'+
+          '<input class="msg-input" type="text" value="'+m.txt.replace(/"/g,'&quot;')+'" placeholder="Digite a mensagem..." spellcheck="false">'+
+          (list.length>1?'<button type="button" class="msg-del" title="Remover">✕</button>':'')+
+        '</div>'+
+        '<div class="msg-color-row">'+
+          '<span class="msg-color-lbl">Cor:</span>'+
+          colorDots(m.color)+
+        '</div>';
+      // eventos
+      item.querySelector('.msg-input').addEventListener('input', function(){
+        list[i].txt = this.value;
+      });
+      const del = item.querySelector('.msg-del');
+      if(del) del.addEventListener('click', ()=>{ list.splice(i,1); renderMsgList(list); });
+      item.querySelectorAll('.mc').forEach(dot=>{
+        dot.addEventListener('click', ()=>{
+          list[i].color = dot.dataset.c;
+          item.querySelectorAll('.mc').forEach(d=>d.classList.remove('on'));
+          dot.classList.add('on');
+        });
+      });
+      msgList.appendChild(item);
+    });
+  }
+
+  let editList = [];
 
   function openModal(){
-    textarea.value = cfg.msg;
-    fontSel.value = cfg.font;
-    sizeSel.value = cfg.size;
-    colorDots.forEach(d=>{
-      d.classList.toggle('on', d.dataset.color === cfg.color);
-    });
-    activeDot = document.querySelector('.tm-color.on') || colorDots[0];
-    updatePreview();
+    editList = msgs.map(m=>({...m}));
+    fontSel.value = font;
+    sizeSel.value = size;
+    renderMsgList(editList);
     overlay.classList.add('on');
-    // Focar no textarea após o modal aparecer
-    setTimeout(()=>{ textarea.focus(); textarea.select(); }, 50);
+    setTimeout(()=>{ const f=msgList.querySelector('.msg-input'); if(f){f.focus();f.select();} }, 60);
   }
   function closeModal(){ overlay.classList.remove('on'); }
 
-  function updatePreview(){
-    preview.textContent = textarea.value || '—';
-    preview.style.fontFamily = fontSel.value;
-    preview.style.fontSize = sizeSel.value;
-    preview.style.color = activeDot ? activeDot.dataset.color : '#e8edf2';
-  }
+  addBtn.addEventListener('click', ()=>{
+    editList.push({ txt:'', color:'#e8edf2' });
+    renderMsgList(editList);
+    setTimeout(()=>{
+      const inputs = msgList.querySelectorAll('.msg-input');
+      const last = inputs[inputs.length-1];
+      if(last) last.focus();
+    }, 30);
+  });
 
   editBtn.addEventListener('click', openModal);
   closeBtn.addEventListener('click', closeModal);
   cancelBtn.addEventListener('click', closeModal);
   overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
 
-  textarea.addEventListener('input', updatePreview);
-  fontSel.addEventListener('change', updatePreview);
-  sizeSel.addEventListener('change', updatePreview);
-  colorDots.forEach(d=>{
-    d.addEventListener('click', ()=>{
-      colorDots.forEach(x=>x.classList.remove('on'));
-      d.classList.add('on');
-      activeDot = d;
-      updatePreview();
-    });
-  });
-
   saveBtn.addEventListener('click', ()=>{
-    cfg.msg = textarea.value.trim() || cfg.msg;
-    cfg.font = fontSel.value;
-    cfg.size = sizeSel.value;
-    cfg.color = activeDot ? activeDot.dataset.color : '#e8edf2';
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg)); }catch(e){}
+    // ler valores atuais dos inputs (caso o usuário não tenha saído do campo)
+    msgList.querySelectorAll('.msg-item').forEach((item, i)=>{
+      const inp = item.querySelector('.msg-input');
+      if(inp && editList[i]) editList[i].txt = inp.value;
+    });
+    msgs = editList.filter(m=>m.txt.trim());
+    if(!msgs.length) msgs = [{ txt:'Sem mensagens', color:'#8b97a5' }];
+    font = fontSel.value;
+    size = sizeSel.value;
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({msgs, font, size})); }catch(e){}
     buildTicker();
     closeModal();
   });
@@ -2936,40 +2949,30 @@ load();
 <div class="ticker-modal-overlay" id="ticker-modal-overlay">
   <div class="ticker-modal">
     <div class="ticker-modal-header">
-      <h3><span class="tm-icon">📢</span> Mensagem do Ticker</h3>
+      <h3>📢 Mensagens do Ticker</h3>
       <button type="button" class="ticker-modal-close" id="ticker-modal-close">✕</button>
     </div>
     <div class="ticker-modal-body">
-      <div class="ticker-modal-label">Formatação</div>
-      <div class="ticker-modal-toolbar">
-        <select class="tm-sel" id="tm-font" title="Fonte">
+      <div class="ticker-global-row">
+        <span class="ticker-global-lbl">Fonte:</span>
+        <select class="tm-sel" id="tm-font">
           <option value="'Poppins',sans-serif">Poppins</option>
           <option value="'Courier New',monospace">Mono</option>
           <option value="Georgia,serif">Serif</option>
           <option value="Arial,sans-serif">Arial</option>
         </select>
-        <select class="tm-sel" id="tm-size" title="Tamanho">
+        <span class="ticker-global-lbl" style="margin-left:6px">Tamanho:</span>
+        <select class="tm-sel" id="tm-size">
           <option value="11px">11px</option>
           <option value="12px" selected>12px</option>
           <option value="14px">14px</option>
           <option value="16px">16px</option>
           <option value="18px">18px</option>
         </select>
-        <div class="tm-color-wrap">
-          <span class="tm-color-lbl">Cor</span>
-          <span class="tm-color on" data-color="#e8edf2" style="background:#e8edf2" title="Branco"></span>
-          <span class="tm-color" data-color="#5b82ff" style="background:#5b82ff" title="Azul"></span>
-          <span class="tm-color" data-color="#3fb950" style="background:#3fb950" title="Verde"></span>
-          <span class="tm-color" data-color="#f0953f" style="background:#f0953f" title="Laranja"></span>
-          <span class="tm-color" data-color="#f0533f" style="background:#f0533f" title="Vermelho"></span>
-          <span class="tm-color" data-color="#9a6cf0" style="background:#9a6cf0" title="Roxo"></span>
-        </div>
       </div>
-      <textarea class="ticker-textarea" id="ticker-textarea" placeholder="Digite a mensagem que irá aparecer no ticker...">⚠️ ATENÇÃO: CASO O COLABORADOR SAIR DA MÁQUINA PARA TRABALHAR EM OUTRO DEPARTAMENTO, APONTAR "TRABALHO EM OUTRO SETOR"</textarea>
-      <div class="ticker-preview-wrap">
-        <div class="ticker-preview-label">Pré-visualização</div>
-        <div class="ticker-preview-box" id="ticker-preview">—</div>
-      </div>
+      <div class="msg-section-lbl">Mensagens <span style="color:var(--txt-faint);font-weight:500;text-transform:none;letter-spacing:0">(cada uma com sua cor)</span></div>
+      <div class="msg-list" id="tm-msg-list"></div>
+      <button type="button" class="btn-add-msg" id="tm-add-msg">+ Adicionar mensagem</button>
     </div>
     <div class="ticker-modal-footer">
       <button type="button" class="mbtn cancel" id="ticker-cancel">Cancelar</button>
