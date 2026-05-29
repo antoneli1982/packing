@@ -725,6 +725,121 @@
   .mbtn.confirm{background:var(--green);border:none;color:#fff;padding:10px 22px}
   .mbtn.confirm:hover{background:#4cd166}
   .mbtn.confirm:active{transform:translateY(1px)}
+
+  /* ===== TICKER CNN ===== */
+  .ticker-bar{
+    display:flex;align-items:center;
+    background:var(--panel);border:1px solid var(--line);
+    border-radius:8px;margin-bottom:16px;
+    height:38px;overflow:hidden;position:relative;
+  }
+  .ticker-label{
+    flex-shrink:0;background:var(--blue);color:#fff;
+    font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;
+    letter-spacing:1.5px;text-transform:uppercase;
+    padding:0 14px;height:100%;display:flex;align-items:center;
+    z-index:2;white-space:nowrap;
+  }
+  .ticker-label::after{
+    content:"";position:absolute;left:calc(var(--lw,70px) - 1px);top:0;bottom:0;width:18px;
+    background:linear-gradient(to right,var(--blue),transparent);pointer-events:none;z-index:3;
+  }
+  .ticker-track{flex:1;overflow:hidden;position:relative;min-width:0}
+  .ticker-track::after{
+    content:"";position:absolute;right:0;top:0;bottom:0;width:40px;
+    background:linear-gradient(to right,transparent,var(--panel));pointer-events:none;z-index:2;
+  }
+  .ticker-inner{
+    display:inline-flex;align-items:center;gap:48px;
+    white-space:nowrap;
+    animation:tickerScroll 30s linear infinite;
+    will-change:transform;
+  }
+  .ticker-inner:hover{animation-play-state:paused}
+  @keyframes tickerScroll{
+    0%{transform:translateX(0)}
+    100%{transform:translateX(-50%)}
+  }
+  .ticker-msg{
+    font-family:'Poppins',sans-serif;font-size:12px;font-weight:500;
+    color:var(--txt);letter-spacing:.3px;flex-shrink:0;
+  }
+  .ticker-sep{
+    font-size:16px;color:var(--blue-soft);flex-shrink:0;opacity:.6;
+  }
+  .ticker-edit-btn{
+    flex-shrink:0;cursor:pointer;background:none;border:1px solid var(--line);
+    color:var(--txt-faint);border-radius:6px;
+    width:28px;height:28px;margin:0 6px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:13px;transition:.13s;z-index:4;
+  }
+  .ticker-edit-btn:hover{border-color:var(--blue);color:var(--blue-soft)}
+
+  /* ===== MODAL TICKER ===== */
+  .ticker-modal-overlay{
+    display:none;position:fixed;inset:0;
+    background:rgba(0,0,0,.72);z-index:9999;
+    align-items:center;justify-content:center;
+    backdrop-filter:blur(4px);
+  }
+  .ticker-modal-overlay.on{display:flex}
+  .ticker-modal{
+    background:var(--panel);border:1px solid var(--line);
+    border-radius:14px;width:500px;max-width:95vw;
+    overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.5);
+  }
+  .ticker-modal-header{
+    padding:18px 22px;border-bottom:1px solid var(--line-soft);
+    display:flex;align-items:center;justify-content:space-between;
+  }
+  .ticker-modal-header h3{font-size:14px;font-weight:700;letter-spacing:.2px;display:flex;align-items:center;gap:8px}
+  .ticker-modal-header h3 span.tm-icon{font-size:16px}
+  .ticker-modal-close{cursor:pointer;background:none;border:none;color:var(--txt-faint);font-size:20px;line-height:1;padding:2px 6px;border-radius:5px;transition:.13s}
+  .ticker-modal-close:hover{color:var(--txt);background:var(--panel-2)}
+  .ticker-modal-body{padding:20px 22px}
+  .ticker-modal-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--txt-dim);margin-bottom:8px}
+  .ticker-modal-toolbar{
+    display:flex;align-items:center;gap:8px;
+    flex-wrap:wrap;
+    background:var(--panel-2);border:1px solid var(--line);
+    border-radius:6px 6px 0 0;padding:9px 12px;
+    border-bottom:none;
+  }
+  .tm-sel{
+    background:var(--panel);border:1px solid var(--line);
+    color:var(--txt);border-radius:5px;padding:5px 8px;
+    font-family:'Poppins',sans-serif;font-size:12px;
+    cursor:pointer;transition:.13s;
+  }
+  .tm-sel:focus{outline:none;border-color:var(--blue)}
+  .tm-color-wrap{display:flex;align-items:center;gap:6px}
+  .tm-color-lbl{font-size:10px;color:var(--txt-faint);font-weight:600;letter-spacing:.8px;text-transform:uppercase}
+  .tm-color{
+    width:22px;height:22px;border-radius:50%;border:2px solid var(--line);
+    cursor:pointer;transition:.13s;flex-shrink:0;
+  }
+  .tm-color:hover,.tm-color.on{border-color:#fff;transform:scale(1.18)}
+  .ticker-textarea{
+    width:100%;background:var(--panel-2);border:1px solid var(--line);
+    border-radius:0 0 6px 6px;color:var(--txt);
+    font-family:'Poppins',sans-serif;font-size:13px;
+    padding:12px;resize:vertical;min-height:90px;
+    transition:.13s;line-height:1.6;
+  }
+  .ticker-textarea:focus{outline:none;border-color:var(--blue);background:#212a35}
+  .ticker-preview-wrap{margin-top:12px}
+  .ticker-preview-label{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt-faint);margin-bottom:6px}
+  .ticker-preview-box{
+    background:var(--panel-2);border:1px solid var(--line-soft);
+    border-radius:6px;padding:10px 14px;
+    font-family:'Poppins',sans-serif;font-size:12px;
+    color:var(--txt);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+  }
+  .ticker-modal-footer{
+    padding:14px 22px;border-top:1px solid var(--line-soft);
+    display:flex;gap:8px;justify-content:flex-end;background:var(--panel-2);
+  }
 </style>
 </head>
 <body>
@@ -786,7 +901,62 @@
     <div class="tab" data-view="dash"><span class="dot"></span>Dashboard</div>
   </div>
 
-  <!-- ============ VIEW: APONTAMENTO ============ -->
+  <!-- ===== TICKER CNN ===== -->
+  <div class="ticker-bar" id="ticker-bar">
+    <div class="ticker-label" id="ticker-label-el">📢 AVISO</div>
+    <div class="ticker-track">
+      <div class="ticker-inner" id="ticker-inner">
+        <!-- mensagens duplicadas para loop contínuo -->
+      </div>
+    </div>
+    <button type="button" class="ticker-edit-btn" id="ticker-edit-btn" title="Editar mensagem">✏️</button>
+  </div>
+
+  <!-- ===== MODAL EDITAR TICKER ===== -->
+  <div class="ticker-modal-overlay" id="ticker-modal-overlay">
+    <div class="ticker-modal">
+      <div class="ticker-modal-header">
+        <h3><span class="tm-icon">📢</span> Mensagem do Ticker</h3>
+        <button type="button" class="ticker-modal-close" id="ticker-modal-close">✕</button>
+      </div>
+      <div class="ticker-modal-body">
+        <div class="ticker-modal-label">Formatação</div>
+        <div class="ticker-modal-toolbar">
+          <select class="tm-sel" id="tm-font" title="Fonte">
+            <option value="'Poppins',sans-serif">Poppins</option>
+            <option value="'Courier New',monospace">Mono</option>
+            <option value="Georgia,serif">Serif</option>
+            <option value="Arial,sans-serif">Arial</option>
+          </select>
+          <select class="tm-sel" id="tm-size" title="Tamanho">
+            <option value="11px">11px</option>
+            <option value="12px" selected>12px</option>
+            <option value="14px">14px</option>
+            <option value="16px">16px</option>
+            <option value="18px">18px</option>
+          </select>
+          <div class="tm-color-wrap">
+            <span class="tm-color-lbl">Cor</span>
+            <span class="tm-color on" data-color="#e8edf2" style="background:#e8edf2" title="Branco"></span>
+            <span class="tm-color" data-color="#5b82ff" style="background:#5b82ff" title="Azul"></span>
+            <span class="tm-color" data-color="#3fb950" style="background:#3fb950" title="Verde"></span>
+            <span class="tm-color" data-color="#f0953f" style="background:#f0953f" title="Laranja"></span>
+            <span class="tm-color" data-color="#f0533f" style="background:#f0533f" title="Vermelho"></span>
+            <span class="tm-color" data-color="#9a6cf0" style="background:#9a6cf0" title="Roxo"></span>
+          </div>
+        </div>
+        <textarea class="ticker-textarea" id="ticker-textarea" placeholder="Digite a mensagem que irá aparecer no ticker...">Bem-vindo ao Sistema de Apontamento SAS · Lavadora de Embalagem — SESÉ · Registre seu apontamento utilizando o formulário ao lado</textarea>
+        <div class="ticker-preview-wrap">
+          <div class="ticker-preview-label">Pré-visualização</div>
+          <div class="ticker-preview-box" id="ticker-preview">—</div>
+        </div>
+      </div>
+      <div class="ticker-modal-footer">
+        <button type="button" class="mbtn cancel" id="ticker-cancel">Cancelar</button>
+        <button type="button" class="mbtn confirm" id="ticker-save">💾 Salvar</button>
+      </div>
+    </div>
+  </div>
   <div class="view on" id="view-apont">
     <div class="grid">
 
@@ -2693,7 +2863,117 @@ load();
   });
 })();
 
-/* ── Selecionar Lavagem de Embalagem por padrão ao abrir ── */
+/* ===== TICKER CNN ===== */
+document.addEventListener('DOMContentLoaded', function initTicker(){
+  const STORAGE_KEY = 'sas_ticker_cfg';
+
+  // Config padrão
+  let cfg = {
+    msg: 'Bem-vindo ao Sistema de Apontamento SAS · Lavadora de Embalagem — SESÉ · Registre seu apontamento utilizando o formulário ao lado',
+    font: "'Poppins',sans-serif",
+    size: '12px',
+    color: '#e8edf2'
+  };
+
+  // Carregar do localStorage se existir
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if(saved) cfg = {...cfg, ...JSON.parse(saved)};
+  } catch(e){}
+
+  const inner = document.getElementById('ticker-inner');
+  const labelEl = document.getElementById('ticker-label-el');
+
+  function buildTicker(){
+    // Duplicar para loop perfeito
+    const msgs = [cfg.msg, cfg.msg];
+    inner.innerHTML = '';
+    msgs.forEach((m,i)=>{
+      const span = document.createElement('span');
+      span.className = 'ticker-msg';
+      span.textContent = m;
+      span.style.fontFamily = cfg.font;
+      span.style.fontSize = cfg.size;
+      span.style.color = cfg.color;
+      inner.appendChild(span);
+      if(i === 0){
+        const sep = document.createElement('span');
+        sep.className = 'ticker-sep';
+        sep.textContent = '◆';
+        inner.appendChild(sep);
+      }
+    });
+    // Ajustar velocidade pela largura
+    const totalW = inner.scrollWidth;
+    const speed = Math.max(20, totalW / 60);
+    inner.style.animationDuration = speed + 's';
+  }
+
+  buildTicker();
+
+  // — Modal —
+  const overlay = document.getElementById('ticker-modal-overlay');
+  const editBtn = document.getElementById('ticker-edit-btn');
+  const closeBtn = document.getElementById('ticker-modal-close');
+  const cancelBtn = document.getElementById('ticker-cancel');
+  const saveBtn = document.getElementById('ticker-save');
+  const textarea = document.getElementById('ticker-textarea');
+  const fontSel = document.getElementById('tm-font');
+  const sizeSel = document.getElementById('tm-size');
+  const colorDots = document.querySelectorAll('.tm-color');
+  const preview = document.getElementById('ticker-preview');
+
+  let activeDot = document.querySelector('.tm-color.on');
+
+  function openModal(){
+    textarea.value = cfg.msg;
+    fontSel.value = cfg.font;
+    sizeSel.value = cfg.size;
+    colorDots.forEach(d=>{
+      d.classList.toggle('on', d.dataset.color === cfg.color);
+    });
+    activeDot = document.querySelector('.tm-color.on') || colorDots[0];
+    updatePreview();
+    overlay.classList.add('on');
+  }
+  function closeModal(){ overlay.classList.remove('on'); }
+
+  function updatePreview(){
+    preview.textContent = textarea.value || '—';
+    preview.style.fontFamily = fontSel.value;
+    preview.style.fontSize = sizeSel.value;
+    preview.style.color = activeDot ? activeDot.dataset.color : '#e8edf2';
+  }
+
+  editBtn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  cancelBtn.addEventListener('click', closeModal);
+  overlay.addEventListener('click', e=>{ if(e.target===overlay) closeModal(); });
+
+  textarea.addEventListener('input', updatePreview);
+  fontSel.addEventListener('change', updatePreview);
+  sizeSel.addEventListener('change', updatePreview);
+  colorDots.forEach(d=>{
+    d.addEventListener('click', ()=>{
+      colorDots.forEach(x=>x.classList.remove('on'));
+      d.classList.add('on');
+      activeDot = d;
+      updatePreview();
+    });
+  });
+
+  saveBtn.addEventListener('click', ()=>{
+    cfg.msg = textarea.value.trim() || cfg.msg;
+    cfg.font = fontSel.value;
+    cfg.size = sizeSel.value;
+    cfg.color = activeDot ? activeDot.dataset.color : '#e8edf2';
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg)); }catch(e){}
+    buildTicker();
+    closeModal();
+  });
+});
+
+
 (function selectLavDefault(){
   const btn = document.querySelector('.tipo-btn[data-tp="lav"]');
   if(!btn) return;
