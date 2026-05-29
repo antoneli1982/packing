@@ -738,34 +738,24 @@
     font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;
     letter-spacing:1.5px;text-transform:uppercase;
     padding:0 14px;height:100%;display:flex;align-items:center;
-    z-index:2;white-space:nowrap;
+    z-index:2;white-space:nowrap;position:relative;
   }
-  .ticker-label::after{
-    content:"";position:absolute;left:calc(var(--lw,70px) - 1px);top:0;bottom:0;width:18px;
-    background:linear-gradient(to right,var(--blue),transparent);pointer-events:none;z-index:3;
-  }
-  .ticker-track{flex:1;overflow:hidden;position:relative;min-width:0}
-  .ticker-track::after{
-    content:"";position:absolute;right:0;top:0;bottom:0;width:40px;
-    background:linear-gradient(to right,transparent,var(--panel));pointer-events:none;z-index:2;
+  .ticker-track{
+    flex:1;overflow:hidden;position:relative;min-width:0;height:100%;
+    display:flex;align-items:center;
   }
   .ticker-inner{
-    display:inline-flex;align-items:center;gap:48px;
+    display:inline-block;
     white-space:nowrap;
-    animation:tickerScroll 30s linear infinite;
-    will-change:transform;
-  }
-  .ticker-inner:hover{animation-play-state:paused}
-  @keyframes tickerScroll{
-    0%{transform:translateX(0)}
-    100%{transform:translateX(-50%)}
+    position:relative;
   }
   .ticker-msg{
-    font-family:'Poppins',sans-serif;font-size:12px;font-weight:500;
-    color:var(--txt);letter-spacing:.3px;flex-shrink:0;
+    font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;
+    letter-spacing:.3px;
+    margin-right:60px;
   }
   .ticker-sep{
-    font-size:16px;color:var(--blue-soft);flex-shrink:0;opacity:.6;
+    font-size:14px;color:var(--blue-soft);opacity:.6;margin-right:60px;
   }
   .ticker-edit-btn{
     flex-shrink:0;cursor:pointer;background:none;border:1px solid var(--line);
@@ -917,9 +907,9 @@
   <div class="ticker-bar" id="ticker-bar">
     <div class="ticker-label" id="ticker-label-el">📢 AVISO</div>
     <div class="ticker-track">
-      <div class="ticker-inner" id="ticker-inner">
-        <!-- mensagens duplicadas para loop contínuo -->
-      </div>
+      <marquee id="ticker-marquee" behavior="scroll" direction="left" scrollamount="4" style="font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;color:#f0953f;">
+        ⚠️ ATENÇÃO: CASO O COLABORADOR SAIR DA MÁQUINA PARA TRABALHAR EM OUTRO DEPARTAMENTO, APONTAR "TRABALHO EM OUTRO SETOR" &nbsp;&nbsp;&nbsp;&nbsp;◆&nbsp;&nbsp;&nbsp;&nbsp; ⚠️ ATENÇÃO: CASO O COLABORADOR SAIR DA MÁQUINA PARA TRABALHAR EM OUTRO DEPARTAMENTO, APONTAR "TRABALHO EM OUTRO SETOR"
+      </marquee>
     </div>
     <button type="button" class="ticker-edit-btn" id="ticker-edit-btn" title="Editar mensagem">✏️</button>
   </div>
@@ -2835,10 +2825,10 @@ load();
 
   // Config padrão
   let cfg = {
-    msg: 'Bem-vindo ao Sistema de Apontamento SAS · Lavadora de Embalagem — SESÉ · Registre seu apontamento utilizando o formulário ao lado',
+    msg: '⚠️ ATENÇÃO: CASO O COLABORADOR SAIR DA MÁQUINA PARA TRABALHAR EM OUTRO DEPARTAMENTO, APONTAR "TRABALHO EM OUTRO SETOR"',
     font: "'Poppins',sans-serif",
     size: '12px',
-    color: '#e8edf2'
+    color: '#f0953f'
   };
 
   // Carregar do localStorage se existir
@@ -2847,32 +2837,16 @@ load();
     if(saved) cfg = {...cfg, ...JSON.parse(saved)};
   } catch(e){}
 
-  const inner = document.getElementById('ticker-inner');
+  const marquee = document.getElementById('ticker-marquee');
   const labelEl = document.getElementById('ticker-label-el');
 
   function buildTicker(){
-    // Duplicar para loop perfeito
-    const msgs = [cfg.msg, cfg.msg];
-    inner.innerHTML = '';
-    msgs.forEach((m,i)=>{
-      const span = document.createElement('span');
-      span.className = 'ticker-msg';
-      span.textContent = m;
-      span.style.fontFamily = cfg.font;
-      span.style.fontSize = cfg.size;
-      span.style.color = cfg.color;
-      inner.appendChild(span);
-      if(i === 0){
-        const sep = document.createElement('span');
-        sep.className = 'ticker-sep';
-        sep.textContent = '◆';
-        inner.appendChild(sep);
-      }
-    });
-    // Ajustar velocidade pela largura
-    const totalW = inner.scrollWidth;
-    const speed = Math.max(20, totalW / 60);
-    inner.style.animationDuration = speed + 's';
+    const txt = cfg.msg;
+    const repeat = txt + ' &nbsp;&nbsp;&nbsp;&nbsp;◆&nbsp;&nbsp;&nbsp;&nbsp; ' + txt;
+    marquee.innerHTML = repeat;
+    marquee.style.fontFamily = cfg.font;
+    marquee.style.fontSize = cfg.size;
+    marquee.style.color = cfg.color;
   }
 
   buildTicker();
@@ -2991,7 +2965,7 @@ load();
           <span class="tm-color" data-color="#9a6cf0" style="background:#9a6cf0" title="Roxo"></span>
         </div>
       </div>
-      <textarea class="ticker-textarea" id="ticker-textarea" placeholder="Digite a mensagem que irá aparecer no ticker..."></textarea>
+      <textarea class="ticker-textarea" id="ticker-textarea" placeholder="Digite a mensagem que irá aparecer no ticker...">⚠️ ATENÇÃO: CASO O COLABORADOR SAIR DA MÁQUINA PARA TRABALHAR EM OUTRO DEPARTAMENTO, APONTAR "TRABALHO EM OUTRO SETOR"</textarea>
       <div class="ticker-preview-wrap">
         <div class="ticker-preview-label">Pré-visualização</div>
         <div class="ticker-preview-box" id="ticker-preview">—</div>
