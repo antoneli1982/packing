@@ -214,6 +214,10 @@
   @keyframes embItemIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
   .emb-item .emb-nome{flex:1;color:var(--txt);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .emb-item .emb-qtd{color:var(--blue-soft);font-weight:700;font-size:13px;min-width:40px;text-align:right}
+  .emb-item .emb-qtd-edit{width:72px;text-align:right;color:var(--blue-soft);font-weight:700;
+    font-size:13px;font-family:'Poppins',sans-serif;background:var(--panel);
+    border:1px solid var(--line);border-radius:5px;padding:5px 7px}
+  .emb-item .emb-qtd-edit:focus{outline:none;border-color:var(--blue-soft)}
   .emb-item .emb-del{cursor:pointer;background:none;border:none;color:var(--txt-faint);
     font-size:14px;padding:2px 5px;border-radius:4px;transition:.12s;line-height:1}
   .emb-item .emb-del:hover{color:var(--red);background:rgba(240,83,63,.12)}
@@ -1303,13 +1307,23 @@ function renderEmbList(){
   embItens.forEach((it,i)=>{
     const div=document.createElement("div");div.className="emb-item";
     div.innerHTML='<span class="emb-nome">'+it.emb+'</span>'+
-      '<span class="emb-qtd">'+it.total.toLocaleString("pt-BR")+'</span>'+
+      '<input type="number" class="emb-qtd-edit" min="1" step="1" value="'+it.total+'" title="Editar quantidade">'+
       '<button type="button" class="emb-del" title="Remover">✕</button>';
+    const inp=div.querySelector(".emb-qtd-edit");
+    inp.addEventListener("input",()=>{
+      const v=parseInt(inp.value,10);
+      if(v>0){embItens[i].total=v;atualizarBarraEmb();}
+    });
     div.querySelector(".emb-del").addEventListener("click",()=>{
       embItens.splice(i,1);renderEmbList();
     });
     list.appendChild(div);
   });
+  atualizarBarraEmb();
+}
+function atualizarBarraEmb(){
+  const bar=document.getElementById("emb-total-bar");
+  if(!embItens.length){bar.innerHTML="";return;}
   const soma=embItens.reduce((a,it)=>a+it.total,0);
   bar.innerHTML='<span class="etb-label">Total do ciclo: '+embItens.length+' tipo'+(embItens.length>1?'s':'')+'</span>'+
     '<span class="etb-value">'+soma.toLocaleString("pt-BR")+' emb.</span>';
@@ -1517,15 +1531,18 @@ document.getElementById("form").addEventListener("submit",async e=>{
   if(mDur>90&&!duracaoConfirmada){checkDuracao();return flash("Confirme se os horários estão corretos (duração: "+fmtMin(mDur)+")",false);}
   const reg={id:editingId||Date.now(),tipo,data,turno,hi,hf,cicloExtra:cicloExtra==='sim',cicloExtraCount:cicloExtraCount};
   if(tipo==="lav"){
-    /* Se o operador adicionou itens na lista, usar a lista.
-       Se não (digitou direto sem clicar +), pegar do select+input */
-    if(embItens.length===0){
-      const emb=selEmb.value;
-      const total=parseInt(document.getElementById("total").value,10);
-      if(!emb)            return flash("Selecione a embalagem e clique + para adicionar",false);
-      if(!total||total<1)return flash("Informe a quantidade e clique + para adicionar",false);
-      embItens.push({emb:emb,total:total});
+    /* Aproveita um valor digitado no campo (mesmo sem ter clicado +),
+       seja em novo registro ou durante a edição */
+    const embPend=selEmb.value;
+    const totalPend=parseInt(document.getElementById("total").value,10);
+    if(embPend && totalPend>0){
+      embItens.push({emb:embPend,total:totalPend});
+      selEmb.selectedIndex=0;document.getElementById("total").value="";
       renderEmbList();
+    }
+    if(embItens.length===0){
+      if(!embPend)            return flash("Selecione a embalagem e clique + para adicionar",false);
+      return flash("Informe a quantidade e clique + para adicionar",false);
     }
     /* Salvar array de itens + manter emb/total para retrocompatibilidade */
     reg.itens=embItens.map(it=>({emb:it.emb,total:it.total}));
