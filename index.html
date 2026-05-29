@@ -2129,6 +2129,8 @@ function fmtCE(v){return v.toFixed(2).replace(".",",");}
 
 function render(){
   document.getElementById("state-box").innerHTML="";
+  // Atualizar velocidade no ticker sempre que os dados mudarem
+  setTimeout(atualizarTickerVelocidade, 100);
   const fp=document.getElementById("f-tipo").value;
   const ft=document.getElementById("f-turno").value;
   const fdDe=document.getElementById("f-data-de").value;
@@ -3035,6 +3037,40 @@ function onEditorInput(){
   }catch(e){}
 })();
 
+/* ===== VELOCIDADE DO DIA ===== */
+function calcVelocidadeDia(){
+  try{
+    const hoje = new Date();
+    const dataHoje = hoje.getFullYear()+'-'+String(hoje.getMonth()+1).padStart(2,'0')+'-'+String(hoje.getDate()).padStart(2,'0');
+    const regsHoje = registros.filter(r=>r.data===dataHoje && r.tipo==='lav');
+    if(!regsHoje.length) return null;
+    const totalEmb = regsHoje.reduce((a,r)=>a+(r.total||0),0);
+    const totalMin = regsHoje.reduce((a,r)=>a+mins(r.hi,r.hf),0);
+    if(totalMin<=0) return null;
+    const emhora = Math.round(totalEmb / (totalMin/60));
+    return { totalEmb, totalMin, emhora };
+  }catch(e){ return null; }
+}
+
+function atualizarTickerVelocidade(){
+  const v = calcVelocidadeDia();
+  if(!v) return;
+  const h = Math.floor(v.totalMin/60), m = v.totalMin%60;
+  const durStr = h>0 ? h+'h '+m+'min' : m+'min';
+  const msgVel = '⚡ VELOCIDADE HOJE: '+v.emhora.toLocaleString('pt-BR')+' emb/hora  •  '+v.totalEmb.toLocaleString('pt-BR')+' embalagens em '+durStr;
+  // Injetar/atualizar no marquee diretamente sem mexer nas mensagens salvas
+  const marquee = document.getElementById('ticker-marquee');
+  if(!marquee) return;
+  // Guardar o HTML original das mensagens de aviso (sem a velocidade)
+  if(!marquee.dataset.baseHtml){
+    marquee.dataset.baseHtml = marquee.innerHTML;
+  }
+  // Montar: mensagens base + separador + velocidade
+  marquee.innerHTML = marquee.dataset.baseHtml +
+    ' &nbsp;&nbsp;<span style="color:rgba(255,255,255,.3);font-size:14px">◆</span>&nbsp;&nbsp; '+
+    '<span style="color:#3fb950;font-family:Poppins,sans-serif;font-size:12px;font-weight:700;margin-right:50px">'+msgVel+'</span>';
+}
+
 (function selectLavDefault(){
   const btn = document.querySelector('.tipo-btn[data-tp="lav"]');
   if(!btn) return;
@@ -3075,6 +3111,13 @@ function onEditorInput(){
           <option value="16px">16px</option>
           <option value="18px">18px</option>
         </select>
+        <span class="ticker-global-lbl" style="margin-left:6px">Velocidade:</span>
+        <select class="tm-sel" id="tm-speed">
+          <option value="2">1×</option>
+          <option value="4" selected>1.5×</option>
+          <option value="6">1.7×</option>
+          <option value="8">2×</option>
+        </select>
       </div>
       <div class="msg-section-lbl">Mensagens <span style="color:var(--txt-faint);font-weight:500;text-transform:none;letter-spacing:0">(cada uma com sua cor)</span></div>
       <div class="msg-list" id="tm-msg-list"></div>
@@ -3098,16 +3141,18 @@ function onEditorInput(){
   ];
   let font = "'Poppins',sans-serif";
   let size = '12px';
+  let speed = '4';
 
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if(saved){ const p=JSON.parse(saved); msgs=p.msgs||msgs; font=p.font||font; size=p.size||size; }
+    if(saved){ const p=JSON.parse(saved); msgs=p.msgs||msgs; font=p.font||font; size=p.size||size; speed=p.speed||speed; }
   } catch(e){}
 
   const marquee = document.getElementById('ticker-marquee');
 
   function buildTicker(){
     if(!marquee) return;
+    marquee.setAttribute('scrollamount', speed);
     let html = '';
     msgs.forEach((m)=>{
       if(!m.txt.trim()) return;
@@ -3176,6 +3221,7 @@ function onEditorInput(){
     editList = msgs.map(m=>({...m}));
     fontSel.value = font;
     sizeSel.value = size;
+    document.getElementById('tm-speed').value = speed;
     renderMsgList(editList);
     overlay.classList.add('on');
     setTimeout(()=>{ const f=msgList.querySelector('.msg-input'); if(f) f.focus(); }, 80);
@@ -3206,7 +3252,8 @@ function onEditorInput(){
     if(!msgs.length) msgs = [{txt:'Sem mensagens', color:'#8b97a5'}];
     font = fontSel.value;
     size = sizeSel.value;
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({msgs,font,size})); }catch(e){}
+    speed = document.getElementById('tm-speed').value;
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({msgs,font,size,speed})); }catch(e){}
     buildTicker();
     closeModal();
   });
