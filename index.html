@@ -2150,16 +2150,12 @@ const DIASEM_PT=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
  * Retorna a data "de início do turno" como string YYYY-MM-DD.
  */
 function dataInicioTurno(r){
-  /* Se é 3º turno e hi < hf (ambos antes de 06:00 = parte madrugada),
-     o turno começou no dia anterior */
-  if(r.turno==="3"){
-    const hiMin=parseInt(r.hi.split(":")[0])*60+parseInt(r.hi.split(":")[1]);
-    if(hiMin<360){ /* antes de 06:00 — era madrugada, turno começou ontem */
-      const d=new Date(r.data+"T12:00:00");
-      d.setDate(d.getDate()-1);
-      return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-    }
-  }
+  /* Usa sempre a data registrada pelo operador (r.data).
+     O 3º turno começa ~22h e vai até ~06h — o operador registra
+     com a data em que o turno COMEÇOU, inclusive nos horários de madrugada.
+     Não fazemos deslocamento automático para evitar que registros
+     editados/apontados manualmente com data correta sejam atribuídos
+     ao dia errado no gráfico. */
   return r.data;
 }
 
