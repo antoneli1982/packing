@@ -1011,8 +1011,13 @@
 
           <div class="field">
             <label>Tipo de Apontamento <span class="req">*</span></label>
-            <div class="seg c3" id="tipos">
-              <div class="seg-btn tipo-btn" data-tp="vaz"><div class="n">📦</div><div class="l">Embalagem<br>Vazia</div></div>
+            <div class="seg c1" id="tipos" style="grid-template-columns:1fr;margin-bottom:8px">
+              <div class="seg-btn tipo-btn" data-tp="vaz" style="padding:10px 16px;display:flex;flex-direction:row;align-items:center;gap:10px;justify-content:center">
+                <div class="n" style="font-size:1.4rem">📦</div>
+                <div class="l" style="font-size:.85rem;font-weight:700;letter-spacing:.04em">EMBALAGEM VAZIA</div>
+              </div>
+            </div>
+            <div class="seg c2" id="tipos-lavpar">
               <div class="seg-btn tipo-btn" data-tp="lav"><div class="n">🧼</div><div class="l">Lavagem de<br>Embalagem</div></div>
               <div class="seg-btn tipo-btn" data-tp="par"><div class="n">⛔</div><div class="l">Parada de<br>Máquina</div></div>
             </div>
@@ -1828,7 +1833,7 @@ const h=new Date();
 document.getElementById("data").value=
   h.getFullYear()+"-"+String(h.getMonth()+1).padStart(2,"0")+"-"+String(h.getDate()).padStart(2,"0");
 
-document.getElementById("tipos").addEventListener("click",e=>{
+document.querySelectorAll(".tipo-btn").forEach(btn=>btn.addEventListener("click",e=>{
   const b=e.target.closest(".tipo-btn");if(!b)return;
   document.querySelectorAll(".tipo-btn").forEach(x=>x.classList.remove("on"));
   b.classList.add("on");tipo=b.dataset.tp;
@@ -1843,7 +1848,7 @@ document.getElementById("tipos").addEventListener("click",e=>{
   document.getElementById("submit-btn").classList.toggle("lav",tipo==="lav"&&!editingId);
   document.getElementById("submit-btn").style.background=tipo==="vaz"?"var(--orange)":"";
   document.getElementById("siren-banner").classList.toggle("on",tipo==="par");
-});
+}));
 document.getElementById("turnos").addEventListener("click",e=>{
   const b=e.target.closest(".turno-btn");if(!b)return;
   document.querySelectorAll(".turno-btn").forEach(x=>x.classList.remove("on"));
