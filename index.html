@@ -3266,18 +3266,25 @@ async function persistAddVazia(reg,isEdit){
   await dbSaveVazia();renderVazia();
 }
 async function persistDelVazia(id){
-  if(backend==="firebase"){try{await fb.collection("embalagem_vazia").doc(String(id)).delete();}catch(e){}return;}
-  registrosVazia=registrosVazia.filter(r=>r.id!==id);await dbSaveVazia();renderVazia();
+  registrosVazia=registrosVazia.filter(r=>r.id!==id);
+  if(backend==="firebase"){
+    try{await fb.collection("embalagem_vazia").doc(String(id)).delete();}catch(e){}
+    renderVazia();
+    return;
+  }
+  await dbSaveVazia();renderVazia();
 }
 async function persistClearVazia(){
+  registrosVazia=[];
   if(backend==="firebase"){
     try{const snap=await fb.collection("embalagem_vazia").get();
       const ops=snap.docs.map(d=>b=>b.delete(d.ref));
       for(let i=0;i<ops.length;i+=400){const batch=fb.batch();ops.slice(i,i+400).forEach(fn=>fn(batch));await batch.commit();}
     }catch(e){flashVazia("Falha Firebase",false);}
+    renderVazia();
     return;
   }
-  registrosVazia=[];await dbSaveVazia();renderVazia();
+  await dbSaveVazia();renderVazia();
 }
 
 /* Firebase listener */
