@@ -980,6 +980,7 @@
 
   <div class="tabs">
     <div class="tab on" data-view="apont"><span class="dot"></span>Apontamento</div>
+    <div class="tab" data-view="vazia"><span class="dot"></span>Embalagem Vazia</div>
     <div class="tab" data-view="dash"><span class="dot"></span>Dashboard</div>
   </div>
 
@@ -1053,19 +1054,22 @@
           </div>
 
           <div class="field hide" id="f-emb-vazia">
-            <label>Embalagens Entradas (Vazias) <span class="req">*</span></label>
+            <div style="margin-bottom:12px">
+              <label>Hora</label>
+              <div class="time-wrap">
+                <input type="time" id="emb-vazia-hora">
+                <button type="button" class="btn-agora" id="btn-agora-emb-vazia" title="Marcar hora atual">⏱ Agora</button>
+              </div>
+            </div>
+            <label>Embalagens Entradas <span class="req">*</span></label>
             <div class="emb-add-row">
-              <div>
-                <select id="embalagem-vazia"><option value="" disabled selected>Selecione…</option></select>
-              </div>
-              <div>
-                <input type="number" id="total-vazia" min="1" step="1" placeholder="Qtd">
-              </div>
+              <div><select id="emb-vazia-sel"><option value="" disabled selected>Selecione…</option></select></div>
+              <div><input type="number" id="emb-vazia-qtd" min="1" step="1" placeholder="Qtd"></div>
               <button type="button" class="btn-add-emb" id="btn-add-emb-vazia" title="Adicionar embalagem">+</button>
             </div>
-            <div class="emb-foto" id="emb-foto-vazia"></div>
-            <div class="emb-list" id="emb-list-vazia"></div>
-            <div class="emb-total-bar" id="emb-total-bar-vazia"></div>
+            <div class="emb-foto" id="emb-foto-vazia-form"></div>
+            <div class="emb-list" id="emb-list-vazia-form"></div>
+            <div class="emb-total-bar" id="emb-total-bar-vazia-form"></div>
           </div>
 
           <div class="field hide" id="f-motivo">
@@ -1187,6 +1191,96 @@
             </table>
           </div>
           <div id="state-box"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ VIEW: EMBALAGEM VAZIA ============ -->
+  <div class="view" id="view-vazia">
+    <div class="grid">
+      <div class="panel" style="align-self:start">
+        <div class="panel-head"><span class="tag" style="background:var(--orange)">📦</span><h2>Registrar Entrada de Embalagem Vazia</h2></div>
+        <form id="form-vazia" autocomplete="off">
+          <div id="vazia-edit-banner" class="edit-banner">✎ Editando um registro — altere os campos e salve</div>
+
+          <div class="field">
+            <label>Turno <span class="req">*</span></label>
+            <div class="seg c3" id="v-turnos">
+              <div class="seg-btn turno-btn" data-t="1"><div class="n">1º</div><div class="l">Turno</div></div>
+              <div class="seg-btn turno-btn" data-t="2"><div class="n">2º</div><div class="l">Turno</div></div>
+              <div class="seg-btn turno-btn" data-t="3"><div class="n">3º</div><div class="l">Turno</div></div>
+            </div>
+          </div>
+
+          <div class="field"><label>Data</label><input type="date" id="v-data"></div>
+
+          <div class="field">
+            <label>Hora</label>
+            <div class="time-wrap">
+              <input type="time" id="v-hora">
+              <button type="button" class="btn-agora" id="v-btn-agora" title="Marcar hora atual">⏱ Agora</button>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Embalagens Entradas <span class="req">*</span></label>
+            <div class="emb-add-row">
+              <div><select id="v-embalagem"><option value="" disabled selected>Selecione…</option></select></div>
+              <div><input type="number" id="v-total" min="1" step="1" placeholder="Qtd"></div>
+              <button type="button" class="btn-add-emb" id="v-btn-add-emb" title="Adicionar embalagem">+</button>
+            </div>
+            <div class="emb-foto" id="v-emb-foto"></div>
+            <div class="emb-list" id="v-emb-list"></div>
+            <div class="emb-total-bar" id="v-emb-total-bar"></div>
+          </div>
+
+          <button type="submit" class="submit" id="v-submit-btn" style="background:var(--orange)">📦 Registrar Entrada de Embalagem Vazia</button>
+          <button type="button" class="cancel-edit" id="v-cancel-edit" style="display:none">Cancelar edição</button>
+          <div class="hint" id="v-hint"></div>
+        </form>
+      </div>
+
+      <div>
+        <div class="stats" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+          <div class="stat" data-c="ref"><div class="v" id="v-s-total">0</div><div class="k">Total Entradas (emb.)</div></div>
+          <div class="stat" data-c="ref"><div class="v" id="v-s-qtd">0</div><div class="k">Registros</div></div>
+          <div class="stat" data-c="lav"><div class="v" id="v-s-tipos">0</div><div class="k">Tipos de Embalagem</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><span class="tag" style="background:var(--orange)">LOG</span><h2>Entradas Registradas</h2></div>
+          <div class="toolbar" style="flex-direction:column;align-items:stretch;gap:0">
+            <div class="toolbar-row" style="padding:10px 14px;gap:8px;flex-wrap:wrap">
+              <select id="vf-tipo"><option value="">Todas as embalagens</option></select>
+              <select id="vf-turno">
+                <option value="">Todos os turnos</option>
+                <option value="1">1º Turno</option>
+                <option value="2">2º Turno</option>
+                <option value="3">3º Turno</option>
+              </select>
+              <div class="range-group">
+                <div class="range-field"><span class="range-lbl">De</span><input type="date" id="vf-data-de" style="color-scheme:dark"></div>
+                <span class="range-sep">→</span>
+                <div class="range-field"><span class="range-lbl">Até</span><input type="date" id="vf-data-ate" style="color-scheme:dark"></div>
+              </div>
+              <button class="btn-ghost" id="vf-clear">✕ Limpar</button>
+              <div class="spacer"></div>
+              <button class="btn-ghost danger" id="v-btn-clear-all">Limpar tudo</button>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <colgroup>
+                <col style="width:10%"><col style="width:8%"><col style="width:auto">
+                <col style="width:9%"><col style="width:9%">
+              </colgroup>
+              <thead><tr>
+                <th>Data</th><th>Hora</th><th>Turno</th><th>Embalagem</th><th>Qtd Entrada</th><th></th>
+              </tr></thead>
+              <tbody id="v-tbody"></tbody>
+            </table>
+          </div>
+          <div id="v-state-box"></div>
         </div>
       </div>
     </div>
@@ -1609,57 +1703,54 @@ tick();setInterval(tick,15000);
 const selEmb=document.getElementById("embalagem");
 EMBALAGENS.forEach(e=>selEmb.add(new Option(e,e)));
 
-/* ===== Embalagem Vazia — multi-embalagem ===== */
-let embItensVazia=[];
-const selEmbVazia=document.getElementById("embalagem-vazia");
-EMBALAGENS.forEach(e=>selEmbVazia.add(new Option(e,e)));
-const elEmbFotoVazia=document.getElementById("emb-foto-vazia");
-function mostrarFotoEmbVazia(nome){
-  const src=FOTOS_EMB[nome];
-  if(src){
-    elEmbFotoVazia.innerHTML='<img src="'+src+'" alt="'+nome+'" loading="lazy"><div class="cap">'+nome+'</div>';
-    elEmbFotoVazia.classList.add("on");
-  }else{
-    elEmbFotoVazia.innerHTML="";
-    elEmbFotoVazia.classList.remove("on");
-  }
-}
-selEmbVazia.addEventListener("change",()=>mostrarFotoEmbVazia(selEmbVazia.value));
-function renderEmbListVazia(){
-  const list=document.getElementById("emb-list-vazia");
-  const bar=document.getElementById("emb-total-bar-vazia");
+/* ===== Embalagem Vazia — formulário de Apontamento ===== */
+let formEmbItensVazia=[];
+const selEmbVaziaForm=document.getElementById("emb-vazia-sel");
+EMBALAGENS.forEach(e=>selEmbVaziaForm.add(new Option(e,e)));
+const elEmbFotoVaziaForm=document.getElementById("emb-foto-vazia-form");
+selEmbVaziaForm.addEventListener("change",()=>{
+  const src=FOTOS_EMB[selEmbVaziaForm.value];
+  if(src){elEmbFotoVaziaForm.innerHTML='<img src="'+src+'" alt="'+selEmbVaziaForm.value+'" loading="lazy"><div class="cap">'+selEmbVaziaForm.value+'</div>';elEmbFotoVaziaForm.classList.add("on");}
+  else{elEmbFotoVaziaForm.innerHTML="";elEmbFotoVaziaForm.classList.remove("on");}
+});
+document.getElementById("btn-agora-emb-vazia").addEventListener("click",()=>{
+  const now=new Date();
+  document.getElementById("emb-vazia-hora").value=
+    String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+});
+function renderFormEmbListVazia(){
+  const list=document.getElementById("emb-list-vazia-form");
+  const bar=document.getElementById("emb-total-bar-vazia-form");
   list.innerHTML="";bar.innerHTML="";
-  if(!embItensVazia.length)return;
-  embItensVazia.forEach((it,i)=>{
+  if(!formEmbItensVazia.length)return;
+  formEmbItensVazia.forEach((it,i)=>{
     const div=document.createElement("div");div.className="emb-item";
     div.innerHTML='<span class="emb-nome">'+it.emb+'</span>'+
       '<input type="number" class="emb-qtd-edit" min="1" step="1" value="'+it.total+'" title="Editar quantidade">'+
       '<button type="button" class="emb-del" title="Remover">✕</button>';
-    const inp=div.querySelector(".emb-qtd-edit");
-    inp.addEventListener("input",()=>{const v=parseInt(inp.value,10);if(v>0){embItensVazia[i].total=v;atualizarBarraEmbVazia();}});
-    div.querySelector(".emb-del").addEventListener("click",()=>{embItensVazia.splice(i,1);renderEmbListVazia();});
+    div.querySelector(".emb-qtd-edit").addEventListener("input",inp=>{const v=parseInt(inp.target.value,10);if(v>0){formEmbItensVazia[i].total=v;atualizarBarraVaziaForm();}});
+    div.querySelector(".emb-del").addEventListener("click",()=>{formEmbItensVazia.splice(i,1);renderFormEmbListVazia();});
     list.appendChild(div);
   });
-  atualizarBarraEmbVazia();
+  atualizarBarraVaziaForm();
 }
-function atualizarBarraEmbVazia(){
-  const bar=document.getElementById("emb-total-bar-vazia");
-  if(!embItensVazia.length){bar.innerHTML="";return;}
-  const soma=embItensVazia.reduce((a,it)=>a+it.total,0);
-  bar.innerHTML='<span class="etb-label">Total da entrada: '+embItensVazia.length+' tipo'+(embItensVazia.length>1?'s':'')+'</span>'+
+function atualizarBarraVaziaForm(){
+  const bar=document.getElementById("emb-total-bar-vazia-form");
+  if(!formEmbItensVazia.length){bar.innerHTML="";return;}
+  const soma=formEmbItensVazia.reduce((a,it)=>a+it.total,0);
+  bar.innerHTML='<span class="etb-label">Total: '+formEmbItensVazia.length+' tipo'+(formEmbItensVazia.length>1?'s':'')+'</span>'+
     '<span class="etb-value">'+soma.toLocaleString("pt-BR")+' emb.</span>';
 }
 document.getElementById("btn-add-emb-vazia").addEventListener("click",()=>{
-  const emb=selEmbVazia.value;
-  const totalEl=document.getElementById("total-vazia");
+  const emb=selEmbVaziaForm.value;
+  const totalEl=document.getElementById("emb-vazia-qtd");
   const total=parseInt(totalEl.value,10);
   if(!emb)return flash("Selecione a embalagem",false);
   if(!total||total<1)return flash("Informe a quantidade",false);
-  embItensVazia.push({emb,total});
-  selEmbVazia.selectedIndex=0;totalEl.value="";
-  mostrarFotoEmbVazia("");
-  renderEmbListVazia();
-  flash("",true);
+  formEmbItensVazia.push({emb,total});
+  selEmbVaziaForm.selectedIndex=0;totalEl.value="";
+  elEmbFotoVaziaForm.innerHTML="";elEmbFotoVaziaForm.classList.remove("on");
+  renderFormEmbListVazia();flash("",true);
 });
 
 /* ===== Foto da embalagem (Guia Visual M-05BR-SCA-09) ===== */
@@ -1744,11 +1835,9 @@ document.getElementById("tipos").addEventListener("click",e=>{
   document.getElementById("f-embalagem").classList.toggle("hide",tipo!=="lav");
   document.getElementById("f-emb-vazia").classList.toggle("hide",tipo!=="vaz");
   document.getElementById("f-horas").classList.toggle("hide",tipo==="vaz");
-  document.getElementById("dur-alert").classList.remove("on");
-  document.getElementById("dur-confirm").style.display="none";
+  document.getElementById("f-cicloextra").classList.toggle("hide",tipo==="par"||tipo==="vaz");
   document.getElementById("f-motivo").classList.toggle("hide",tipo!=="par");
   document.getElementById("f-obs").classList.toggle("hide",tipo!=="par");
-  document.getElementById("f-cicloextra").classList.toggle("hide",tipo==="par");
   document.getElementById("submit-btn").textContent=
     editingId?"Salvar Alterações":"Registrar "+TPLABEL[tipo];
   document.getElementById("submit-btn").classList.toggle("lav",tipo==="lav"&&!editingId);
@@ -1876,6 +1965,7 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   t.classList.add("on");
   document.getElementById("view-"+t.dataset.view).classList.add("on");
   if(t.dataset.view==="dash")renderDash();
+  if(t.dataset.view==="vazia")renderVazia();
 }));
 
 function mins(hi,hf){
@@ -1907,15 +1997,48 @@ document.getElementById("form").addEventListener("submit",async e=>{
   const hf=document.getElementById("hf").value;
   if(!tipo)   return flash("Selecione o tipo de apontamento",false);
   if(!turno)  return flash("Selecione o turno",false);
-  /* Horas só obrigatórias para lav e par */
+  /* Horas apenas para lav e par */
   if(tipo!=="vaz"){
     if(!hi||!hf)return flash("Informe hora inicial e final",false);
-    /* Verificação de duração */
     const mDur=minsRaw(hi,hf);
     if(mDur>7*60) return flash("Duração superior a 7h — corrija os horários antes de salvar",false);
     if(mDur>90&&!duracaoConfirmada){checkDuracao();return flash("Confirme se os horários estão corretos (duração: "+fmtMin(mDur)+")",false);}
   }
-  const reg={id:editingId||Date.now(),tipo,data,turno,hi:hi||"",hf:hf||"",cicloExtra:cicloExtra==='sim',cicloExtraCount:cicloExtraCount};
+  /* Embalagem Vazia — salva em coleção separada */
+  if(tipo==="vaz"){
+    const horaVaz=document.getElementById("emb-vazia-hora").value;
+    /* Se usuário preencheu sel+qtd mas não clicou +, adiciona automaticamente */
+    const embPendV=document.getElementById("emb-vazia-sel").value;
+    const totalPendV=parseInt(document.getElementById("emb-vazia-qtd").value,10);
+    if(embPendV&&totalPendV>0){
+      formEmbItensVazia.push({emb:embPendV,total:totalPendV});
+      document.getElementById("emb-vazia-sel").selectedIndex=0;
+      document.getElementById("emb-vazia-qtd").value="";
+      renderFormEmbListVazia();
+    }
+    /* Se ainda não tem nada mas tem embalagem sem quantidade, avisa */
+    if(formEmbItensVazia.length===0){
+      if(embPendV&&!totalPendV)return flash("Informe a quantidade da embalagem",false);
+      return flash("Selecione a embalagem e informe a quantidade",false);
+    }
+    if(!data)return flash("Informe a data",false);
+    const regV={
+      id:Date.now(),
+      data,hora:horaVaz,turno,
+      cicloExtra:false,cicloExtraCount:0,
+      itens:formEmbItensVazia.map(it=>({emb:it.emb,total:it.total})),
+      emb:formEmbItensVazia.map(it=>it.emb).join(", "),
+      total:formEmbItensVazia.reduce((a,it)=>a+it.total,0)
+    };
+    await persistAddVazia(regV,false);
+    flash("Embalagem Vazia registrada com sucesso",true);
+    formEmbItensVazia=[];renderFormEmbListVazia();
+    const fvf=document.getElementById("emb-foto-vazia-form");
+    if(fvf){fvf.innerHTML="";fvf.classList.remove("on");}
+    if(document.getElementById("view-dash").classList.contains("on"))renderDash();
+    return;
+  }
+  const reg={id:editingId||Date.now(),tipo,data,turno,hi,hf,cicloExtra:cicloExtra==='sim',cicloExtraCount:cicloExtraCount};
   if(tipo==="lav"){
     /* Aproveita um valor digitado no campo (mesmo sem ter clicado +),
        seja em novo registro ou durante a edição */
@@ -1944,53 +2067,37 @@ document.getElementById("form").addEventListener("submit",async e=>{
     reg.motivo=motivo;
     reg.obs=obs;
   }
-  if(tipo==="vaz"){
-    const selVaz=document.getElementById("embalagem-vazia");
-    const embPendV=selVaz.value;
-    const totalPendV=parseInt(document.getElementById("total-vazia").value,10);
-    if(embPendV&&totalPendV>0){
-      embItensVazia.push({emb:embPendV,total:totalPendV});
-      selVaz.selectedIndex=0;document.getElementById("total-vazia").value="";
-      renderEmbListVazia();
-    }
-    if(embItensVazia.length===0){
-      if(!embPendV)return flash("Selecione a embalagem e clique + para adicionar",false);
-      return flash("Informe a quantidade e clique + para adicionar",false);
-    }
-    reg.itens=embItensVazia.map(it=>({emb:it.emb,total:it.total}));
-    reg.emb=embItensVazia.map(it=>it.emb).join(", ");
-    reg.total=embItensVazia.reduce((a,it)=>a+it.total,0);
-  }
   const eraEdicao=!!editingId;
   await persistAdd(reg,eraEdicao);
   flash(eraEdicao?"Apontamento atualizado com sucesso"
                  :TPLABEL[tipo]+" registrada com sucesso",true);
   editingId=null; setEditMode(false);
   limparCampos();
-  /* Manter Embalagem Vazia selecionada para facilitar */
+  /* Voltar para Lavagem de Embalagem */
   document.querySelectorAll('.tipo-btn').forEach(x=>x.classList.remove('on'));
-  document.querySelector('.tipo-btn[data-tp="vaz"]').classList.add('on');
-  tipo='vaz';
-  document.getElementById('f-embalagem').classList.add('hide');
-  document.getElementById('f-emb-vazia').classList.remove('hide');
-  document.getElementById('f-horas').classList.add('hide');
+  document.querySelector('.tipo-btn[data-tp="lav"]').classList.add('on');
+  tipo='lav';
+  document.getElementById('f-embalagem').classList.remove('hide');
+  document.getElementById('f-emb-vazia').classList.add('hide');
+  document.getElementById('f-horas').classList.remove('hide');
+  document.getElementById('f-cicloextra').classList.remove('hide');
   document.getElementById('f-motivo').classList.add('hide');
   document.getElementById('f-obs').classList.add('hide');
   document.getElementById('siren-banner').classList.remove('on');
-  document.getElementById('submit-btn').textContent='Registrar '+TPLABEL['vaz'];
-  document.getElementById('submit-btn').classList.remove('lav');
-  document.getElementById('submit-btn').style.background='var(--orange)';
+  document.getElementById('submit-btn').textContent='Registrar '+TPLABEL['lav'];
+  document.getElementById('submit-btn').classList.add('lav');
+  document.getElementById('submit-btn').style.background='';
 });
 function limparCampos(){
   selEmb.selectedIndex=0;
   document.getElementById("total").value="";
   embItens=[];renderEmbList();
-  /* Vazia */
-  const selVaz=document.getElementById("embalagem-vazia");
-  if(selVaz)selVaz.selectedIndex=0;
-  const tvEl=document.getElementById("total-vazia");
-  if(tvEl)tvEl.value="";
-  embItensVazia=[];renderEmbListVazia();
+  /* Vazia form */
+  const sVaz=document.getElementById("emb-vazia-sel");if(sVaz)sVaz.selectedIndex=0;
+  const qVaz=document.getElementById("emb-vazia-qtd");if(qVaz)qVaz.value="";
+  const hVaz=document.getElementById("emb-vazia-hora");if(hVaz)hVaz.value="";
+  formEmbItensVazia=[];renderFormEmbListVazia();
+  const fvf=document.getElementById("emb-foto-vazia-form");if(fvf){fvf.innerHTML="";fvf.classList.remove("on");}
   document.getElementById("motivo").selectedIndex=0;
   document.getElementById("obs").value="";
   document.getElementById("hi").value="";
@@ -1998,7 +2105,6 @@ function limparCampos(){
   cicloExtra="nao";cicloExtraCount=0;
   document.querySelectorAll(".ciclo-btn").forEach(x=>x.classList.toggle("on",x.dataset.ce==="nao"));
   document.getElementById("ciclo-count-display").textContent="➕";
-  // Limpa estado de validação de duração
   document.getElementById("hi").classList.remove("dur-warn");
   document.getElementById("hf").classList.remove("dur-warn");
   document.getElementById("dur-alert").classList.remove("on");
@@ -2020,43 +2126,27 @@ function setEditMode(on){
 function editar(id){
   const r=registros.find(x=>x.id===id);
   if(!r)return;
-  /* tipo */
   tipo=r.tipo;
   document.querySelectorAll(".tipo-btn").forEach(x=>x.classList.toggle("on",x.dataset.tp===tipo));
   document.getElementById("f-embalagem").classList.toggle("hide",tipo!=="lav");
   document.getElementById("f-emb-vazia").classList.toggle("hide",tipo!=="vaz");
   document.getElementById("f-horas").classList.toggle("hide",tipo==="vaz");
+  document.getElementById("f-cicloextra").classList.toggle("hide",tipo==="par"||tipo==="vaz");
   document.getElementById("f-motivo").classList.toggle("hide",tipo!=="par");
   document.getElementById("f-obs").classList.toggle("hide",tipo!=="par");
-  document.getElementById("f-cicloextra").classList.toggle("hide",tipo==="par");
   turno=r.turno;
   document.querySelectorAll(".turno-btn").forEach(x=>x.classList.toggle("on",x.dataset.t===turno));
-  /* campos */
   document.getElementById("data").value=r.data;
   document.getElementById("hi").value=r.hi||"";
   document.getElementById("hf").value=r.hf||"";
   if(tipo==="lav"){
-    /* Carregar multi-embalagem */
-    if(r.itens&&r.itens.length){
-      embItens=r.itens.map(it=>({emb:it.emb,total:it.total}));
-    } else {
-      embItens=[{emb:r.emb,total:r.total}];
-    }
+    if(r.itens&&r.itens.length){embItens=r.itens.map(it=>({emb:it.emb,total:it.total}));}
+    else{embItens=[{emb:r.emb,total:r.total}];}
     renderEmbList();
     selEmb.selectedIndex=0;document.getElementById("total").value="";
-  } else if(tipo==="vaz"){
-    if(r.itens&&r.itens.length){
-      embItensVazia=r.itens.map(it=>({emb:it.emb,total:it.total}));
-    } else {
-      embItensVazia=[{emb:r.emb,total:r.total}];
-    }
-    renderEmbListVazia();
-    document.getElementById("embalagem-vazia").selectedIndex=0;
-    document.getElementById("total-vazia").value="";
   } else {
     document.getElementById("motivo").value=r.motivo;document.getElementById("obs").value=r.obs||"";
   }
-  /* ciclo extra */
   cicloExtra=r.cicloExtra?"sim":"nao";
   cicloExtraCount=r.cicloExtraCount||0;
   document.querySelectorAll(".ciclo-btn").forEach(x=>x.classList.toggle("on",x.dataset.ce===cicloExtra));
@@ -2067,19 +2157,19 @@ function editar(id){
 }
 document.getElementById("cancel-edit").addEventListener("click",()=>{
   editingId=null; setEditMode(false); limparCampos();
-  /* Volta para Embalagem Vazia */
   document.querySelectorAll('.tipo-btn').forEach(x=>x.classList.remove('on'));
-  document.querySelector('.tipo-btn[data-tp="vaz"]').classList.add('on');
-  tipo='vaz';
-  document.getElementById('f-embalagem').classList.add('hide');
-  document.getElementById('f-emb-vazia').classList.remove('hide');
-  document.getElementById('f-horas').classList.add('hide');
+  document.querySelector('.tipo-btn[data-tp="lav"]').classList.add('on');
+  tipo='lav';
+  document.getElementById('f-embalagem').classList.remove('hide');
+  document.getElementById('f-emb-vazia').classList.add('hide');
+  document.getElementById('f-horas').classList.remove('hide');
+  document.getElementById('f-cicloextra').classList.remove('hide');
   document.getElementById('f-motivo').classList.add('hide');
   document.getElementById('f-obs').classList.add('hide');
   document.getElementById('siren-banner').classList.remove('on');
-  document.getElementById('submit-btn').textContent='Registrar '+TPLABEL['vaz'];
-  document.getElementById('submit-btn').classList.remove('lav');
-  document.getElementById('submit-btn').style.background='var(--orange)';
+  document.getElementById('submit-btn').textContent='Registrar '+TPLABEL['lav'];
+  document.getElementById('submit-btn').classList.add('lav');
+  document.getElementById('submit-btn').style.background='';
 });
 function flash(msg,ok){
   const x=document.getElementById("hint");
@@ -2120,7 +2210,7 @@ document.getElementById("f-clear").addEventListener("click",()=>{
 });
 
 function detalhe(r){
-  if(r.tipo==="lav"||r.tipo==="vaz"){
+  if(r.tipo==="lav"){
     if(r.itens&&r.itens.length>1){
       return r.itens.map(it=>it.emb+' <span style="color:var(--blue-soft);font-weight:700">('+it.total.toLocaleString("pt-BR")+')</span>').join(' <span style="color:var(--txt-faint)">+</span> ');
     }
@@ -2297,7 +2387,6 @@ function render(){
 
   const lav=view.filter(r=>r.tipo==="lav");
   const par=view.filter(r=>r.tipo==="par");
-  const vaz=view.filter(r=>r.tipo==="vaz");
   document.getElementById("s-emb").textContent=lav.reduce((a,r)=>a+r.total,0).toLocaleString("pt-BR");
   document.getElementById("s-qtd").textContent=lav.length;
   document.getElementById("s-trab").textContent=fmtMin(lav.reduce((a,r)=>a+mins(r.hi,r.hf),0));
@@ -2450,7 +2539,6 @@ function renderDash(){
   });
   const lav=base.filter(r=>r.tipo==="lav"&&(!fm||r.emb===fm||( r.itens&&r.itens.some(it=>it.emb===fm))));
   const par=base.filter(r=>r.tipo==="par");
-  const vaz=base.filter(r=>r.tipo==="vaz");
 
   /* resumo do escopo selecionado */
   const partes=[];
@@ -2467,7 +2555,7 @@ function renderDash(){
   document.getElementById("d-par").textContent=fmtMin(par.reduce((a,r)=>a+mins(r.hi,r.hf),0));
   document.getElementById("d-ref").textContent=fmtMin([...lav,...par].reduce((a,r)=>a+minsRef(r.hi,r.hf),0));
   const dVazEl=document.getElementById("d-vaz");
-  if(dVazEl)dVazEl.textContent=vaz.reduce((a,r)=>a+(r.total||0),0).toLocaleString("pt-BR");
+  if(dVazEl)dVazEl.textContent=registrosVazia.reduce((a,r)=>a+(r.total||0),0).toLocaleString("pt-BR");
 
   /* Média de ciclos extras no dashboard */
   if(lav.length>0){
@@ -3079,7 +3167,7 @@ document.getElementById("lamp-paradas").addEventListener("click",function(){
 function renderConsistencia(base){
   const el=document.getElementById("chart-consistencia");
   if(!el)return;
-  const vazAll=(base||registros).filter(r=>r.tipo==="vaz");
+  const vazAll=registrosVazia;
   if(!vazAll.length){
     el.innerHTML='<div class="empty"><div class="big">▦</div><div class="txt">SEM ENTRADAS DE EMBALAGEM VAZIA REGISTRADAS</div></div>';
     return;
@@ -3145,7 +3233,301 @@ function renderConsistencia(base){
   });
 }
 
+/* ========================================================
+   EMBALAGEM VAZIA — Aba separada, sem horas
+   ======================================================== */
+const KEY_VAZIA="sas-embalagem-vazia-v2";
+let registrosVazia=[], vaziaEditingId=null, vaziaEmbItens=[], vaziaTurno="1", vaziaCicloExtra="nao", vaziaCicloExtraCount=0;
+
+/* --- Persistência --- */
+async function dbLoadVazia(){
+  try{
+    if(backend==="firebase"){const snap=await fb.collection("embalagem_vazia").get();return snap.docs.map(d=>d.data()).sort((a,b)=>b.id-a.id);}
+    if(backend==="idb"){const v=await idbGet(KEY_VAZIA);return v?JSON.parse(v):[];}
+    if(backend==="storage"){const r=await window.storage.get(KEY_VAZIA);return r&&r.value?JSON.parse(r.value):[];}
+  }catch(e){}
+  return [];
+}
+async function dbSaveVazia(){
+  try{
+    if(backend==="idb"){await idbSet(KEY_VAZIA,JSON.stringify(registrosVazia));return true;}
+    if(backend==="storage"){await window.storage.set(KEY_VAZIA,JSON.stringify(registrosVazia));return true;}
+  }catch(e){}
+  return false;
+}
+async function persistAddVazia(reg,isEdit){
+  if(isEdit) registrosVazia=registrosVazia.map(x=>x.id===reg.id?reg:x);
+  else registrosVazia.unshift(reg);
+  if(backend==="firebase"){
+    try{await fb.collection("embalagem_vazia").doc(String(reg.id)).set(reg);}catch(e){flashVazia("Falha Firebase",false);}
+    renderVazia();
+    return;
+  }
+  await dbSaveVazia();renderVazia();
+}
+async function persistDelVazia(id){
+  if(backend==="firebase"){try{await fb.collection("embalagem_vazia").doc(String(id)).delete();}catch(e){}return;}
+  registrosVazia=registrosVazia.filter(r=>r.id!==id);await dbSaveVazia();renderVazia();
+}
+async function persistClearVazia(){
+  if(backend==="firebase"){
+    try{const snap=await fb.collection("embalagem_vazia").get();
+      const ops=snap.docs.map(d=>b=>b.delete(d.ref));
+      for(let i=0;i<ops.length;i+=400){const batch=fb.batch();ops.slice(i,i+400).forEach(fn=>fn(batch));await batch.commit();}
+    }catch(e){flashVazia("Falha Firebase",false);}
+    return;
+  }
+  registrosVazia=[];await dbSaveVazia();renderVazia();
+}
+
+/* Firebase listener */
+function initFirebaseVazia(){
+  if(backend==="firebase"){
+    fb.collection("embalagem_vazia").onSnapshot(snap=>{
+      registrosVazia=snap.docs.map(d=>d.data()).sort((a,b)=>b.id-a.id);
+      renderVazia();
+      if(document.getElementById("view-dash").classList.contains("on"))renderDash();
+    },err=>console.warn("EmbVazia:",err));
+  }
+}
+
+/* Flash */
+function flashVazia(msg,ok){
+  const x=document.getElementById("v-hint");if(!x)return;
+  x.textContent=msg;x.className="hint"+(ok?" ok":"");
+  if(ok)setTimeout(()=>{if(x.textContent===msg)x.textContent="";},3500);
+}
+
+/* Foto */
+const vSelEmb=document.getElementById("v-embalagem");
+const vElEmbFoto=document.getElementById("v-emb-foto");
+EMBALAGENS.forEach(e=>vSelEmb.add(new Option(e,e)));
+document.getElementById("vf-tipo").innerHTML='<option value="">Todas as embalagens</option>';
+EMBALAGENS.forEach(e=>document.getElementById("vf-tipo").add(new Option(e,e)));
+
+vSelEmb.addEventListener("change",()=>{
+  const src=FOTOS_EMB[vSelEmb.value];
+  if(src){vElEmbFoto.innerHTML='<img src="'+src+'" alt="'+vSelEmb.value+'" loading="lazy"><div class="cap">'+vSelEmb.value+'</div>';vElEmbFoto.classList.add("on");}
+  else{vElEmbFoto.innerHTML="";vElEmbFoto.classList.remove("on");}
+});
+
+/* Multi-embalagem Vazia */
+function renderVaziaEmbList(){
+  const list=document.getElementById("v-emb-list");
+  const bar=document.getElementById("v-emb-total-bar");
+  list.innerHTML="";bar.innerHTML="";
+  if(!vaziaEmbItens.length)return;
+  vaziaEmbItens.forEach((it,i)=>{
+    const div=document.createElement("div");div.className="emb-item";
+    div.innerHTML='<span class="emb-nome">'+it.emb+'</span>'+
+      '<input type="number" class="emb-qtd-edit" min="1" step="1" value="'+it.total+'" title="Editar quantidade">'+
+      '<button type="button" class="emb-del" title="Remover">✕</button>';
+    const inp=div.querySelector(".emb-qtd-edit");
+    inp.addEventListener("input",()=>{const v=parseInt(inp.value,10);if(v>0){vaziaEmbItens[i].total=v;atualizarBarraVazia();}});
+    div.querySelector(".emb-del").addEventListener("click",()=>{vaziaEmbItens.splice(i,1);renderVaziaEmbList();});
+    list.appendChild(div);
+  });
+  atualizarBarraVazia();
+}
+function atualizarBarraVazia(){
+  const bar=document.getElementById("v-emb-total-bar");
+  if(!vaziaEmbItens.length){bar.innerHTML="";return;}
+  const soma=vaziaEmbItens.reduce((a,it)=>a+it.total,0);
+  bar.innerHTML='<span class="etb-label">Total: '+vaziaEmbItens.length+' tipo'+(vaziaEmbItens.length>1?'s':'')+'</span>'+
+    '<span class="etb-value">'+soma.toLocaleString("pt-BR")+' emb.</span>';
+}
+document.getElementById("v-btn-add-emb").addEventListener("click",()=>{
+  const emb=vSelEmb.value;
+  const totalEl=document.getElementById("v-total");
+  const total=parseInt(totalEl.value,10);
+  if(!emb)return flashVazia("Selecione a embalagem",false);
+  if(!total||total<1)return flashVazia("Informe a quantidade",false);
+  vaziaEmbItens.push({emb,total});
+  vSelEmb.selectedIndex=0;totalEl.value="";
+  vElEmbFoto.innerHTML="";vElEmbFoto.classList.remove("on");
+  renderVaziaEmbList();flashVazia("",true);
+});
+
+/* Botão Agora — aba Embalagem Vazia */
+document.getElementById("v-btn-agora").addEventListener("click",()=>{
+  const now=new Date();
+  document.getElementById("v-hora").value=
+    String(now.getHours()).padStart(2,"0")+":"+String(now.getMinutes()).padStart(2,"0");
+});
+
+/* Turnos aba Vazia */
+document.getElementById("v-turnos").addEventListener("click",e=>{
+  const b=e.target.closest(".turno-btn");if(!b)return;
+  document.querySelectorAll("#v-turnos .turno-btn").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");vaziaTurno=b.dataset.t;
+});
+
+/* Limpar campos Vazia (aba separada) */
+function limparCamposVazia(){
+  vSelEmb.selectedIndex=0;
+  document.getElementById("v-total").value="";
+  const vh=document.getElementById("v-hora");if(vh)vh.value="";
+  vaziaEmbItens=[];renderVaziaEmbList();
+  vElEmbFoto.innerHTML="";vElEmbFoto.classList.remove("on");
+}
+
+/* Cancelar edição */
+document.getElementById("v-cancel-edit").addEventListener("click",()=>{
+  vaziaEditingId=null;
+  document.getElementById("vazia-edit-banner").classList.remove("on");
+  document.getElementById("v-cancel-edit").style.display="none";
+  document.getElementById("v-submit-btn").textContent="📦 Registrar Entrada de Embalagem Vazia";
+  limparCamposVazia();
+});
+
+/* Editar registro Vazia */
+function editarVazia(id){
+  const r=registrosVazia.find(x=>x.id===id);if(!r)return;
+  vaziaEditingId=id;
+  document.getElementById("vazia-edit-banner").classList.add("on");
+  document.getElementById("v-cancel-edit").style.display="";
+  document.getElementById("v-submit-btn").textContent="Salvar Alterações";
+  document.getElementById("v-data").value=r.data;
+  const vh=document.getElementById("v-hora");if(vh)vh.value=r.hora||"";
+  vaziaTurno=r.turno;
+  document.querySelectorAll("#v-turnos .turno-btn").forEach(x=>x.classList.toggle("on",x.dataset.t===r.turno));
+  vaziaEmbItens=(r.itens||[{emb:r.emb,total:r.total}]).map(it=>({...it}));
+  renderVaziaEmbList();
+  document.getElementById("view-vazia").scrollIntoView({behavior:"smooth"});
+}
+
+/* Submit Vazia */
+document.getElementById("form-vazia").addEventListener("submit",async e=>{
+  e.preventDefault();
+  const data=document.getElementById("v-data").value;
+  const hora=document.getElementById("v-hora").value;
+  if(!vaziaTurno)return flashVazia("Selecione o turno",false);
+  /* Auto-adiciona se o usuário preencheu sel+qtd sem clicar + */
+  const embPend=vSelEmb.value;
+  const totalPendRaw=document.getElementById("v-total").value;
+  const totalPend=parseInt(totalPendRaw,10);
+  if(embPend&&totalPend>0){
+    vaziaEmbItens.push({emb:embPend,total:totalPend});
+    vSelEmb.selectedIndex=0;document.getElementById("v-total").value="";
+    renderVaziaEmbList();
+  } else if(embPend&&!totalPend){
+    return flashVazia("Informe a quantidade da embalagem selecionada",false);
+  }
+  if(vaziaEmbItens.length===0)return flashVazia("Selecione a embalagem e informe a quantidade",false);
+  if(!data)return flashVazia("Informe a data",false);
+  const reg={
+    id:vaziaEditingId||Date.now(),
+    data,hora,turno:vaziaTurno,
+    cicloExtra:false,cicloExtraCount:0,
+    itens:vaziaEmbItens.map(it=>({emb:it.emb,total:it.total})),
+    emb:vaziaEmbItens.map(it=>it.emb).join(", "),
+    total:vaziaEmbItens.reduce((a,it)=>a+it.total,0)
+  };
+  const eraEdicao=!!vaziaEditingId;
+  await persistAddVazia(reg,eraEdicao);
+  flashVazia(eraEdicao?"Registro atualizado":"✅ Entrada registrada com sucesso",true);
+  vaziaEditingId=null;
+  document.getElementById("vazia-edit-banner").classList.remove("on");
+  document.getElementById("v-cancel-edit").style.display="none";
+  document.getElementById("v-submit-btn").textContent="📦 Registrar Entrada de Embalagem Vazia";
+  limparCamposVazia();
+  if(document.getElementById("view-dash").classList.contains("on"))renderDash();
+});
+
+/* Limpar tudo Vazia */
+document.getElementById("v-btn-clear-all").addEventListener("click",async()=>{
+  if(!registrosVazia.length)return;
+  const senha=prompt("Para apagar TODOS os registros, digite a senha:");
+  if(senha===null)return;
+  if(senha!=="1234"){alert("Senha incorreta.");return;}
+  if(confirm("Confirma apagar TODOS os registros de entrada?"))await persistClearVazia();
+});
+
+/* Filtros */
+["vf-tipo","vf-turno","vf-data-de","vf-data-ate"].forEach(id=>{
+  const el=document.getElementById(id);if(el)el.addEventListener("change",renderVazia);
+});
+document.getElementById("vf-clear").addEventListener("click",()=>{
+  document.getElementById("vf-tipo").value="";
+  document.getElementById("vf-turno").value="";
+  document.getElementById("vf-data-de").value="";
+  document.getElementById("vf-data-ate").value="";
+  renderVazia();
+});
+
+/* Render tabela Vazia */
+function renderVazia(){
+  const stateBox=document.getElementById("v-state-box");stateBox.innerHTML="";
+  const fp=document.getElementById("vf-tipo").value;
+  const ft=document.getElementById("vf-turno").value;
+  const fdDe=document.getElementById("vf-data-de").value;
+  const fdAte=document.getElementById("vf-data-ate").value;
+  const view=registrosVazia.filter(r=>{
+    if(ft&&r.turno!==ft)return false;
+    if(fdDe&&r.data<fdDe)return false;
+    if(fdAte&&r.data>fdAte)return false;
+    if(fp){if(r.itens&&r.itens.length){if(!r.itens.some(it=>it.emb===fp))return false;}else if(r.emb!==fp)return false;}
+    return true;
+  });
+  /* Stats */
+  const totalEmb=view.reduce((a,r)=>a+(r.total||0),0);
+  const tiposUnicos=new Set();
+  view.forEach(r=>{if(r.itens&&r.itens.length)r.itens.forEach(it=>tiposUnicos.add(it.emb));else if(r.emb)tiposUnicos.add(r.emb);});
+  document.getElementById("v-s-total").textContent=totalEmb.toLocaleString("pt-BR");
+  document.getElementById("v-s-qtd").textContent=view.length;
+  document.getElementById("v-s-tipos").textContent=tiposUnicos.size;
+  /* Tabela */
+  const tb=document.getElementById("v-tbody");tb.innerHTML="";
+  if(!view.length){
+    stateBox.innerHTML='<div class="empty"><div class="big">📦</div><div class="txt">'+
+      (registrosVazia.length?"NENHUM RESULTADO PARA O FILTRO":"NENHUMA ENTRADA REGISTRADA")+
+    '</div></div>';
+    return;
+  }
+  view.forEach(r=>{
+    const tr=document.createElement("tr");
+    const[y,m,d]=r.data.split("-");
+    let detalhe="";
+    if(r.itens&&r.itens.length>1){
+      detalhe=r.itens.map(it=>it.emb+' <span style="color:var(--blue-soft);font-weight:700">('+it.total.toLocaleString("pt-BR")+')</span>').join(' + ');
+    }else if(r.itens&&r.itens.length===1){detalhe=r.itens[0].emb;}
+    else{detalhe=r.emb||"—";}
+    tr.innerHTML=
+      '<td class="mono">'+d+"/"+m+"/"+y.slice(2)+'</td>'+
+      '<td class="mono">'+(r.hora||"—")+'</td>'+
+      '<td><span class="pill" data-t="'+r.turno+'">'+r.turno+'º</span></td>'+
+      '<td>'+detalhe+'</td>'+
+      '<td class="mono qty">'+(r.total||0).toLocaleString("pt-BR")+'</td>'+
+      '<td><button class="edit" title="Editar">✎</button><button class="del" title="Excluir">✕</button></td>';
+    tr.querySelector(".edit").addEventListener("click",()=>editarVazia(r.id));
+    tr.querySelector(".del").addEventListener("click",async()=>{
+      if(vaziaEditingId===r.id){vaziaEditingId=null;document.getElementById("vazia-edit-banner").classList.remove("on");document.getElementById("v-cancel-edit").style.display="none";limparCamposVazia();}
+      await persistDelVazia(r.id);
+      if(document.getElementById("view-dash").classList.contains("on"))renderDash();
+    });
+    tb.appendChild(tr);
+  });
+}
+
+/* Data padrão + inicializar turno 1 */
+(function(){
+  const hv=new Date();
+  const el=document.getElementById("v-data");
+  if(el)el.value=hv.getFullYear()+"-"+String(hv.getMonth()+1).padStart(2,"0")+"-"+String(hv.getDate()).padStart(2,"0");
+  /* Selecionar 1º turno por padrão */
+  const t1=document.querySelector("#v-turnos .turno-btn[data-t='1']");
+  if(t1)t1.classList.add("on");
+  vaziaTurno="1";
+})();
+
+/* Carregar dados Vazia */
+async function loadVazia(){
+  if(backend==="firebase"){initFirebaseVazia();}
+  else{registrosVazia=await dbLoadVazia();renderVazia();}
+}
+
 load();
+loadVazia();
 (function(){
   function toDateStr(d){
     return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -3297,21 +3679,22 @@ function atualizarTickerVelocidade(){
     '<span style="color:#3fb950;font-family:Poppins,sans-serif;font-size:12px;font-weight:700;margin-right:50px">'+msgVel+'</span>';
 }
 
-(function selectVazDefault(){
-  const btn = document.querySelector('.tipo-btn[data-tp="vaz"]');
+(function selectLavDefault(){
+  const btn = document.querySelector('.tipo-btn[data-tp="lav"]');
   if(!btn) return;
   document.querySelectorAll('.tipo-btn').forEach(x=>x.classList.remove('on'));
   btn.classList.add('on');
-  tipo = 'vaz';
-  document.getElementById('f-emb-vazia').classList.remove('hide');
-  document.getElementById('f-embalagem').classList.add('hide');
-  document.getElementById('f-horas').classList.add('hide');
+  tipo = 'lav';
+  document.getElementById('f-embalagem').classList.remove('hide');
+  document.getElementById('f-emb-vazia').classList.add('hide');
+  document.getElementById('f-horas').classList.remove('hide');
+  document.getElementById('f-cicloextra').classList.remove('hide');
   document.getElementById('f-motivo').classList.add('hide');
   document.getElementById('f-obs').classList.add('hide');
   document.getElementById('siren-banner').classList.remove('on');
-  document.getElementById('submit-btn').textContent = 'Registrar ' + TPLABEL['vaz'];
-  document.getElementById('submit-btn').classList.remove('lav');
-  document.getElementById('submit-btn').style.background = 'var(--orange)';
+  document.getElementById('submit-btn').textContent = 'Registrar ' + TPLABEL['lav'];
+  document.getElementById('submit-btn').classList.add('lav');
+  document.getElementById('submit-btn').style.background = '';
 })();
 </script>
 
