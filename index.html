@@ -3935,95 +3935,122 @@ function atualizarTickerVelocidade(){
 
 <script>
 /* ===================================================================
-   CADASTRO DE EMBALAGENS
-   Armazena nome + imagem no localStorage (chave: sas_embalagens_v1)
-   e sincroniza via Firebase (coleção: embalagens) se disponível.
+   CADASTRO DE EMBALAGENS — versão corrigida
+   Usa APENAS localStorage para salvar (sem dependência do Firebase init).
+   A lista é inicializada a partir das EMBALAGENS_DEFAULT + FOTOS_EMB
+   na primeira vez e pode ser editada pelo usuário.
    =================================================================== */
-const KEY_EMB_CAD = 'sas_embalagens_v1';
-const COLECAO_EMB = 'embalagens';
-let embCadLista = []; // [{id, nome, foto}]
-let embCadEditId = null;
+const KEY_EMB_CAD  = 'sas_embalagens_v2';
+let embCadLista    = [];   // [{id, nome, foto}]
+let embCadEditId   = null;
+let embCadPronto   = false; // evita renderizar antes de carregar
 
-/* --------- Utilitários de persistência --------- */
-async function embCadLoad(){
-  // tenta Firebase primeiro
-  if(backend==='firebase' && fb){
-    try{
-      const snap = await fb.collection(COLECAO_EMB).orderBy('nome').get();
-      if(!snap.empty){
-        return snap.docs.map(d=>d.data());
-      }
-    }catch(e){ console.warn('embCadLoad Firebase:', e.message); }
-  }
-  // fallback: localStorage
+/* --------- localStorage helpers --------- */
+function embLS_load(){
   try{
     const raw = localStorage.getItem(KEY_EMB_CAD);
-    if(raw) return JSON.parse(raw);
+    if(raw){const arr=JSON.parse(raw); if(Array.isArray(arr)&&arr.length) return arr;}
   }catch(e){}
-  return [];
+  return null;
 }
-
-async function embCadSave(lista){
-  try{ localStorage.setItem(KEY_EMB_CAD, JSON.stringify(lista)); }catch(e){}
-  if(backend==='firebase' && fb){
-    try{
-      // escreve cada item como doc com id=nome (slug)
-      const batch = fb.batch();
-      lista.forEach(item=>{
-        batch.set(fb.collection(COLECAO_EMB).doc(String(item.id)), item);
-      });
-      await batch.commit();
-    }catch(e){ console.warn('embCadSave Firebase:', e.message); }
-  }
-}
-
-async function embCadDeleteDoc(id){
+function embLS_save(lista){
   try{
-    const lst = JSON.parse(localStorage.getItem(KEY_EMB_CAD)||'[]');
-    localStorage.setItem(KEY_EMB_CAD, JSON.stringify(lst.filter(x=>x.id!==id)));
-  }catch(e){}
-  if(backend==='firebase' && fb){
-    try{ await fb.collection(COLECAO_EMB).doc(String(id)).delete(); }catch(e){}
+    // Salvar sem as fotos base64 padrão para não sobrecarregar o localStorage
+    // (as fotos padrão já estão em FOTOS_EMB, só salvamos as novas)
+    localStorage.setItem(KEY_EMB_CAD, JSON.stringify(lista));
+  }catch(e){
+    // localStorage cheio (fotos grandes): tenta salvar só nomes
+    try{
+      const mini = lista.map(x=>({id:x.id, nome:x.nome, foto:x.foto&&!FOTOS_EMB_DEFAULT_KEYS.includes(x.nome)?x.foto:''}));
+      localStorage.setItem(KEY_EMB_CAD, JSON.stringify(mini));
+    }catch(e2){ console.warn('localStorage cheio, usando só memória'); }
   }
 }
 
-/* --------- Inicialização --------- */
+/* Chaves das fotos padrão (para não duplicar no localStorage) */
+const FOTOS_EMB_DEFAULT_KEYS = Object.keys(FOTOS_EMB);
+
+/* --------- Inicialização (chamada no load()) --------- */
 async function initEmbalagens(){
-  const lista = await embCadLoad();
-  if(lista && lista.length > 0){
-    embCadLista = lista;
-    applyEmbalagens();
+  const salvo = embLS_load();
+  if(salvo && salvo.length > 0){
+    // Já tem cadastro — restaurar fotos padrão que não foram salvas
+    embCadLista = salvo.map(item=>({
+      ...item,
+      foto: item.foto || FOTOS_EMB[item.nome] || ''
+    }));
   } else {
-    // Primeira vez: popular com as embalagens padrão (sem foto)
+    // Primeira vez — criar a partir das embalagens padrão com fotos
     embCadLista = EMBALAGENS_DEFAULT.map((nome,i)=>({
-      id: Date.now() + i,
+      id: 1000 + i,
       nome,
       foto: FOTOS_EMB[nome] || ''
     }));
-    await embCadSave(embCadLista);
-    applyEmbalagens();
+    embLS_save(embCadLista);
   }
+  embCadPronto = true;
+  applyEmbalagens();
+  // Se Firebase conectar depois, sincroniza em background
+  _embSincFirebase();
 }
 
-/* Atualiza as variáveis globais EMBALAGENS e FOTOS_EMB e recarrega selects */
+/* --------- Sincronização Firebase (não bloqueante) --------- */
+async function _embSincFirebase(){
+  if(backend!=='firebase' || !fb) return;
+  try{
+    const snap = await fb.collection('embalagens').get();
+    if(!snap.empty){
+      const lista = snap.docs.map(d=>d.data());
+      if(lista.length > 0){
+        // Firebase tem dados: usar como fonte de verdade
+        embCadLista = lista.map(item=>({
+          ...item,
+          foto: item.foto || FOTOS_EMB[item.nome] || ''
+        }));
+        embLS_save(embCadLista);
+        applyEmbalagens();
+        // Atualizar lista se estiver visível
+        if(document.getElementById('view-cadEmb').classList.contains('on')) renderCadEmb();
+        return;
+      }
+    }
+    // Firebase vazio — subir o que temos no localStorage
+    const batch = fb.batch();
+    embCadLista.forEach(item=>{
+      batch.set(fb.collection('embalagens').doc(String(item.id)), item);
+    });
+    await batch.commit();
+  }catch(e){ console.warn('embSincFirebase:', e.message); }
+}
+
+/* --------- Salvar no Firebase se disponível --------- */
+async function _embSalvarFirebase(lista){
+  if(backend!=='firebase' || !fb) return;
+  try{
+    const batch = fb.batch();
+    lista.forEach(item=>{ batch.set(fb.collection('embalagens').doc(String(item.id)), item); });
+    await batch.commit();
+  }catch(e){ console.warn('embSalvarFirebase:', e.message); }
+}
+async function _embExcluirFirebase(id){
+  if(backend!=='firebase' || !fb) return;
+  try{ await fb.collection('embalagens').doc(String(id)).delete(); }catch(e){}
+}
+
+/* --------- applyEmbalagens: atualiza EMBALAGENS + selects --------- */
 function applyEmbalagens(){
-  // Reconstruir EMBALAGENS e FOTOS_EMB a partir do cadastro
   EMBALAGENS.length = 0;
   embCadLista.forEach(item=>{
     EMBALAGENS.push(item.nome);
     if(item.foto) FOTOS_EMB[item.nome] = item.foto;
-    else delete FOTOS_EMB[item.nome];
   });
-
-  // Recarregar todos os selects de embalagem
-  ['embalagem','emb-vazia-sel','v-embalagem','vf-tipo','d-fmodelo'].forEach(id=>{
-    const sel = document.getElementById(id);
+  ['embalagem','emb-vazia-sel','v-embalagem','vf-tipo','d-fmodelo'].forEach(selId=>{
+    const sel = document.getElementById(selId);
     if(!sel) return;
     const val = sel.value;
-    while(sel.options.length > 0) sel.remove(0);
-    if(['embalagem','emb-vazia-sel','v-embalagem'].includes(id)){
-      sel.add(new Option('Selecione…',''));
-      sel.options[0].disabled = true;
+    while(sel.options.length) sel.remove(0);
+    if(['embalagem','emb-vazia-sel','v-embalagem'].includes(selId)){
+      const opt = new Option('Selecione…',''); opt.disabled=true; sel.add(opt);
     } else {
       sel.add(new Option('Todos os modelos',''));
     }
@@ -4037,33 +4064,38 @@ function renderCadEmb(){
   const container = document.getElementById('cadEmb-lista');
   if(!container) return;
 
-  if(embCadLista.length === 0){
-    container.innerHTML = '<div class="empty"><div class="big">📦</div><div class="txt">NENHUMA EMBALAGEM CADASTRADA</div></div>';
+  if(!embCadPronto){
+    container.innerHTML='<div class="loading">Carregando…</div>';
+    return;
+  }
+  if(!embCadLista.length){
+    container.innerHTML='<div class="empty"><div class="big">📦</div><div class="txt">NENHUMA EMBALAGEM CADASTRADA</div></div>';
     return;
   }
 
-  let html = '<table style="width:100%;border-collapse:collapse">';
-  html += '<thead><tr>';
-  html += '<th style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-faint);text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)">Foto</th>';
-  html += '<th style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-faint);text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)">Nome</th>';
-  html += '<th style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-faint);text-align:right;padding:8px 6px;border-bottom:1px solid var(--line)">Ações</th>';
-  html += '</tr></thead><tbody>';
+  let html='<table style="width:100%;border-collapse:collapse">';
+  html+='<thead><tr>';
+  html+='<th style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-faint);text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);width:60px">Foto</th>';
+  html+='<th style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-faint);text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)">Nome</th>';
+  html+='<th style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-faint);text-align:right;padding:8px 6px;border-bottom:1px solid var(--line);width:130px">Ações</th>';
+  html+='</tr></thead><tbody>';
 
   embCadLista.forEach(item=>{
-    const fotoHtml = item.foto
-      ? '<img src="'+item.foto+'" alt="'+item.nome+'" style="width:50px;height:34px;object-fit:cover;border-radius:5px;border:1px solid var(--line)">'
-      : '<div style="width:50px;height:34px;background:var(--panel-2);border-radius:5px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:16px">📦</div>';
-    html += '<tr style="border-bottom:1px solid var(--line-soft)">';
-    html += '<td style="padding:8px 6px">'+fotoHtml+'</td>';
-    html += '<td style="padding:8px 6px;font-size:12px;font-weight:600;color:var(--txt)">'+item.nome+'</td>';
-    html += '<td style="padding:8px 6px;text-align:right">';
-    html += '<button class="edit" onclick="cadEmbEditar(''+item.id+'')" title="Editar">✏️</button>';
-    html += '<button class="del" onclick="cadEmbExcluir(''+item.id+'')" title="Excluir">✕</button>';
-    html += '</td>';
-    html += '</tr>';
+    const foto = item.foto || FOTOS_EMB[item.nome] || '';
+    const fotoHtml = foto
+      ? '<img src="'+foto+'" alt="'+item.nome+'" style="width:52px;height:36px;object-fit:cover;border-radius:5px;border:1px solid var(--line)">'
+      : '<div style="width:52px;height:36px;background:var(--panel-2);border-radius:5px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px">📦</div>';
+    html+='<tr style="border-bottom:1px solid var(--line-soft)">';
+    html+='<td style="padding:7px 6px">'+fotoHtml+'</td>';
+    html+='<td style="padding:7px 6px;font-size:12px;font-weight:600;color:var(--txt)">'+item.nome+'</td>';
+    html+='<td style="padding:7px 6px;text-align:right;white-space:nowrap">';
+    html+='<button class="edit" onclick="cadEmbEditar(\''+item.id+'\')" title="Editar" style="margin-right:4px">✏️</button>';
+    html+='<button class="del" onclick="cadEmbExcluir(\''+item.id+'\')" title="Excluir">✕</button>';
+    html+='</td>';
+    html+='</tr>';
   });
 
-  html += '</tbody></table>';
+  html+='</tbody></table>';
   container.innerHTML = html;
 }
 
@@ -4071,21 +4103,23 @@ function renderCadEmb(){
 function cadEmbEditar(id){
   const item = embCadLista.find(x=>String(x.id)===String(id));
   if(!item) return;
-  embCadEditId = id;
-
-  document.getElementById('cadEmb-nome').value = item.nome;
-  document.getElementById('cadEmb-file').value = '';
-  document.getElementById('cadEmb-titulo').textContent = 'Editar Embalagem';
+  embCadEditId = String(id);
+  document.getElementById('cadEmb-nome').value   = item.nome;
+  document.getElementById('cadEmb-file').value   = '';
+  document.getElementById('cadEmb-titulo').textContent = 'Editar: '+item.nome;
   document.getElementById('cadEmb-banner').classList.add('on');
   document.getElementById('cadEmb-cancelar').style.display = 'block';
   document.getElementById('cadEmb-hint').textContent = '';
-
-  if(item.foto){
-    document.getElementById('cadEmb-previewImg').src = item.foto;
+  const foto = item.foto || FOTOS_EMB[item.nome] || '';
+  if(foto){
+    document.getElementById('cadEmb-previewImg').src = foto;
     document.getElementById('cadEmb-preview').style.display = 'block';
   } else {
     document.getElementById('cadEmb-preview').style.display = 'none';
   }
+  // Scroll para o topo do formulário
+  document.getElementById('cadEmb-nome').scrollIntoView({behavior:'smooth',block:'center'});
+  document.getElementById('cadEmb-nome').focus();
 }
 
 /* --------- Cancelar edição --------- */
@@ -4102,38 +4136,25 @@ function cadEmbCancelar(){
 
 /* --------- Excluir --------- */
 async function cadEmbExcluir(id){
-  if(!confirm('Excluir esta embalagem?')) return;
+  const item = embCadLista.find(x=>String(x.id)===String(id));
+  if(!item) return;
+  if(!confirm('Excluir a embalagem "'+item.nome+'"?')) return;
   embCadLista = embCadLista.filter(x=>String(x.id)!==String(id));
-  await embCadDeleteDoc(id);
+  embLS_save(embCadLista);
+  _embExcluirFirebase(id);
   applyEmbalagens();
   renderCadEmb();
 }
 
-/* --------- Reordenar (mover para cima/baixo) --------- */
-function cadEmbMover(id, dir){
-  const idx = embCadLista.findIndex(x=>String(x.id)===String(id));
-  if(idx < 0) return;
-  const newIdx = idx + dir;
-  if(newIdx < 0 || newIdx >= embCadLista.length) return;
-  const tmp = embCadLista[idx];
-  embCadLista[idx] = embCadLista[newIdx];
-  embCadLista[newIdx] = tmp;
-  embCadSave(embCadLista);
-  applyEmbalagens();
-  renderCadEmb();
-}
-
-/* --------- Salvar (novo ou edição) --------- */
+/* --------- Listeners do formulário --------- */
 document.addEventListener('DOMContentLoaded', function(){
   const btnSubmit   = document.getElementById('cadEmb-submit');
   const btnCancelar = document.getElementById('cadEmb-cancelar');
   const inpFile     = document.getElementById('cadEmb-file');
   const preview     = document.getElementById('cadEmb-preview');
   const previewImg  = document.getElementById('cadEmb-previewImg');
-
   if(!btnSubmit) return;
 
-  /* Preview ao escolher arquivo */
   inpFile.addEventListener('change', function(){
     const file = this.files[0];
     if(!file) return;
@@ -4148,48 +4169,46 @@ document.addEventListener('DOMContentLoaded', function(){
   btnCancelar.addEventListener('click', cadEmbCancelar);
 
   btnSubmit.addEventListener('click', async function(){
-    const nomeEl  = document.getElementById('cadEmb-nome');
-    const hintEl  = document.getElementById('cadEmb-hint');
-    const nome = nomeEl.value.trim();
-    if(!nome){ hintEl.textContent = 'Informe o nome da embalagem'; hintEl.className='hint'; return; }
+    const hintEl = document.getElementById('cadEmb-hint');
+    const nome   = document.getElementById('cadEmb-nome').value.trim();
+    if(!nome){ hintEl.textContent='Informe o nome da embalagem'; hintEl.className='hint'; return; }
 
-    // Verificar nome duplicado (exceto na edição do próprio item)
-    const duplicado = embCadLista.find(x=> x.nome.toLowerCase()===nome.toLowerCase() && String(x.id)!==String(embCadEditId));
-    if(duplicado){ hintEl.textContent = 'Já existe uma embalagem com este nome'; hintEl.className='hint'; return; }
+    const duplicado = embCadLista.find(x=>
+      x.nome.toLowerCase()===nome.toLowerCase() && String(x.id)!==String(embCadEditId)
+    );
+    if(duplicado){ hintEl.textContent='Já existe uma embalagem com este nome'; hintEl.className='hint'; return; }
 
-    // Obter foto: arquivo tem prioridade, depois URL, depois foto já existente
+    // Foto: arquivo > foto já existente
     let foto = '';
     const file = inpFile.files[0];
     if(file){
       foto = await new Promise(res=>{
-        const r = new FileReader();
-        r.onload = e=>res(e.target.result);
-        r.readAsDataURL(file);
+        const r=new FileReader(); r.onload=e=>res(e.target.result); r.readAsDataURL(file);
       });
     } else if(embCadEditId){
       const ex = embCadLista.find(x=>String(x.id)===String(embCadEditId));
-      if(ex) foto = ex.foto || '';
+      if(ex) foto = ex.foto || FOTOS_EMB[ex.nome] || '';
     }
 
     if(embCadEditId){
-      // Editar
-      const idx = embCadLista.findIndex(x=>String(x.id)===String(embCadEditId));
-      if(idx >= 0){ embCadLista[idx].nome = nome; embCadLista[idx].foto = foto; }
+      const i = embCadLista.findIndex(x=>String(x.id)===String(embCadEditId));
+      if(i>=0){ embCadLista[i].nome=nome; embCadLista[i].foto=foto; }
     } else {
-      // Novo
       embCadLista.push({ id: Date.now(), nome, foto });
     }
 
-    await embCadSave(embCadLista);
+    embLS_save(embCadLista);
+    _embSalvarFirebase(embCadLista);
     applyEmbalagens();
+    const wasEdit = !!embCadEditId;
     cadEmbCancelar();
     renderCadEmb();
-    hintEl.textContent = embCadEditId ? '✔ Embalagem atualizada' : '✔ Embalagem adicionada';
+    hintEl.textContent = wasEdit ? '✔ Embalagem atualizada' : '✔ Embalagem adicionada';
     hintEl.className = 'hint ok';
-    setTimeout(()=>{ hintEl.textContent=''; }, 2500);
+    setTimeout(()=>{ hintEl.textContent=''; }, 3000);
   });
 });
-</script>
+
 
 <script>
 /* ===== PROTEÇÃO POR SENHA — CADASTRO DE EMBALAGENS ===== */
