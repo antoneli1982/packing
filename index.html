@@ -1645,6 +1645,42 @@ function refreshStatus(){
   if(st){st.textContent=statusTxt();st.className="dbstat "+backend;}
 }
 
+const MIGRATION_FLAG="sas_idb_migrated_v1";
+async function migrateLocalToFirebase(){
+  /* Só roda uma vez por máquina e só se Firebase estiver ativo */
+  if(backend!=="firebase"||!fb)return;
+  try{
+    const jaFeito=localStorage.getItem(MIGRATION_FLAG);
+    if(jaFeito)return;
+    /* Lê dados locais do IDB */
+    const locais=idb?JSON.parse(await idbGet(KEY)||"[]"):[];
+    if(!locais||!locais.length){localStorage.setItem(MIGRATION_FLAG,"1");return;}
+    /* Verifica quantos já existem no Firebase */
+    const snap=await fb.collection(COLECAO).limit(1).get();
+    const firebaseVazio=snap.empty;
+    if(!firebaseVazio){
+      /* Firebase já tem dados — não sobrescreve, apenas marca como migrado */
+      localStorage.setItem(MIGRATION_FLAG,"1");
+      console.info("Migração: Firebase já possui dados, migração ignorada.");
+      return;
+    }
+    /* Firebase está vazio e há dados locais — sobe tudo */
+    const box=document.getElementById("state-box");
+    if(box)box.innerHTML='<div class="loading">🔄 Sincronizando dados locais com Firebase…</div>';
+    const chunks=[];
+    for(let i=0;i<locais.length;i+=400)chunks.push(locais.slice(i,i+400));
+    for(const chunk of chunks){
+      const batch=fb.batch();
+      chunk.forEach(r=>batch.set(fb.collection(COLECAO).doc(String(r.id)),r));
+      await batch.commit();
+    }
+    localStorage.setItem(MIGRATION_FLAG,"1");
+    console.info("Migração concluída: "+locais.length+" registro(s) enviado(s) ao Firebase.");
+  }catch(e){
+    console.warn("Migração local→Firebase falhou (não crítico):",e.message);
+  }
+}
+
 async function load(){
   const box=document.getElementById("state-box");
   box.innerHTML='<div class="loading">Carregando banco de dados…</div>';
@@ -1652,8 +1688,10 @@ async function load(){
   /* Carrega IDB primeiro — exibe imediatamente no F5 */
   registros=await dbLoad();
   refreshStatus();render();
-  /* Se Firebase disponível, sincroniza por cima via listener */
+  /* Se Firebase disponível, migra dados locais e depois sincroniza via listener */
   if(backend==="firebase"&&fb){
+    /* Migração automática: sobe dados do IDB local para o Firebase (só na primeira vez) */
+    await migrateLocalToFirebase();
     fb.collection(COLECAO).onSnapshot(snap=>{
       registros=snap.docs.map(d=>d.data()).sort((a,b)=>b.id-a.id);
       /* Espelha no IDB para garantir cache local */
