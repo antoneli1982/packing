@@ -1766,6 +1766,7 @@ async function load(){
   box.innerHTML='<div class="loading">Carregando banco de dados…</div>';
   await initDB();
   await initEmbalagens();
+  initCadEmbForm();
   /* Carrega IDB primeiro — exibe imediatamente no F5 */
   registros=await dbLoad();
   refreshStatus();render();
@@ -4147,7 +4148,7 @@ async function cadEmbExcluir(id){
 }
 
 /* --------- Listeners do formulário --------- */
-document.addEventListener('DOMContentLoaded', function(){
+function initCadEmbForm(){
   const btnSubmit   = document.getElementById('cadEmb-submit');
   const btnCancelar = document.getElementById('cadEmb-cancelar');
   const inpFile     = document.getElementById('cadEmb-file');
@@ -4207,7 +4208,8 @@ document.addEventListener('DOMContentLoaded', function(){
     hintEl.className = 'hint ok';
     setTimeout(()=>{ hintEl.textContent=''; }, 3000);
   });
-});
+}
+</script>
 
 
 <script>
