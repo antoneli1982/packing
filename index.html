@@ -148,24 +148,31 @@
     border-top:1px solid var(--line-soft);text-transform:uppercase}
 
   .table-scroll{overflow-x:auto}
-  table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+  table{width:100%;border-collapse:collapse;font-size:12px;table-layout:auto}
   thead th{font-family:'Poppins',sans-serif;font-size:9px;font-weight:600;
     text-transform:uppercase;letter-spacing:.5px;color:var(--txt-faint);text-align:left;
     padding:9px 7px;border-bottom:1px solid var(--line);
-    overflow:hidden;text-overflow:ellipsis}
-  tbody td{padding:9px 7px;border-bottom:1px solid var(--line-soft);
-    word-break:break-word;vertical-align:middle}
+    white-space:nowrap}
+  tbody td{padding:8px 7px;border-bottom:1px solid var(--line-soft);
+    vertical-align:middle;word-break:normal;overflow-wrap:anywhere}
   tbody tr:hover{background:var(--panel-2)}
-  .mono{font-family:'Poppins',sans-serif;white-space:nowrap}
+  .mono{font-family:'Poppins',sans-serif;white-space:nowrap;font-size:11.5px}
   /* larguras de coluna — tudo cabe sem rolagem lateral */
-  col.c-data{width:10%}
-  col.c-turno{width:8%}
-  col.c-tipo{width:15%}
-  col.c-det{width:auto}
-  col.c-hi,col.c-hf{width:8%}
-  col.c-dur{width:10%}
-  col.c-total{width:9%}
-  col.c-acao{width:16%}
+  col.c-data{width:82px}
+  col.c-turno{width:58px}
+  col.c-tipo{width:90px}
+  col.c-det{width:auto;min-width:140px}
+  col.c-hi,col.c-hf{width:58px}
+  col.c-dur{width:72px}
+  col.c-total{width:62px}
+  col.c-acao{width:130px}
+  /* Botões de ação na tabela */
+  .td-acoes{white-space:nowrap;text-align:right}
+  .td-acoes .edit,.td-acoes .del{font-size:11px;padding:4px 8px}
+  @media(max-width:1000px){
+    .td-acoes{white-space:normal}
+    .td-acoes .edit,.td-acoes .del{display:inline-block;margin-bottom:2px}
+  }
   .pill{display:inline-block;font-family:'Poppins',sans-serif;font-size:11px;
     font-weight:600;padding:2px 9px;border-radius:11px}
   .pill[data-t="1"]{background:rgba(56,102,247,.18);color:var(--blue-soft)}
@@ -2611,9 +2618,9 @@ function render(){
       '<td class="mono" style="color:var(--txt-dim)">'+fmtMin(mins(r.hi,r.hf))+'</td>'+
       '<td class="mono qty">'+(r.tipo==="lav"||r.tipo==="vaz"?r.total.toLocaleString("pt-BR"):"—")+'</td>'+
       '<td class="mono" style="'+ceColor+'">'+ceDisp+'</td>'+
-      '<td style="white-space:nowrap">'+
-      '<button class="edit" title="Editar apontamento" style="font-size:12px;padding:4px 8px">✏️ Editar</button> '+
-      '<button class="del" title="Excluir apontamento" style="font-size:12px;padding:4px 8px">✕ Excluir</button></td>';
+      '<td class="td-acoes">'+
+      '<button class="edit" title="Editar">✏️ Editar</button> '+
+      '<button class="del" title="Excluir">✕</button></td>';
     tr.querySelector(".edit").addEventListener("click",()=>editar(r.id));
     tr.querySelector(".del").addEventListener("click",()=>excluir(r.id));
     tb.appendChild(tr);
@@ -3689,7 +3696,7 @@ function renderVazia(){
       '<td><span class="pill" data-t="'+r.turno+'">'+r.turno+'º</span></td>'+
       '<td>'+detalhe+'</td>'+
       '<td class="mono qty">'+(r.total||0).toLocaleString("pt-BR")+'</td>'+
-      '<td style="white-space:nowrap"><button class="edit" title="Editar" style="font-size:12px;padding:4px 8px">✏️ Editar</button> <button class="del" title="Excluir" style="font-size:12px;padding:4px 8px">✕ Excluir</button></td>';
+      '<td class="td-acoes"><button class="edit" title="Editar">✏️ Editar</button> <button class="del" title="Excluir">✕</button></td>';
     tr.querySelector(".edit").addEventListener("click",()=>editarVazia(r.id));
     tr.querySelector(".del").addEventListener("click",async()=>{
       if(vaziaEditingId===r.id){vaziaEditingId=null;document.getElementById("vazia-edit-banner").classList.remove("on");document.getElementById("v-cancel-edit").style.display="none";limparCamposVazia();}
