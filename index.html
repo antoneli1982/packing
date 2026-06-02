@@ -4066,6 +4066,7 @@ function applyEmbalagens(){
   embCadLista.forEach(item=>{
     EMBALAGENS.push(item.nome);
     if(item.foto) FOTOS_EMB[item.nome] = item.foto;
+    else delete FOTOS_EMB[item.nome];   // remove foto antiga se foi excluída
   });
   ['embalagem','emb-vazia-sel','v-embalagem','vf-tipo','d-fmodelo'].forEach(selId=>{
     const sel = document.getElementById(selId);
@@ -4226,24 +4227,30 @@ function initCadEmbForm(){
     if(duplicado){ hintEl.textContent='Já existe uma embalagem com este nome'; hintEl.className='hint'; return; }
 
     /* Determinar foto final:
-       - novo arquivo selecionado  -> fotoAtualEmEdicao (base64)
-       - usuário clicou excluir    -> fotoAtualEmEdicao === null -> foto = ''
-       - nenhuma ação sobre foto   -> fotoAtualEmEdicao === undefined -> mantém a existente
-       - cadastro novo sem foto    -> '' */
+       - novo arquivo selecionado -> lê o arquivo
+       - fotoAtualEmEdicao===null -> usuário clicou "Excluir imagem" -> foto=''
+       - fotoAtualEmEdicao===undefined -> sem mudança -> mantém a foto existente
+       - novo cadastro sem foto   -> '' */
     let foto = '';
     const file = document.getElementById('cadEmb-file').files[0];
     if(file){
+      // novo arquivo escolhido — tem prioridade sobre tudo
       foto = await new Promise(res=>{
         const r=new FileReader(); r.onload=e=>res(e.target.result); r.readAsDataURL(file);
       });
     } else if(fotoAtualEmEdicao === null){
-      foto = '';   // excluída intencionalmente
-    } else if(fotoAtualEmEdicao !== undefined){
-      foto = fotoAtualEmEdicao;
+      foto = '';   // excluída intencionalmente — salva vazio
     } else if(embCadEditId){
-      const ex = embCadLista.find(x=>String(x.id)===String(embCadEditId));
-      if(ex) foto = ex.foto || FOTOS_EMB[ex.nome] || '';
+      // editando sem trocar a foto: mantém a foto que estava no item
+      if(fotoAtualEmEdicao === undefined){
+        const ex = embCadLista.find(x=>String(x.id)===String(embCadEditId));
+        foto = ex ? (ex.foto || '') : '';
+      } else {
+        foto = fotoAtualEmEdicao || '';
+      }
     }
+    // novo cadastro sem arquivo e sem fotoAtualEmEdicao -> foto permanece ''
+
 
     if(embCadEditId){
       const i = embCadLista.findIndex(x=>String(x.id)===String(embCadEditId));
