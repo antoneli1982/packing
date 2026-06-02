@@ -1562,9 +1562,24 @@
           </div>
 
           <!-- Preview -->
-          <div id="cadEmb-preview" style="display:none;margin:10px 0;text-align:center">
-            <img id="cadEmb-previewImg" src="" alt="preview"
-              style="max-height:120px;border-radius:8px;border:1px solid var(--line);object-fit:cover">
+          <div id="cadEmb-preview" style="display:none;margin:10px 0">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <img id="cadEmb-previewImg" src="" alt="preview"
+                style="max-height:100px;border-radius:8px;border:1px solid var(--line);object-fit:cover;flex-shrink:0">
+              <button type="button" id="cadEmb-rmvFoto" title="Excluir imagem atual"
+                style="cursor:pointer;background:rgba(240,83,63,.12);border:1px solid rgba(240,83,63,.5);
+                color:var(--red);border-radius:6px;padding:7px 11px;font-family:'Poppins',sans-serif;
+                font-size:11px;font-weight:700;transition:.13s;white-space:nowrap;flex-shrink:0">
+                🗑 Excluir imagem
+              </button>
+            </div>
+          </div>
+
+          <!-- Aviso sem foto -->
+          <div id="cadEmb-semFoto" style="display:none;background:rgba(240,83,63,.13);border:1px solid rgba(240,83,63,.5);
+            border-radius:6px;padding:10px 12px;margin:8px 0;font-family:'Poppins',sans-serif;font-size:11px;
+            font-weight:700;color:var(--red);line-height:1.5;text-align:center">
+            ⚠️ SEMPRE OPTE POR DEIXAR IMAGEM CADASTRADA, VISANDO AUXILIAR O OPERADOR A REALIZAR O APONTAMENTO
           </div>
 
           <div class="hint" id="cadEmb-hint"></div>
@@ -3925,7 +3940,7 @@ function atualizarTickerVelocidade(){
   <div class="senha-modal">
     <h3>🔒 Área Restrita</h3>
     <p>Digite a senha para acessar o Cadastro de Embalagens</p>
-    <input type="password" id="senha-input" placeholder="••••" maxlength="20" autocomplete="off">
+    <input type="password" id="senha-input" placeholder="••••" maxlength="20" autocomplete="new-password">
     <div class="senha-erro" id="senha-erro"></div>
     <div class="senha-btns">
       <button type="button" class="btn-senha-cancel" id="senha-cancelar">Cancelar</button>
@@ -4111,13 +4126,10 @@ function cadEmbEditar(id){
   document.getElementById('cadEmb-banner').classList.add('on');
   document.getElementById('cadEmb-cancelar').style.display = 'block';
   document.getElementById('cadEmb-hint').textContent = '';
+  fotoAtualEmEdicao = undefined;  // reset: nenhuma mudança de foto ainda
   const foto = item.foto || FOTOS_EMB[item.nome] || '';
-  if(foto){
-    document.getElementById('cadEmb-previewImg').src = foto;
-    document.getElementById('cadEmb-preview').style.display = 'block';
-  } else {
-    document.getElementById('cadEmb-preview').style.display = 'none';
-  }
+  document.getElementById('cadEmb-semFoto').style.display = 'none';
+  _cadEmbAtualizarPreview(foto || null);
   // Scroll para o topo do formulário
   document.getElementById('cadEmb-nome').scrollIntoView({behavior:'smooth',block:'center'});
   document.getElementById('cadEmb-nome').focus();
@@ -4131,8 +4143,10 @@ function cadEmbCancelar(){
   document.getElementById('cadEmb-titulo').textContent = 'Nova Embalagem';
   document.getElementById('cadEmb-banner').classList.remove('on');
   document.getElementById('cadEmb-cancelar').style.display = 'none';
-  document.getElementById('cadEmb-preview').style.display = 'none';
+  document.getElementById('cadEmb-preview').style.display  = 'none';
+  document.getElementById('cadEmb-semFoto').style.display  = 'none';
   document.getElementById('cadEmb-hint').textContent = '';
+  fotoAtualEmEdicao = undefined;
 }
 
 /* --------- Excluir --------- */
@@ -4148,23 +4162,48 @@ async function cadEmbExcluir(id){
 }
 
 /* --------- Listeners do formulário --------- */
+/* fotoAtualEmEdicao: guarda a foto durante edição;
+   null = sem foto (usuario excluiu), undefined = não editado ainda */
+let fotoAtualEmEdicao = undefined;
+
+function _cadEmbAtualizarPreview(src){
+  const preview   = document.getElementById('cadEmb-preview');
+  const previewImg= document.getElementById('cadEmb-previewImg');
+  const semFoto   = document.getElementById('cadEmb-semFoto');
+  if(src){
+    previewImg.src = src;
+    preview.style.display   = 'block';
+    semFoto.style.display   = 'none';
+  } else {
+    preview.style.display   = 'none';
+    semFoto.style.display   = 'block';
+  }
+}
+
 function initCadEmbForm(){
   const btnSubmit   = document.getElementById('cadEmb-submit');
   const btnCancelar = document.getElementById('cadEmb-cancelar');
+  const btnRmvFoto  = document.getElementById('cadEmb-rmvFoto');
   const inpFile     = document.getElementById('cadEmb-file');
-  const preview     = document.getElementById('cadEmb-preview');
-  const previewImg  = document.getElementById('cadEmb-previewImg');
   if(!btnSubmit) return;
 
+  /* Escolher novo arquivo */
   inpFile.addEventListener('change', function(){
     const file = this.files[0];
     if(!file) return;
     const reader = new FileReader();
     reader.onload = function(e){
-      previewImg.src = e.target.result;
-      preview.style.display = 'block';
+      fotoAtualEmEdicao = e.target.result;
+      _cadEmbAtualizarPreview(fotoAtualEmEdicao);
     };
     reader.readAsDataURL(file);
+  });
+
+  /* Excluir imagem atual */
+  btnRmvFoto.addEventListener('click', function(){
+    fotoAtualEmEdicao = null;   // null = sem foto (intencional)
+    document.getElementById('cadEmb-file').value = '';
+    _cadEmbAtualizarPreview(null);
   });
 
   btnCancelar.addEventListener('click', cadEmbCancelar);
@@ -4179,13 +4218,21 @@ function initCadEmbForm(){
     );
     if(duplicado){ hintEl.textContent='Já existe uma embalagem com este nome'; hintEl.className='hint'; return; }
 
-    // Foto: arquivo > foto já existente
+    /* Determinar foto final:
+       - novo arquivo selecionado  -> fotoAtualEmEdicao (base64)
+       - usuário clicou excluir    -> fotoAtualEmEdicao === null -> foto = ''
+       - nenhuma ação sobre foto   -> fotoAtualEmEdicao === undefined -> mantém a existente
+       - cadastro novo sem foto    -> '' */
     let foto = '';
-    const file = inpFile.files[0];
+    const file = document.getElementById('cadEmb-file').files[0];
     if(file){
       foto = await new Promise(res=>{
         const r=new FileReader(); r.onload=e=>res(e.target.result); r.readAsDataURL(file);
       });
+    } else if(fotoAtualEmEdicao === null){
+      foto = '';   // excluída intencionalmente
+    } else if(fotoAtualEmEdicao !== undefined){
+      foto = fotoAtualEmEdicao;
     } else if(embCadEditId){
       const ex = embCadLista.find(x=>String(x.id)===String(embCadEditId));
       if(ex) foto = ex.foto || FOTOS_EMB[ex.nome] || '';
