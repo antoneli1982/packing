@@ -1548,12 +1548,12 @@
           <span class="tag">CAD</span>
           <h2 id="cadEmb-titulo">Nova Embalagem</h2>
         </div>
-        <div style="padding:18px 16px 20px">
+        <form autocomplete="off" onsubmit="return false" style="padding:18px 16px 20px">
           <div class="edit-banner" id="cadEmb-banner">✏️ Editando embalagem</div>
 
           <div class="field">
             <label>Nome <span class="req">*</span></label>
-            <input type="text" id="cadEmb-nome" placeholder="Ex: EKLT9999" maxlength="80">
+            <input type="text" id="cadEmb-nome" placeholder="Ex: EKLT9999" maxlength="80" autocomplete="off">
           </div>
 
           <div class="field" style="text-align:center">
@@ -1586,7 +1586,7 @@
 
           <button type="button" class="submit" id="cadEmb-submit" style="margin-top:12px">Salvar Embalagem</button>
           <button type="button" class="cancel-edit" id="cadEmb-cancelar" style="display:none">Cancelar edição</button>
-        </div>
+        </form>
       </div>
 
       <!-- Lista de embalagens -->
