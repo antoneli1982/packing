@@ -1507,7 +1507,7 @@
           <div class="table-scroll">
             <table>
               <colgroup>
-                <col style="width:10%"><col style="width:8%"><col style="width:12%"><col style="width:auto"><col style="width:10%">
+                <col style="width:90px"><col style="width:80px"><col style="width:130px"><col style="width:auto"><col style="width:70px">
               </colgroup>
               <thead><tr>
                 <th>Data</th><th>Turno</th><th>Área</th><th>Itens Lavados</th><th></th>
@@ -5106,20 +5106,21 @@ async function loadRack(){
       const labelArea=RACK_AREA_LABEL[r.area]||r.area;
       const tNum = r.turno||'—';
       const corT  = RACK_TURNO_COLOR[r.turno]||'var(--txt-dim)';
-      const labT  = RACK_TURNO_LABEL[r.turno]||('T'+tNum);
+      const labT  = tNum+'º';
       const dataFmt=r.data?r.data.split('-').reverse().join('/'):'—';
       const itensHtml=(r.itens||[]).map(it=>{
         const nome=typeof it==='object'?it.nome:it;
         const qty=typeof it==='object'&&it.qty?it.qty:null;
-        return '<span style="display:inline-flex;align-items:center;gap:4px;margin:1px 4px 1px 0">'+
-          nome+(qty?'<span style="background:#9a6cf022;color:#9a6cf0;font-weight:700;border-radius:4px;padding:0 5px;font-size:10px">'+qty+'</span>':'')+'</span>';
-      }).join('<span style="color:var(--line);margin:0 2px">·</span>');
+        return '<span style="display:inline-flex;align-items:center;gap:5px;margin:2px 6px 2px 0;white-space:nowrap">'+
+          '<span style="font-weight:600;color:var(--txt);font-size:12px">'+nome+'</span>'+
+          (qty?'<span style="background:#9a6cf0;color:#fff;font-weight:700;border-radius:4px;padding:1px 7px;font-size:11px">'+qty+'</span>':'')+'</span>';
+      }).join('<span style="color:var(--line);margin:0 3px;font-size:14px">·</span>');
       return '<tr>'+
-        '<td class="mono">'+dataFmt+'</td>'+
-        '<td><span class="pill" style="background:'+corT+'22;color:'+corT+'">'+labT+'</span></td>'+
-        '<td><span class="pill" style="background:'+corArea+'22;color:'+corArea+'">'+labelArea+'</span></td>'+
-        '<td style="font-size:11px;color:var(--txt-dim);line-height:1.8">'+itensHtml+'</td>'+
-        '<td class="td-acoes">'+
+        '<td class="mono" style="white-space:nowrap">'+dataFmt+'</td>'+
+        '<td style="white-space:nowrap"><span class="pill" style="background:'+corT+'22;color:'+corT+'">'+labT+'</span></td>'+
+        '<td style="white-space:nowrap"><span class="pill" style="background:'+corArea+'22;color:'+corArea+'">'+labelArea+'</span></td>'+
+        '<td style="line-height:2">'+itensHtml+'</td>'+
+        '<td class="td-acoes" style="white-space:nowrap">'+
           '<button class="edit" onclick="rackEditar('+r.id+')" title="Editar">✏️</button>'+
           '<button class="del" onclick="rackDel('+r.id+')" title="Excluir">✕</button>'+
         '</td>'+
