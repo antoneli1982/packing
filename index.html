@@ -3709,13 +3709,61 @@ function renderVazia(){
   vaziaTurno="1";
 })();
 
+/* ===== Migração IDB → Firebase (Embalagem Vazia) — roda uma única vez por máquina ===== */
+const MIGRATION_FLAG_VAZIA = "sas_idb_vazia_migrated_v1";
+async function migrateLocalToFirebaseVazia(){
+  if(backend!=="firebase"||!fb) return;
+  try{
+    const jaFeito = localStorage.getItem(MIGRATION_FLAG_VAZIA);
+    if(jaFeito) return;
+    /* Lê dados locais do IDB */
+    const locais = idb ? JSON.parse(await idbGet(KEY_VAZIA)||"[]") : [];
+    if(!locais||!locais.length){ localStorage.setItem(MIGRATION_FLAG_VAZIA,"1"); return; }
+    /* Verifica se Firebase já tem dados */
+    const snap = await fb.collection("embalagem_vazia").limit(1).get();
+    if(!snap.empty){
+      localStorage.setItem(MIGRATION_FLAG_VAZIA,"1");
+      console.info("Migração Vazia: Firebase já possui dados, migração ignorada.");
+      return;
+    }
+    /* Firebase vazio + há dados locais → sobe tudo */
+    console.info("Migração Vazia: subindo "+locais.length+" registro(s) do IDB para Firebase…");
+    const chunks=[];
+    for(let i=0;i<locais.length;i+=400) chunks.push(locais.slice(i,i+400));
+    for(const chunk of chunks){
+      const batch=fb.batch();
+      chunk.forEach(r=>batch.set(fb.collection("embalagem_vazia").doc(String(r.id)),r));
+      await batch.commit();
+    }
+    localStorage.setItem(MIGRATION_FLAG_VAZIA,"1");
+    console.info("Migração Vazia concluída: "+locais.length+" registro(s) enviado(s) ao Firebase.");
+  }catch(e){
+    console.warn("Migração Vazia falhou (não crítico):",e.message);
+  }
+}
+
 /* Carregar dados Vazia */
 async function loadVazia(){
   /* Carrega IDB primeiro — exibe imediatamente no F5 */
   registrosVazia=await dbLoadVazia();
   renderVazia();
-  /* Firebase sincroniza por cima se disponível */
-  if(backend==="firebase"&&fb){initFirebaseVazia();}
+  if(backend==="firebase"&&fb){
+    /* Migra dados locais para Firebase (só 1ª vez por máquina) */
+    await migrateLocalToFirebaseVazia();
+    /* Se IDB veio vazio, tenta buscar direto do Firebase antes do listener */
+    if(!registrosVazia.length){
+      try{
+        const snap=await fb.collection("embalagem_vazia").get();
+        if(!snap.empty){
+          registrosVazia=snap.docs.map(d=>d.data()).sort((a,b)=>b.id-a.id);
+          if(idb)idbSet(KEY_VAZIA,JSON.stringify(registrosVazia)).catch(()=>{});
+          renderVazia();
+        }
+      }catch(e){ console.warn("Pré-carregamento Firebase Vazia:",e.message); }
+    }
+    /* Ativa listener em tempo real (mantém sincronizado entre abas/navegadores) */
+    initFirebaseVazia();
+  }
 }
 
 /* Inicialização sequencial — loadVazia aguarda load() para garantir que idb está pronto */
