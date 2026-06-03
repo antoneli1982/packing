@@ -1787,6 +1787,18 @@ async function load(){
   if(backend==="firebase"&&fb){
     /* Migração automática: sobe dados do IDB local para o Firebase (só na primeira vez) */
     await migrateLocalToFirebase();
+    /* SEMPRE busca do Firebase antes do listener para garantir dados atualizados */
+    try{
+      const snap=await fb.collection(COLECAO).orderBy("id","desc").get();
+      if(!snap.empty){
+        const fbDados=snap.docs.map(d=>d.data()).sort((a,b)=>b.id-a.id);
+        if(fbDados.length>=registros.length){
+          registros=fbDados;
+          if(idb)idbSet(KEY,JSON.stringify(registros)).catch(()=>{});
+          refreshStatus();render();
+        }
+      }
+    }catch(e){ console.warn("Pré-carregamento Firebase:",e.message); }
     fb.collection(COLECAO).onSnapshot(snap=>{
       registros=snap.docs.map(d=>d.data()).sort((a,b)=>b.id-a.id);
       /* Espelha no IDB para garantir cache local */
@@ -3750,17 +3762,20 @@ async function loadVazia(){
   if(backend==="firebase"&&fb){
     /* Migra dados locais para Firebase (só 1ª vez por máquina) */
     await migrateLocalToFirebaseVazia();
-    /* Se IDB veio vazio, tenta buscar direto do Firebase antes do listener */
-    if(!registrosVazia.length){
-      try{
-        const snap=await fb.collection("embalagem_vazia").get();
-        if(!snap.empty){
-          registrosVazia=snap.docs.map(d=>d.data()).sort((a,b)=>b.id-a.id);
+    /* SEMPRE busca do Firebase antes de ativar o listener —
+       garante que máquinas sem IDB local recebam os dados */
+    try{
+      const snap=await fb.collection("embalagem_vazia").orderBy("id","desc").get();
+      if(!snap.empty){
+        const fbDados=snap.docs.map(d=>d.data()).sort((a,b)=>b.id-a.id);
+        /* Usa os dados do Firebase se tiver mais registros ou IDB estiver vazio */
+        if(fbDados.length>=registrosVazia.length){
+          registrosVazia=fbDados;
           if(idb)idbSet(KEY_VAZIA,JSON.stringify(registrosVazia)).catch(()=>{});
           renderVazia();
         }
-      }catch(e){ console.warn("Pré-carregamento Firebase Vazia:",e.message); }
-    }
+      }
+    }catch(e){ console.warn("Pré-carregamento Firebase Vazia:",e.message); }
     /* Ativa listener em tempo real (mantém sincronizado entre abas/navegadores) */
     initFirebaseVazia();
   }
