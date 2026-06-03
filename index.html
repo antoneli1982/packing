@@ -1617,7 +1617,7 @@ const EMBALAGENS_DEFAULT=[
   "Divisoria BLO/ CAB","Cobertura da usinagem","Divisoria de bomba","Divisoria de cárter",
   /* ── OUTROS ── */
   "BERÇO VOLANTE / EMBREAGEM"];
-let EMBALAGENS=[...EMBALAGENS_DEFAULT];
+let EMBALAGENS=[...EMBALAGENS_DEFAULT].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
 const MOTIVOS=["Abastecimento de água na máquina","Falta de embalagem","Falta de energia","Manutenção geral (descreva na observação)","Parada por máquina","Quebra de espinho","Trabalho em outro setor","Troca de filtro"];
 const TLABEL={"1":"1º Turno","2":"2º Turno","3":"3º Turno"};
 const TCOLOR={"1":"var(--t1)","2":"var(--t2)","3":"var(--t3)"};
@@ -4048,7 +4048,9 @@ function _mergeDefaults(lista){
   });
   if(novas.length === 0) return lista; // nada a acrescentar
   console.info('[Embalagens] Adicionando ' + novas.length + ' nova(s) embalagem(ns) padrão:', novas.map(x=>x.nome));
-  return [...lista, ...novas];
+  const merged = [...lista, ...novas];
+  merged.sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
+  return merged;
 }
 
 /* --------- Inicialização (chamada no load()) --------- */
@@ -4138,6 +4140,8 @@ async function _embExcluirFirebase(id){
 
 /* --------- applyEmbalagens: atualiza EMBALAGENS + selects --------- */
 function applyEmbalagens(){
+  /* Garante ordem alfabética sempre */
+  embCadLista.sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
   EMBALAGENS.length = 0;
   embCadLista.forEach(item=>{
     EMBALAGENS.push(item.nome);
@@ -4334,6 +4338,9 @@ function initCadEmbForm(){
     } else {
       embCadLista.push({ id: Date.now(), nome, foto });
     }
+
+    /* Reordenar alfabeticamente após qualquer alteração */
+    embCadLista.sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR',{sensitivity:'base'}));
 
     embLS_save(embCadLista);
     _embSalvarFirebase(embCadLista);
