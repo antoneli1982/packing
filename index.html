@@ -1050,7 +1050,7 @@
             </div>
           </div>
 
-          <div class="field"><label>Data</label><input type="date" id="data"></div>
+          <div class="field"><label>Data 🔒</label><input type="date" id="data" readonly style="cursor:not-allowed;opacity:.7"></div>
 
           <div class="field hide" id="f-embalagem">
             <label>Embalagens do Ciclo <span class="req">*</span></label>
@@ -1228,7 +1228,7 @@
             </div>
           </div>
 
-          <div class="field"><label>Data</label><input type="date" id="v-data"></div>
+          <div class="field"><label>Data 🔒</label><input type="date" id="v-data" readonly style="cursor:not-allowed;opacity:.7"></div>
 
           <div class="field">
             <label>Hora</label>
@@ -4491,6 +4491,224 @@ function initCadEmbForm(){
     buildTicker();
     closeModal();
   });
+})();
+</script>
+
+<!-- ===== MODAL DE SENHA PARA LIBERAR DATA ===== -->
+<div id="date-unlock-overlay" style="
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,.72);backdrop-filter:blur(4px);
+  align-items:center;justify-content:center;">
+  <div style="
+    background:#1c232d;border:1px solid #2a323d;border-radius:12px;
+    padding:28px 28px 24px;width:320px;max-width:90vw;
+    box-shadow:0 24px 60px rgba(0,0,0,.6);
+    font-family:'Poppins',sans-serif;position:relative;">
+
+    <div style="font-size:28px;text-align:center;margin-bottom:6px">🔐</div>
+    <div style="font-size:14px;font-weight:700;color:#e8edf2;text-align:center;margin-bottom:4px;letter-spacing:.3px">Liberação de Data</div>
+    <div style="font-size:10.5px;color:#8b97a5;text-align:center;margin-bottom:20px;letter-spacing:.3px">Digite a senha de 7 dígitos fornecida pelo Planejamento</div>
+
+    <div style="position:relative;width:100%">
+      <input id="date-unlock-input" type="password" maxlength="7"
+        placeholder="• • • • • • •"
+        style="
+          width:100%;background:#0e1116;border:1px solid #2a323d;
+          color:#e8edf2;border-radius:7px;padding:12px 44px 12px 14px;
+          font-family:'Poppins',sans-serif;font-size:22px;
+          letter-spacing:8px;text-align:center;outline:none;
+          transition:.15s;box-sizing:border-box"
+        oninput="this.value=this.value.replace(/\D/g,'')"
+      >
+      <button id="date-eye-btn" type="button"
+        title="Mostrar/ocultar senha"
+        style="
+          position:absolute;right:10px;top:50%;transform:translateY(-50%);
+          background:none;border:none;cursor:pointer;
+          color:#5d6b7a;padding:4px;line-height:1;
+          transition:color .15s;display:flex;align-items:center"
+        onmouseover="this.style.color='#5b82ff'"
+        onmouseout="this.style.color='#5d6b7a'">
+        <svg id="eye-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+          <circle cx="12" cy="12" r="3"/>
+        </svg>
+        <svg id="eye-off-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
+          <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
+          <line x1="1" y1="1" x2="23" y2="23"/>
+        </svg>
+      </button>
+    </div>
+
+    <div id="date-unlock-err" style="
+      display:none;margin-top:10px;
+      background:rgba(240,83,63,.13);border:1px solid rgba(240,83,63,.4);
+      color:#f0533f;border-radius:6px;padding:8px 10px;
+      font-size:11px;font-weight:600;text-align:center;letter-spacing:.3px">
+      ❌ Senha incorreta
+    </div>
+
+    <div id="date-unlock-ok" style="
+      display:none;margin-top:10px;
+      background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.4);
+      color:#3fb950;border-radius:6px;padding:8px 10px;
+      font-size:11px;font-weight:600;text-align:center;letter-spacing:.3px">
+      ✔ Data liberada — você tem 30 segundos
+    </div>
+
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button id="date-unlock-cancel" style="
+        flex:1;cursor:pointer;background:transparent;
+        border:1px solid #2a323d;color:#8b97a5;border-radius:6px;
+        padding:10px;font-family:'Poppins',sans-serif;font-size:12px;
+        font-weight:600;transition:.13s"
+        onmouseover="this.style.borderColor='#f0533f';this.style.color='#f0533f'"
+        onmouseout="this.style.borderColor='#2a323d';this.style.color='#8b97a5'">
+        Cancelar
+      </button>
+      <button id="date-unlock-confirm" style="
+        flex:1;cursor:pointer;background:#3866f7;border:1px solid #3866f7;
+        color:#fff;border-radius:6px;padding:10px;
+        font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;
+        letter-spacing:.4px;transition:.13s"
+        onmouseover="this.style.background='#5b82ff';this.style.borderColor='#5b82ff'"
+        onmouseout="this.style.background='#3866f7';this.style.borderColor='#3866f7'">
+        Liberar
+      </button>
+    </div>
+
+
+
+  </div>
+</div>
+
+<script>
+/* ===== BLOQUEIO DE DATA COM SENHA DE 7 DÍGITOS ===== */
+(function(){
+
+  var overlay   = document.getElementById('date-unlock-overlay');
+  var inp       = document.getElementById('date-unlock-input');
+  var errEl     = document.getElementById('date-unlock-err');
+  var okEl      = document.getElementById('date-unlock-ok');
+  var cancelBtn = document.getElementById('date-unlock-cancel');
+  var confirmBtn= document.getElementById('date-unlock-confirm');
+
+
+
+  var pendingInput = null;   /* qual input estava sendo clicado */
+  var unlockTimer  = null;   /* timer que retrava após 30s */
+  var unlockedSet  = new Set(); /* ids liberados */
+
+  function openModal(inputId){
+    pendingInput = inputId;
+    inp.value = '';
+    errEl.style.display = 'none';
+    okEl.style.display  = 'none';
+    overlay.style.display = 'flex';
+    setTimeout(function(){ inp.focus(); }, 80);
+  }
+
+  function closeModal(){
+    overlay.style.display = 'none';
+    pendingInput = null;
+    inp.value = '';
+    errEl.style.display = 'none';
+    okEl.style.display  = 'none';
+  }
+
+  function unlockInput(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    el.removeAttribute('readonly');
+    el.style.cursor  = 'text';
+    el.style.opacity = '1';
+    unlockedSet.add(id);
+  }
+
+  function relockInput(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    el.setAttribute('readonly','');
+    el.style.cursor  = 'not-allowed';
+    el.style.opacity = '.7';
+    unlockedSet.delete(id);
+  }
+
+  function tryUnlock(){
+    if(/^\d{7}$/.test(inp.value)){
+      okEl.style.display  = 'block';
+      errEl.style.display = 'none';
+
+      /* Libera TODOS os campos de data */
+      ['data','v-data'].forEach(unlockInput);
+
+      clearTimeout(unlockTimer);
+      unlockTimer = setTimeout(function(){
+        /* Retrava após 30 segundos */
+        ['data','v-data'].forEach(relockInput);
+      }, 30000);
+
+      setTimeout(closeModal, 1000);
+    } else {
+      errEl.style.display = 'block';
+      okEl.style.display  = 'none';
+      inp.value = '';
+      inp.focus();
+      /* Tremor visual */
+      inp.style.borderColor = '#f0533f';
+      inp.style.background  = 'rgba(240,83,63,.08)';
+      setTimeout(function(){
+        inp.style.borderColor = '#2a323d';
+        inp.style.background  = '#0e1116';
+      }, 700);
+    }
+  }
+
+  /* Bloqueia clique/toque em cada campo de data */
+  ['data','v-data'].forEach(function(id){
+    var el = document.getElementById(id);
+    if(!el) return;
+    ['mousedown','touchstart'].forEach(function(evt){
+      el.addEventListener(evt, function(e){
+        if(unlockedSet.has(id)) return; /* já liberado */
+        e.preventDefault();
+        openModal(id);
+      }, true);
+    });
+    el.addEventListener('keydown', function(e){
+      if(!unlockedSet.has(id)) e.preventDefault();
+    }, true);
+  });
+
+  /* Botões do modal */
+  if(cancelBtn)  cancelBtn.addEventListener('click',  closeModal);
+  if(confirmBtn) confirmBtn.addEventListener('click', tryUnlock);
+
+  /* Enter confirma */
+  if(inp) inp.addEventListener('keydown', function(e){
+    if(e.key === 'Enter') tryUnlock();
+  });
+
+  /* Clique fora fecha */
+  if(overlay) overlay.addEventListener('click', function(e){
+    if(e.target === overlay) closeModal();
+  });
+
+  /* Botão olho — mostrar/ocultar senha */
+  var eyeBtn     = document.getElementById('date-eye-btn');
+  var eyeIcon    = document.getElementById('eye-icon');
+  var eyeOffIcon = document.getElementById('eye-off-icon');
+  if(eyeBtn){
+    eyeBtn.addEventListener('click', function(){
+      var isPassword = inp.type === 'password';
+      inp.type = isPassword ? 'text' : 'password';
+      eyeIcon.style.display    = isPassword ? 'none'  : 'block';
+      eyeOffIcon.style.display = isPassword ? 'block' : 'none';
+      inp.focus();
+    });
+  }
+
 })();
 </script>
 </body>
