@@ -1868,7 +1868,8 @@ const COLECAO = "apontamentos";   /* nome da coleção no Firestore */
 
 const KEY="sas-apontamentos";
 let registros=[],turno=null,tipo=null,editingId=null,cicloExtra='nao',cicloExtraCount=0;
-let backend="mem",idb=null,fb=null;
+let backend="mem",idb=null;
+window.fb=null;var fb=window.fb;
 /* Multi-embalagem por ciclo */
 let embItens=[];  /* [{emb:"EKLT3214", total:50}, ...] */
 
@@ -1912,6 +1913,7 @@ async function initDB(){
         firebase.initializeApp(FIREBASE_CONFIG);
       }
       fb=firebase.firestore();
+      window.fb=fb;
       /* enablePersistence em try isolado — falha em múltiplas abas, não é crítico */
       try{await fb.enablePersistence({synchronizeTabs:true});}catch(pe){
         console.info("Firebase persistence não ativado (normal em múltiplas abas):",pe.code);
@@ -1923,7 +1925,7 @@ async function initDB(){
     }catch(e){
       console.warn("Firebase indisponível, usando IndexedDB local:",e.code||e.message);
       fb=null;
-      /* Não muda backend se já tiver idb inicializado */
+      window.fb=null;
     }
   }
   /* === 3) Fallback final === */
@@ -2223,6 +2225,20 @@ document.getElementById("data").value=
 
 document.querySelectorAll(".tipo-btn").forEach(btn=>btn.addEventListener("click",e=>{
   const b=e.target.closest(".tipo-btn");if(!b)return;
+
+  /* Se clicou em LAVAGEM DE RACK → navega direto para a aba de Lavagem de Rack */
+  if(b.dataset.tp==="rack"){
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("on"));
+    document.querySelectorAll(".view").forEach(x=>x.classList.remove("on"));
+    const tabRack=document.querySelector('.tab[data-view="rack"]');
+    if(tabRack) tabRack.classList.add("on");
+    document.getElementById("view-rack").classList.add("on");
+    if(typeof renderRack==="function") renderRack();
+    /* reseta o botão para não ficar selecionado */
+    document.querySelectorAll(".tipo-btn").forEach(x=>x.classList.remove("on"));
+    return;
+  }
+
   document.querySelectorAll(".tipo-btn").forEach(x=>x.classList.remove("on"));
   b.classList.add("on");tipo=b.dataset.tp;
   document.getElementById("f-embalagem").classList.toggle("hide",tipo!=="lav");
@@ -4946,21 +4962,24 @@ async function persistRack(reg, isEdit){
   else rackRegistros.unshift(reg);
   rackLS_save();
   /* Tenta Firebase (coleção separada "rack") */
-  if(typeof fb !== 'undefined' && fb){
-    try{ await fb.collection('rack').doc(String(reg.id)).set(reg); }catch(e){ console.warn('Firebase rack write:', e.message); }
+  var _fb = window.fb || (typeof fb!=='undefined'?fb:null);
+  if(_fb){
+    try{ await _fb.collection('rack').doc(String(reg.id)).set(reg); }catch(e){ console.warn('Firebase rack write:', e.message); }
   }
 }
 async function persistRackDel(id){
   rackRegistros = rackRegistros.filter(r=>r.id!==id);
   rackLS_save();
-  if(typeof fb !== 'undefined' && fb){
-    try{ await fb.collection('rack').doc(String(id)).delete(); }catch(e){}
+  var _fb = window.fb || (typeof fb!=='undefined'?fb:null);
+  if(_fb){
+    try{ await _fb.collection('rack').doc(String(id)).delete(); }catch(e){}
   }
 }
 async function rackLoadFromFirebase(){
-  if(typeof fb === 'undefined' || !fb) return;
+  var _fb = window.fb || (typeof fb!=='undefined'?fb:null);
+  if(!_fb) return;
   try{
-    const snap = await fb.collection('rack').orderBy('id','desc').get();
+    const snap = await _fb.collection('rack').orderBy('id','desc').get();
     if(!snap.empty){
       const fbDados = snap.docs.map(d=>d.data()).sort((a,b)=>b.id-a.id);
       if(fbDados.length >= rackRegistros.length){
@@ -4968,7 +4987,7 @@ async function rackLoadFromFirebase(){
         rackLS_save();
       }
     }
-    fb.collection('rack').onSnapshot(snap=>{
+    _fb.collection('rack').onSnapshot(snap=>{
       rackRegistros = snap.docs.map(d=>d.data()).sort((a,b)=>b.id-a.id);
       rackLS_save();
       if(document.getElementById('view-rack').classList.contains('on')) rackRender();
@@ -5202,10 +5221,11 @@ rackRegistros = rackLS_load();
     if(!confirm('Apagar TODOS os registros de Lavagem de Rack? Esta ação não pode ser desfeita.')) return;
     rackRegistros=[];
     rackLS_save();
-    if(typeof fb!=='undefined'&&fb){
+    var _fb2 = window.fb || (typeof fb!=='undefined'?fb:null);
+    if(_fb2){
       try{
-        const snap=await fb.collection('rack').get();
-        const batch=fb.batch();
+        const snap=await _fb2.collection('rack').get();
+        const batch=_fb2.batch();
         snap.docs.forEach(d=>batch.delete(d.ref));
         await batch.commit();
       }catch(e){ console.warn('Firebase rack clear:', e.message); }
