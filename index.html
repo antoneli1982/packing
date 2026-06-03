@@ -361,28 +361,7 @@
     .tipo-btn .l{font-size:9.5px}
   }
 
-  /* ===== Modal de Senha ===== */
-  .senha-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:2000;
-    align-items:center;justify-content:center}
-  .senha-overlay.on{display:flex}
-  .senha-modal{background:var(--panel);border:1px solid var(--line);border-radius:10px;
-    padding:28px 28px 24px;width:320px;max-width:94vw;text-align:center}
-  .senha-modal h3{font-size:15px;font-weight:700;margin-bottom:6px;color:var(--txt)}
-  .senha-modal p{font-size:11px;color:var(--txt-dim);margin-bottom:18px}
-  .senha-modal input{text-align:center;letter-spacing:6px;font-size:20px;font-weight:700;
-    padding:11px;color:var(--txt);background:var(--panel-2);border:1px solid var(--line);
-    border-radius:6px;width:100%;margin-bottom:12px}
-  .senha-modal input:focus{outline:none;border-color:var(--blue)}
-  .senha-modal .senha-erro{color:var(--red);font-size:11px;min-height:14px;margin-bottom:10px;font-weight:600}
-  .senha-modal .senha-btns{display:flex;gap:8px}
-  .senha-modal .btn-senha-ok{flex:1;cursor:pointer;border:none;border-radius:6px;
-    background:var(--blue);color:#fff;font-family:'Poppins',sans-serif;font-weight:700;
-    font-size:13px;padding:11px;transition:.13s}
-  .senha-modal .btn-senha-ok:hover{background:var(--blue-soft)}
-  .senha-modal .btn-senha-cancel{cursor:pointer;background:none;border:1px solid var(--line);
-    color:var(--txt-dim);border-radius:6px;padding:11px 14px;font-family:'Poppins',sans-serif;
-    font-size:12px;font-weight:600;transition:.13s}
-  .senha-modal .btn-senha-cancel:hover{border-color:var(--red);color:var(--red)}
+  /* Modal de Senha removido — acesso livre ao Cadastro de Embalagens */
 
   /* ===== Faixa rolável de atalhos ===== */
   .quick-strip-wrap{
@@ -3942,19 +3921,7 @@ function atualizarTickerVelocidade(){
   </div>
 </div>
 
-<!-- ===== MODAL DE SENHA — CADASTRO DE EMBALAGENS ===== -->
-<div class="senha-overlay" id="senha-overlay">
-  <div class="senha-modal">
-    <h3>🔒 Área Restrita</h3>
-    <p>Digite a senha para acessar o Cadastro de Embalagens</p>
-    <input type="password" id="senha-input" placeholder="••••" maxlength="20" autocomplete="new-password">
-    <div class="senha-erro" id="senha-erro"></div>
-    <div class="senha-btns">
-      <button type="button" class="btn-senha-cancel" id="senha-cancelar">Cancelar</button>
-      <button type="button" class="btn-senha-ok" id="senha-confirmar">Entrar</button>
-    </div>
-  </div>
-</div>
+<!-- Modal de Senha removido — acesso direto ao Cadastro de Embalagens -->
 
 <script>
 /* ===================================================================
@@ -4274,87 +4241,8 @@ function initCadEmbForm(){
 
 
 <script>
-/* ===== PROTEÇÃO POR SENHA — CADASTRO DE EMBALAGENS ===== */
-(function initSenhaCad(){
-  const SENHA_HASH = 'a37bf905fadc41d1777cb9f095cd6b07b9bd9c4a942eb530b6fa219f73ca6441'; /* sha256 de Sese@2025 */
-  const SESSION_KEY = 'sas_cad_auth_v1';
-  let autenticado = false;
-
-  /* SHA-256 via Web Crypto API */
-  async function sha256(str){
-    const buf = new TextEncoder().encode(str);
-    const hash = await crypto.subtle.digest('SHA-256', buf);
-    return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
-  }
-
-  /* Verifica sessão salva */
-  function verificarSessao(){
-    try{
-      const s = sessionStorage.getItem(SESSION_KEY);
-      if(s === 'ok') autenticado = true;
-    }catch(e){}
-  }
-  verificarSessao();
-
-  /* Intercepta clique na tab Cadastro */
-  document.addEventListener('click', async function(e){
-    const tab = e.target.closest('.tab[data-view="cadEmb"]');
-    if(!tab) return;
-    if(autenticado) return; // já autenticado nesta sessão
-    e.stopImmediatePropagation();
-    mostrarModal();
-  }, true); /* capture = true para capturar antes do listener das tabs */
-
-  function mostrarModal(){
-    const overlay = document.getElementById('senha-overlay');
-    const inp = document.getElementById('senha-input');
-    const erro = document.getElementById('senha-erro');
-    if(!overlay) return;
-    inp.value = '';
-    erro.textContent = '';
-    overlay.classList.add('on');
-    setTimeout(()=>inp.focus(), 80);
-  }
-
-  function fecharModal(){
-    const overlay = document.getElementById('senha-overlay');
-    if(overlay) overlay.classList.remove('on');
-  }
-
-  async function tentarEntrar(){
-    const inp = document.getElementById('senha-input');
-    const erro = document.getElementById('senha-erro');
-    const val = inp.value;
-    if(!val){ erro.textContent = 'Digite a senha'; return; }
-    const hash = await sha256(val);
-    if(hash === SENHA_HASH){
-      autenticado = true;
-      try{ sessionStorage.setItem(SESSION_KEY,'ok'); }catch(e){}
-      fecharModal();
-      /* Navegar para a tab de cadastro */
-      const tab = document.querySelector('.tab[data-view="cadEmb"]');
-      if(tab) tab.click();
-    } else {
-      erro.textContent = 'Senha incorreta';
-      inp.value = '';
-      inp.focus();
-      setTimeout(()=>{ erro.textContent=''; }, 2000);
-    }
-  }
-
-  document.addEventListener('DOMContentLoaded', function(){
-    const btnOk     = document.getElementById('senha-confirmar');
-    const btnCancel = document.getElementById('senha-cancelar');
-    const inp       = document.getElementById('senha-input');
-    const overlay   = document.getElementById('senha-overlay');
-    if(!btnOk) return;
-
-    btnOk.addEventListener('click', tentarEntrar);
-    btnCancel.addEventListener('click', fecharModal);
-    overlay.addEventListener('click', function(e){ if(e.target===overlay) fecharModal(); });
-    inp.addEventListener('keydown', function(e){ if(e.key==='Enter') tentarEntrar(); });
-  });
-})();
+/* ===== ACESSO DIRETO AO CADASTRO — senha removida ===== */
+/* Nenhuma restrição de acesso à aba Cadastro de Embalagens */
 </script>
 
 <script>
