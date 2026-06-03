@@ -933,6 +933,21 @@
     font-size:12px;font-weight:600;transition:.13s;
   }
   .btn-add-msg:hover{background:rgba(56,102,247,.2);border-color:var(--blue)}
+
+  /* ===== Rack qty stepper ===== */
+  .rack-stepper{display:flex;align-items:center;gap:0;opacity:.35;transition:opacity .15s;pointer-events:none}
+  .rack-stepper.active{opacity:1;pointer-events:auto}
+  .rack-stepper-btn{cursor:pointer;background:var(--panel);border:1px solid var(--line);
+    color:var(--txt-dim);width:28px;height:28px;font-size:16px;font-weight:700;line-height:1;
+    display:flex;align-items:center;justify-content:center;transition:.12s;flex-shrink:0;user-select:none}
+  .rack-stepper-btn:first-child{border-radius:5px 0 0 5px}
+  .rack-stepper-btn:last-child{border-radius:0 5px 5px 0}
+  .rack-stepper-btn:hover{background:#9a6cf0;border-color:#9a6cf0;color:#fff}
+  .rack-stepper-btn:active{transform:scale(.92)}
+  .rack-stepper-val{width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);border-left:none;border-right:none;
+    font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);
+    padding:0;height:28px;line-height:28px}
 </style>
 </head>
 <body>
@@ -1398,58 +1413,98 @@
             <label>Itens Lavados <span class="req">*</span></label>
             <div style="background:var(--panel-2);border:1px solid var(--line);border-radius:6px;overflow:hidden" id="rack-checklist">
               <!-- cabeçalho -->
-              <div style="display:grid;grid-template-columns:24px 1fr 80px;gap:10px;padding:8px 14px 6px;border-bottom:1px solid var(--line-soft)">
+              <div style="display:grid;grid-template-columns:24px 1fr auto;gap:10px;padding:8px 14px 6px;border-bottom:1px solid var(--line-soft)">
                 <span></span>
                 <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt-faint)">Item</span>
-                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt-faint);text-align:center">Qtd</span>
+                <span style="font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt-faint);text-align:center;min-width:96px">Qtd</span>
               </div>
               <!-- item 1 -->
-              <div style="display:grid;grid-template-columns:24px 1fr 80px;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line-soft)">
+              <div style="display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line-soft)">
                 <input type="checkbox" id="rack-item-1" value="Rack de motores" style="width:16px;height:16px;accent-color:#9a6cf0;cursor:pointer">
                 <label for="rack-item-1" style="font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;margin:0">Rack de motores</label>
-                <input type="number" id="rack-qty-1" min="1" step="1" placeholder="—" style="text-align:center;font-size:13px;padding:5px 6px;opacity:.4;transition:.15s">
+                <div class="rack-stepper" id="rack-stepper-1">
+                  <button type="button" class="rack-stepper-btn" onclick="rackStep(1,-1)">−</button>
+                  <input type="number" id="rack-qty-1" min="1" step="1" value="" readonly
+                    style="width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-left:none;border-right:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);padding:0;height:28px">
+                  <button type="button" class="rack-stepper-btn" onclick="rackStep(1,1)">+</button>
+                </div>
               </div>
               <!-- item 2 -->
-              <div style="display:grid;grid-template-columns:24px 1fr 80px;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line-soft)">
+              <div style="display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line-soft)">
                 <input type="checkbox" id="rack-item-2" value="Racks virabrequim" style="width:16px;height:16px;accent-color:#9a6cf0;cursor:pointer">
                 <label for="rack-item-2" style="font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;margin:0">Racks virabrequim</label>
-                <input type="number" id="rack-qty-2" min="1" step="1" placeholder="—" style="text-align:center;font-size:13px;padding:5px 6px;opacity:.4;transition:.15s">
+                <div class="rack-stepper" id="rack-stepper-2">
+                  <button type="button" class="rack-stepper-btn" onclick="rackStep(2,-1)">−</button>
+                  <input type="number" id="rack-qty-2" min="1" step="1" value="" readonly
+                    style="width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-left:none;border-right:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);padding:0;height:28px">
+                  <button type="button" class="rack-stepper-btn" onclick="rackStep(2,1)">+</button>
+                </div>
               </div>
               <!-- item 3 -->
-              <div style="display:grid;grid-template-columns:24px 1fr 80px;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line-soft)">
+              <div style="display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line-soft)">
                 <input type="checkbox" id="rack-item-3" value="GLT" style="width:16px;height:16px;accent-color:#9a6cf0;cursor:pointer">
                 <label for="rack-item-3" style="font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;margin:0">GLT</label>
-                <input type="number" id="rack-qty-3" min="1" step="1" placeholder="—" style="text-align:center;font-size:13px;padding:5px 6px;opacity:.4;transition:.15s">
+                <div class="rack-stepper" id="rack-stepper-3">
+                  <button type="button" class="rack-stepper-btn" onclick="rackStep(3,-1)">−</button>
+                  <input type="number" id="rack-qty-3" min="1" step="1" value="" readonly
+                    style="width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-left:none;border-right:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);padding:0;height:28px">
+                  <button type="button" class="rack-stepper-btn" onclick="rackStep(3,1)">+</button>
+                </div>
               </div>
               <!-- item 4 -->
-              <div style="display:grid;grid-template-columns:24px 1fr 80px;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line-soft)">
+              <div style="display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line-soft)">
                 <input type="checkbox" id="rack-item-4" value="Tampas de Bloco" style="width:16px;height:16px;accent-color:#9a6cf0;cursor:pointer">
                 <label for="rack-item-4" style="font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;margin:0">Tampas de Bloco</label>
-                <input type="number" id="rack-qty-4" min="1" step="1" placeholder="—" style="text-align:center;font-size:13px;padding:5px 6px;opacity:.4;transition:.15s">
+                <div class="rack-stepper" id="rack-stepper-4">
+                  <button type="button" class="rack-stepper-btn" onclick="rackStep(4,-1)">−</button>
+                  <input type="number" id="rack-qty-4" min="1" step="1" value="" readonly
+                    style="width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-left:none;border-right:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);padding:0;height:28px">
+                  <button type="button" class="rack-stepper-btn" onclick="rackStep(4,1)">+</button>
+                </div>
               </div>
               <!-- item 5 -->
-              <div style="display:grid;grid-template-columns:24px 1fr 80px;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line-soft)">
+              <div style="display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line-soft)">
                 <input type="checkbox" id="rack-item-5" value="Carrinho Trilogiq" style="width:16px;height:16px;accent-color:#9a6cf0;cursor:pointer">
                 <label for="rack-item-5" style="font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;margin:0">Carrinho Trilogiq</label>
-                <input type="number" id="rack-qty-5" min="1" step="1" placeholder="—" style="text-align:center;font-size:13px;padding:5px 6px;opacity:.4;transition:.15s">
+                <div class="rack-stepper" id="rack-stepper-5">
+                  <button type="button" class="rack-stepper-btn" onclick="rackStep(5,-1)">−</button>
+                  <input type="number" id="rack-qty-5" min="1" step="1" value="" readonly
+                    style="width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-left:none;border-right:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);padding:0;height:28px">
+                  <button type="button" class="rack-stepper-btn" onclick="rackStep(5,1)">+</button>
+                </div>
               </div>
               <!-- item 6 -->
-              <div style="display:grid;grid-template-columns:24px 1fr 80px;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line-soft)">
+              <div style="display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line-soft)">
                 <input type="checkbox" id="rack-item-6" value="Separação de divisórias" style="width:16px;height:16px;accent-color:#9a6cf0;cursor:pointer">
                 <label for="rack-item-6" style="font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;margin:0">Separação de divisórias</label>
-                <input type="number" id="rack-qty-6" min="1" step="1" placeholder="—" style="text-align:center;font-size:13px;padding:5px 6px;opacity:.4;transition:.15s">
+                <div class="rack-stepper" id="rack-stepper-6">
+                  <button type="button" class="rack-stepper-btn" onclick="rackStep(6,-1)">−</button>
+                  <input type="number" id="rack-qty-6" min="1" step="1" value="" readonly
+                    style="width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-left:none;border-right:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);padding:0;height:28px">
+                  <button type="button" class="rack-stepper-btn" onclick="rackStep(6,1)">+</button>
+                </div>
               </div>
               <!-- item 7 -->
-              <div style="display:grid;grid-template-columns:24px 1fr 80px;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line-soft)">
+              <div style="display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:9px 14px;border-bottom:1px solid var(--line-soft)">
                 <input type="checkbox" id="rack-item-7" value="Filtros da lavadora EA211" style="width:16px;height:16px;accent-color:#9a6cf0;cursor:pointer">
                 <label for="rack-item-7" style="font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;margin:0">Filtros da lavadora EA211</label>
-                <input type="number" id="rack-qty-7" min="1" step="1" placeholder="—" style="text-align:center;font-size:13px;padding:5px 6px;opacity:.4;transition:.15s">
+                <div class="rack-stepper" id="rack-stepper-7">
+                  <button type="button" class="rack-stepper-btn" onclick="rackStep(7,-1)">−</button>
+                  <input type="number" id="rack-qty-7" min="1" step="1" value="" readonly
+                    style="width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-left:none;border-right:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);padding:0;height:28px">
+                  <button type="button" class="rack-stepper-btn" onclick="rackStep(7,1)">+</button>
+                </div>
               </div>
               <!-- item 8 -->
-              <div style="display:grid;grid-template-columns:24px 1fr 80px;gap:10px;align-items:center;padding:9px 14px">
+              <div style="display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:9px 14px">
                 <input type="checkbox" id="rack-item-8" value="Paletes de ferro" style="width:16px;height:16px;accent-color:#9a6cf0;cursor:pointer">
                 <label for="rack-item-8" style="font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;margin:0">Paletes de ferro</label>
-                <input type="number" id="rack-qty-8" min="1" step="1" placeholder="—" style="text-align:center;font-size:13px;padding:5px 6px;opacity:.4;transition:.15s">
+                <div class="rack-stepper" id="rack-stepper-8">
+                  <button type="button" class="rack-stepper-btn" onclick="rackStep(8,-1)">−</button>
+                  <input type="number" id="rack-qty-8" min="1" step="1" value="" readonly
+                    style="width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-left:none;border-right:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);padding:0;height:28px">
+                  <button type="button" class="rack-stepper-btn" onclick="rackStep(8,1)">+</button>
+                </div>
               </div>
             </div>
           </div>
@@ -1562,6 +1617,7 @@
       <div class="stat big-kpi" data-c="ref"><div class="v" id="d-ref">0h00</div><div class="k">Refeição Descontada</div></div>
       <div class="stat big-kpi" data-c="lav"><div class="v" id="d-mce" style="color:var(--green)">0,00</div><div class="k">Média Ciclos Extras</div></div>
       <div class="stat big-kpi" style="--before-bg:var(--orange)" data-c="ref"><div class="v" id="d-vaz" style="color:var(--orange)">0</div><div class="k">Embalagens Vazias Entradas</div></div>
+      <div class="stat big-kpi" style="--before-bg:#9a6cf0"><div class="v" id="d-rack-total" style="color:#9a6cf0">0</div><div class="k">Lavagens de Rack</div></div>
     </div>
     <div class="dash-grid">
       <div class="panel">
@@ -1620,6 +1676,39 @@
         <div class="panel-head"><span class="tag" style="background:var(--orange)">06</span><h2>Consistência — Embalagem Vazia vs Lavagem</h2></div>
         <div id="chart-consistencia" style="padding:16px">
           <div class="empty"><div class="big">▦</div><div class="txt">SEM ENTRADAS DE EMBALAGEM VAZIA REGISTRADAS</div></div>
+        </div>
+      </div>
+
+      <!-- Painel 07: Lavagem de Rack -->
+      <div class="panel" style="grid-column:1/-1">
+        <div class="panel-head">
+          <span class="tag" style="background:#9a6cf0">07</span>
+          <h2>Lavagem de Rack</h2>
+        </div>
+        <div class="dash-grid" style="padding:16px;gap:16px">
+          <!-- Itens mais lavados -->
+          <div>
+            <div style="font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt-faint);margin-bottom:12px">Itens Mais Lavados</div>
+            <div id="chart-rack-itens"></div>
+          </div>
+          <!-- Por turno -->
+          <div>
+            <div style="font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt-faint);margin-bottom:12px">Registros por Turno</div>
+            <div id="chart-rack-turno"></div>
+          </div>
+        </div>
+        <!-- Tabela de registros -->
+        <div class="table-scroll" style="border-top:1px solid var(--line-soft)">
+          <table>
+            <colgroup>
+              <col style="width:90px"><col style="width:80px"><col style="width:130px"><col style="width:auto">
+            </colgroup>
+            <thead><tr>
+              <th>Data</th><th>Turno</th><th>Área</th><th>Itens Lavados</th>
+            </tr></thead>
+            <tbody id="dash-rack-tbody"></tbody>
+          </table>
+          <div id="dash-rack-empty"></div>
         </div>
       </div>
     </div>
@@ -3076,6 +3165,9 @@ function renderDash(){
 
   /* ===== Painel 06: Consistência Entrada vs Lavagem ===== */
   renderConsistencia(base);
+
+  /* ===== Painel 07: Lavagem de Rack ===== */
+  renderDashRack(ft, fde, fate);
 }
 
 /* ===== Renderiza cards de horas por turno COM CAUSAS ===== */
@@ -3700,6 +3792,78 @@ function renderConsistencia(base){
   requestAnimationFrame(()=>{
     el.querySelectorAll(".consist-bar-fill").forEach(b=>{b.style.width=b.dataset.pct+"%";});
   });
+}
+
+/* ===== Painel 07: Lavagem de Rack no Dashboard ===== */
+function renderDashRack(ft, fde, fate){
+  /* KPI total */
+  const kpiEl = document.getElementById('d-rack-total');
+
+  /* Filtra por turno e período (só data, rack não tem hora) */
+  let lista = [...rackRegistros];
+  if(ft)  lista = lista.filter(r => String(r.turno) === String(ft));
+  if(fde) lista = lista.filter(r => r.data >= fde);
+  if(fate) lista = lista.filter(r => r.data <= fate);
+
+  if(kpiEl) kpiEl.textContent = lista.length.toLocaleString('pt-BR');
+
+  /* ---- Gráfico: itens mais lavados ---- */
+  const porItem = {};
+  lista.forEach(r => {
+    (r.itens||[]).forEach(it => {
+      const nome = typeof it === 'object' ? it.nome : it;
+      if(!porItem[nome]) porItem[nome] = 0;
+      porItem[nome]++;
+    });
+  });
+  const itensRows = Object.entries(porItem)
+    .map(([k,v]) => ({k, v, color:'#9a6cf0'}))
+    .sort((a,b) => b.v - a.v);
+  const chartItens = document.getElementById('chart-rack-itens');
+  if(chartItens){
+    if(itensRows.length) bars(chartItens, itensRows, {});
+    else chartItens.innerHTML = '<div class="empty"><div class="big">▦</div><div class="txt">SEM DADOS</div></div>';
+  }
+
+  /* ---- Gráfico: registros por turno ---- */
+  const porTurno = ['1','2','3'].map(t => ({
+    k: t+'º Turno',
+    v: lista.filter(r => String(r.turno) === t).length,
+    color: RACK_TURNO_COLOR[t] || '#9a6cf0'
+  }));
+  const chartTurno = document.getElementById('chart-rack-turno');
+  if(chartTurno) bars(chartTurno, porTurno, {});
+
+  /* ---- Tabela de registros ---- */
+  const tbody = document.getElementById('dash-rack-tbody');
+  const emptyEl = document.getElementById('dash-rack-empty');
+  if(!tbody) return;
+  if(!lista.length){
+    tbody.innerHTML = '';
+    if(emptyEl) emptyEl.innerHTML = '<div class="empty"><div class="big">▦</div><div class="txt">NENHUM REGISTRO DE LAVAGEM DE RACK</div></div>';
+    return;
+  }
+  if(emptyEl) emptyEl.innerHTML = '';
+  tbody.innerHTML = lista.sort((a,b) => b.id - a.id).map(r => {
+    const corArea = RACK_AREA_COLOR[r.area] || '#9a6cf0';
+    const labelArea = RACK_AREA_LABEL[r.area] || r.area;
+    const corT = RACK_TURNO_COLOR[r.turno] || 'var(--txt-dim)';
+    const dataFmt = r.data ? r.data.split('-').reverse().join('/') : '—';
+    const itensHtml = (r.itens||[]).map(it => {
+      const nome = typeof it === 'object' ? it.nome : it;
+      const qty  = typeof it === 'object' && it.qty ? it.qty : null;
+      return '<span style="display:inline-flex;align-items:center;gap:5px;margin:2px 6px 2px 0;white-space:nowrap">'+
+        '<span style="font-weight:600;color:var(--txt);font-size:12px">'+nome+'</span>'+
+        (qty ? '<span style="background:#9a6cf0;color:#fff;font-weight:700;border-radius:4px;padding:1px 7px;font-size:11px">'+qty+'</span>' : '')+
+      '</span>';
+    }).join('<span style="color:var(--line);margin:0 3px">·</span>');
+    return '<tr>'+
+      '<td class="mono" style="white-space:nowrap">'+dataFmt+'</td>'+
+      '<td style="white-space:nowrap"><span class="pill" style="background:'+corT+'22;color:'+corT+'">'+r.turno+'º</span></td>'+
+      '<td style="white-space:nowrap"><span class="pill" style="background:'+corArea+'22;color:'+corArea+'">'+labelArea+'</span></td>'+
+      '<td style="line-height:2">'+itensHtml+'</td>'+
+    '</tr>';
+  }).join('');
 }
 
 /* ========================================================
@@ -5044,19 +5208,36 @@ async function loadRack(){
     });
   });
 
-  /* ---- Checkbox → qty ---- */
+  /* ---- Checkbox → ativa/desativa stepper ---- */
   function rackSyncQty(i){
-    const cb  = document.getElementById('rack-item-'+i);
-    const qty = document.getElementById('rack-qty-'+i);
-    if(!cb||!qty) return;
-    if(cb.checked){ qty.style.opacity='1'; qty.removeAttribute('disabled'); qty.style.borderColor='#9a6cf0'; }
-    else { qty.style.opacity='.35'; qty.setAttribute('disabled',''); qty.style.borderColor=''; qty.value=''; }
+    const cb      = document.getElementById('rack-item-'+i);
+    const stepper = document.getElementById('rack-stepper-'+i);
+    const qty     = document.getElementById('rack-qty-'+i);
+    if(!cb||!stepper) return;
+    if(cb.checked){
+      stepper.classList.add('active');
+      if(qty && (!qty.value || parseInt(qty.value)<1)) qty.value = '1';
+    } else {
+      stepper.classList.remove('active');
+      if(qty) qty.value = '';
+    }
   }
   for(let i=1;i<=8;i++){
     const cb=document.getElementById('rack-item-'+i);
     if(cb) cb.addEventListener('change',()=>rackSyncQty(i));
     rackSyncQty(i);
   }
+
+  /* ---- Função global para os botões + / - ---- */
+  window.rackStep = function(i, delta){
+    const cb  = document.getElementById('rack-item-'+i);
+    const qty = document.getElementById('rack-qty-'+i);
+    if(!cb||!qty) return;
+    if(!cb.checked){ cb.checked=true; rackSyncQty(i); }
+    const atual = parseInt(qty.value)||0;
+    const novo  = Math.max(1, atual+delta);
+    qty.value   = novo;
+  };
 
   /* ---- Seleção de área ---- */
   document.querySelectorAll('.rack-area-btn').forEach(btn=>{
