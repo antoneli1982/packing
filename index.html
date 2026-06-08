@@ -1304,6 +1304,7 @@
                 <option value="2">2º Turno</option>
                 <option value="3">3º Turno</option>
               </select>
+              <div class="ms" id="f-emb-ms"></div>
               <!-- De e Até na mesma linha com label -->
               <div class="range-group">
                 <div class="range-field">
@@ -1400,7 +1401,7 @@
           <div class="panel-head"><span class="tag" style="background:var(--orange)">LOG</span><h2>Entradas Registradas</h2></div>
           <div class="toolbar" style="flex-direction:column;align-items:stretch;gap:0">
             <div class="toolbar-row" style="padding:10px 14px;gap:8px;flex-wrap:wrap">
-              <select id="vf-tipo"><option value="">Todas as embalagens</option></select>
+              <div class="ms" id="vf-tipo-ms"></div>
               <select id="vf-turno">
                 <option value="">Todos os turnos</option>
                 <option value="1">1º Turno</option>
@@ -1643,6 +1644,7 @@
                 <option value="area">Área de Lavagem</option>
                 <option value="linha">Racks limpos na linha</option>
               </select>
+              <div class="ms" id="rf-item-ms"></div>
               <div class="range-group">
                 <div class="range-field"><span class="range-lbl">De</span><input type="date" id="rf-data-de" style="color-scheme:dark"></div>
                 <span class="range-sep">→</span>
@@ -2971,9 +2973,14 @@ document.getElementById("f-data-de").addEventListener("change",render);
 document.getElementById("f-hora-de").addEventListener("change",render);
 document.getElementById("f-data-ate").addEventListener("change",render);
 document.getElementById("f-hora-ate").addEventListener("change",render);
+/* filtro de embalagem (múltipla seleção) */
+var fEmbMS = createMultiSelect(document.getElementById("f-emb-ms"), {
+  options: EMBALAGENS, placeholder: "Todas as embalagens", searchable: true, onChange: ()=>render()
+});
 document.getElementById("f-clear").addEventListener("click",()=>{
   document.getElementById("f-tipo").value="";
   document.getElementById("f-turno").value="";
+  if(typeof fEmbMS!=="undefined"&&fEmbMS) fEmbMS.clear();
   document.getElementById("f-data-de").value="";
   document.getElementById("f-hora-de").value="";
   document.getElementById("f-data-ate").value="";
@@ -3142,6 +3149,7 @@ function render(){
   setTimeout(atualizarTickerVelocidade, 100);
   const fp=document.getElementById("f-tipo").value;
   const ft=document.getElementById("f-turno").value;
+  const feSet=new Set((typeof fEmbMS!=="undefined"&&fEmbMS)?fEmbMS.getValues():[]);
   const fdDe=document.getElementById("f-data-de").value;
   const fhDe=document.getElementById("f-hora-de").value||"00:00";
   const fdAte=document.getElementById("f-data-ate").value;
@@ -3151,6 +3159,7 @@ function render(){
   const view=registros.filter(r=>
     (!fp||r.tipo===fp)&&
     (!ft||r.turno===ft)&&
+    (!feSet.size||(r.tipo==="lav"&&(feSet.has(r.emb)||(r.itens&&r.itens.some(it=>feSet.has(it.emb))))))&&
     (!dtDe ||recDT(r)>=dtDe)&&
     (!dtAte||recDT(r)<=dtAte)
   );
@@ -4155,8 +4164,9 @@ function flashVazia(msg,ok){
 const vSelEmb=document.getElementById("v-embalagem");
 const vElEmbFoto=document.getElementById("v-emb-foto");
 EMBALAGENS.forEach(e=>vSelEmb.add(new Option(e,e)));
-document.getElementById("vf-tipo").innerHTML='<option value="">Todas as embalagens</option>';
-EMBALAGENS.forEach(e=>document.getElementById("vf-tipo").add(new Option(e,e)));
+var vfEmbMS = createMultiSelect(document.getElementById("vf-tipo-ms"), {
+  options: EMBALAGENS, placeholder: "Todas as embalagens", searchable: true, onChange: ()=>renderVazia()
+});
 
 vSelEmb.addEventListener("change",()=>{
   const src=FOTOS_EMB[vSelEmb.value];
@@ -4297,11 +4307,11 @@ document.getElementById("v-btn-clear-all").addEventListener("click",async()=>{
 });
 
 /* Filtros */
-["vf-tipo","vf-turno","vf-data-de","vf-data-ate"].forEach(id=>{
+["vf-turno","vf-data-de","vf-data-ate"].forEach(id=>{
   const el=document.getElementById(id);if(el)el.addEventListener("change",renderVazia);
 });
 document.getElementById("vf-clear").addEventListener("click",()=>{
-  document.getElementById("vf-tipo").value="";
+  if(typeof vfEmbMS!=="undefined"&&vfEmbMS) vfEmbMS.clear();
   document.getElementById("vf-turno").value="";
   document.getElementById("vf-data-de").value="";
   document.getElementById("vf-data-ate").value="";
@@ -4311,7 +4321,7 @@ document.getElementById("vf-clear").addEventListener("click",()=>{
 /* Render tabela Vazia */
 function renderVazia(){
   const stateBox=document.getElementById("v-state-box");stateBox.innerHTML="";
-  const fp=document.getElementById("vf-tipo").value;
+  const fpSet=new Set((typeof vfEmbMS!=="undefined"&&vfEmbMS)?vfEmbMS.getValues():[]);
   const ft=document.getElementById("vf-turno").value;
   const fdDe=document.getElementById("vf-data-de").value;
   const fdAte=document.getElementById("vf-data-ate").value;
@@ -4319,7 +4329,7 @@ function renderVazia(){
     if(ft&&r.turno!==ft)return false;
     if(fdDe&&r.data<fdDe)return false;
     if(fdAte&&r.data>fdAte)return false;
-    if(fp){if(r.itens&&r.itens.length){if(!r.itens.some(it=>it.emb===fp))return false;}else if(r.emb!==fp)return false;}
+    if(fpSet.size){if(r.itens&&r.itens.length){if(!r.itens.some(it=>fpSet.has(it.emb)))return false;}else if(!fpSet.has(r.emb))return false;}
     return true;
   });
   /* Stats */
@@ -4801,7 +4811,7 @@ function applyEmbalagens(){
     if(item.foto) FOTOS_EMB[item.nome] = item.foto;
     else delete FOTOS_EMB[item.nome];   // remove foto antiga se foi excluída
   });
-  ['embalagem','emb-vazia-sel','v-embalagem','vf-tipo'].forEach(selId=>{
+  ['embalagem','emb-vazia-sel','v-embalagem'].forEach(selId=>{
     const sel = document.getElementById(selId);
     if(!sel) return;
     const val = sel.value;
@@ -4815,6 +4825,8 @@ function applyEmbalagens(){
     if(val && EMBALAGENS.includes(val)) sel.value = val;
   });
   if(typeof dModeloMS !== "undefined" && dModeloMS) dModeloMS.setOptions(EMBALAGENS);
+  if(typeof fEmbMS  !== "undefined" && fEmbMS)  fEmbMS.setOptions(EMBALAGENS);
+  if(typeof vfEmbMS !== "undefined" && vfEmbMS) vfEmbMS.setOptions(EMBALAGENS);
 }
 
 /* --------- Render da lista de cadastro --------- */
@@ -5480,16 +5492,25 @@ async function loadRack(){
   /* ---- Tabela ---- */
   window.rackRender = function(){
     rackRenderStats();
+    /* opções do filtro de item (nome), a partir dos registros */
+    (function(){
+      if(!rfItemMS) return;
+      const nomes=new Set();
+      rackRegistros.forEach(r=>(r.itens||[]).forEach(it=>{const n=typeof it==='object'?it.nome:it; if(n) nomes.add(n);}));
+      rfItemMS.setOptions([...nomes].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'})));
+    })();
     const tbody=document.getElementById('rack-tbody');
     const box=document.getElementById('rack-state-box');
     if(!tbody) return;
     const fTurno=document.getElementById('rf-turno').value;
     const fArea=document.getElementById('rf-area').value;
+    const fItemSet=new Set(rfItemMS?rfItemMS.getValues():[]);
     const fDe=document.getElementById('rf-data-de').value;
     const fAte=document.getElementById('rf-data-ate').value;
     let lista=[...rackRegistros].sort((a,b)=>b.id-a.id);
     if(fTurno) lista=lista.filter(r=>String(r.turno)===String(fTurno));
     if(fArea)  lista=lista.filter(r=>r.area===fArea);
+    if(fItemSet.size) lista=lista.filter(r=>(r.itens||[]).some(it=>fItemSet.has(typeof it==='object'?it.nome:it)));
     if(fDe)    lista=lista.filter(r=>r.data>=fDe);
     if(fAte)   lista=lista.filter(r=>r.data<=fAte);
     if(!lista.length){
@@ -5633,6 +5654,9 @@ async function loadRack(){
   });
 
   /* ---- Filtros ---- */
+  var rfItemMS = createMultiSelect(document.getElementById('rf-item-ms'), {
+    options: [], placeholder: 'Todos os itens', searchable: true, onChange: ()=>rackRender()
+  });
   ['rf-turno','rf-area','rf-data-de','rf-data-ate'].forEach(id=>{
     const el=document.getElementById(id);
     if(el) el.addEventListener('change', rackRender);
@@ -5640,6 +5664,7 @@ async function loadRack(){
   document.getElementById('rf-clear').addEventListener('click',()=>{
     document.getElementById('rf-turno').value='';
     document.getElementById('rf-area').value='';
+    if(rfItemMS) rfItemMS.clear();
     document.getElementById('rf-data-de').value='';
     document.getElementById('rf-data-ate').value='';
     rackRender();
