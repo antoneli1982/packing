@@ -948,6 +948,55 @@
     border-bottom:1px solid var(--line);border-left:none;border-right:none;
     font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);
     padding:0;height:28px;line-height:28px}
+
+  /* ===== Multi-seleção (filtros do dashboard) ===== */
+  .ms{position:relative;display:inline-flex;flex-direction:column;font-family:'Poppins',sans-serif;vertical-align:top}
+  .ms-trigger{display:flex;align-items:center;gap:8px;min-height:33px;width:auto;min-width:152px;max-width:280px;
+    background:var(--panel-2);border:1px solid var(--line);color:var(--txt);border-radius:6px;
+    padding:5px 10px;font-family:'Poppins',sans-serif;font-size:12px;cursor:pointer;transition:.13s;text-align:left}
+  .ms.open .ms-trigger,.ms-trigger:focus{outline:none;border-color:var(--blue);background:#212a35}
+  .ms-tags{flex:1;display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-width:0;overflow:hidden}
+  .ms-ph{color:var(--txt-faint);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ms-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(56,102,247,.16);color:var(--blue-soft);
+    border:1px solid rgba(56,102,247,.38);border-radius:5px;padding:2px 6px;font-size:11px;font-weight:600;max-width:130px}
+  .ms-chip .t{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ms-chip .x{cursor:pointer;opacity:.65;font-size:14px;line-height:.8;transition:.1s}
+  .ms-chip .x:hover{opacity:1}
+  .ms-more{font-size:11px;font-weight:700;color:var(--txt-dim);flex-shrink:0}
+  .ms-caret{flex-shrink:0;color:var(--txt-dim);font-size:10px;transition:.15s;margin-left:2px}
+  .ms.open .ms-caret{transform:rotate(180deg)}
+  .ms-panel{display:none;position:absolute;top:calc(100% + 5px);left:0;z-index:1300;
+    min-width:100%;width:max-content;max-width:300px;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:8px;box-shadow:0 14px 36px rgba(0,0,0,.55);
+    padding:6px;max-height:300px;flex-direction:column}
+  .ms.open .ms-panel{display:flex}
+  .ms-search{padding:2px 4px 6px}
+  .ms-search input{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--txt);
+    border-radius:6px;padding:7px 9px;font-size:12px;font-family:'Poppins',sans-serif}
+  .ms-search input:focus{outline:none;border-color:var(--blue)}
+  .ms-actions{display:flex;gap:6px;padding:0 4px 6px}
+  .ms-act{flex:1;cursor:pointer;background:var(--panel);border:1px solid var(--line);color:var(--txt-dim);
+    border-radius:5px;padding:5px 6px;font-size:10px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;
+    font-family:'Poppins',sans-serif;transition:.13s}
+  .ms-act:hover{border-color:var(--blue);color:var(--blue-soft)}
+  .ms-list{overflow-y:auto;flex:1;display:flex;flex-direction:column;gap:1px}
+  .ms-opt{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:6px;cursor:pointer;transition:.1s}
+  .ms-opt:hover{background:var(--panel)}
+  .ms-opt.sel{background:rgba(56,102,247,.12)}
+  .ms-check{flex-shrink:0;width:16px;height:16px;border-radius:4px;border:1.6px solid var(--line);
+    display:flex;align-items:center;justify-content:center;transition:.1s}
+  .ms-opt.sel .ms-check{background:var(--blue);border-color:var(--blue)}
+  .ms-check::after{content:"";width:4px;height:8px;border:solid #fff;border-width:0 2px 2px 0;
+    transform:rotate(45deg) scale(0);transition:.1s;margin-top:-1px}
+  .ms-opt.sel .ms-check::after{transform:rotate(45deg) scale(1)}
+  .ms-label{font-size:12.5px;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ms-empty{padding:10px 8px;font-size:11px;color:var(--txt-faint);text-align:center}
+  @media(max-width:600px){
+    .toolbar .ms{flex:1 1 46%}
+    .ms-trigger{width:100%;min-width:0;max-width:none;font-size:13px;padding:7px 9px;min-height:36px}
+    .ms-panel{max-width:min(86vw,320px)}
+    .ms-label,.ms-search input{font-size:14px}
+  }
 </style>
 </head>
 <body>
@@ -1627,15 +1676,8 @@
     <div class="panel" style="margin-bottom:22px">
       <div class="panel-head"><span class="tag">FILTRO</span><h2>Filtros do Dashboard</h2></div>
       <div class="toolbar">
-        <select id="d-fmodelo">
-          <option value="">Todos os modelos</option>
-        </select>
-        <select id="d-fturno">
-          <option value="">Todos os turnos</option>
-          <option value="1">1º Turno</option>
-          <option value="2">2º Turno</option>
-          <option value="3">3º Turno</option>
-        </select>
+        <div class="ms" id="d-fmodelo-ms"></div>
+        <div class="ms" id="d-fturno-ms"></div>
         <div class="range-group">
           <div class="range-field">
             <span class="range-lbl">De</span>
@@ -2341,13 +2383,138 @@ document.getElementById("btn-add-emb").addEventListener("click",()=>{
   flash("",true); /* limpa msg de erro */
 });
 
-const selDMod=document.getElementById("d-fmodelo");
-EMBALAGENS.forEach(e=>selDMod.add(new Option(e,e)));
-["d-fmodelo","d-fturno","d-fdata-de","d-fhora-de","d-fdata-ate","d-fhora-ate"].forEach(id=>
+/* ===== Componente de multi-seleção (clicar em um ou vários itens) ===== */
+function createMultiSelect(mount, cfg){
+  cfg = cfg || {};
+  const placeholder = cfg.placeholder || "Selecionar…";
+  const searchable  = !!cfg.searchable;
+  const onChange    = typeof cfg.onChange === "function" ? cfg.onChange : function(){};
+  let options = (cfg.options || []).map(o => typeof o === "string" ? {value:o,label:o} : o);
+  const selected = new Set();
+
+  mount.classList.add("ms");
+  mount.innerHTML =
+    '<button type="button" class="ms-trigger" aria-haspopup="listbox">'+
+      '<span class="ms-tags"></span>'+
+      '<span class="ms-caret">▾</span>'+
+    '</button>'+
+    '<div class="ms-panel" role="listbox" aria-multiselectable="true">'+
+      (searchable ? '<div class="ms-search"><input type="text" placeholder="Buscar…"></div>' : '')+
+      '<div class="ms-actions">'+
+        '<button type="button" class="ms-act ms-all">Selecionar todos</button>'+
+        '<button type="button" class="ms-act ms-none">Limpar</button>'+
+      '</div>'+
+      '<div class="ms-list"></div>'+
+    '</div>';
+
+  const trigger = mount.querySelector(".ms-trigger");
+  const tags    = mount.querySelector(".ms-tags");
+  const panel   = mount.querySelector(".ms-panel");
+  const list    = mount.querySelector(".ms-list");
+  const search  = searchable ? mount.querySelector(".ms-search input") : null;
+
+  function visible(){
+    const q = search ? search.value.trim().toLowerCase() : "";
+    return options.filter(o => !q || o.label.toLowerCase().includes(q));
+  }
+  function renderTags(){
+    tags.innerHTML = "";
+    const chosen = options.filter(o => selected.has(o.value));
+    if(!chosen.length){
+      const ph = document.createElement("span");
+      ph.className = "ms-ph"; ph.textContent = placeholder;
+      tags.appendChild(ph); return;
+    }
+    const MAXC = 2;
+    chosen.slice(0, MAXC).forEach(o => {
+      const c = document.createElement("span"); c.className = "ms-chip";
+      const t = document.createElement("span"); t.className = "t"; t.textContent = o.label;
+      const x = document.createElement("span"); x.className = "x"; x.textContent = "×"; x.title = "Remover";
+      x.addEventListener("click", ev => { ev.stopPropagation(); selected.delete(o.value); refresh(); onChange(); });
+      c.appendChild(t); c.appendChild(x); tags.appendChild(c);
+    });
+    if(chosen.length > MAXC){
+      const more = document.createElement("span");
+      more.className = "ms-more"; more.textContent = "+" + (chosen.length - MAXC);
+      tags.appendChild(more);
+    }
+  }
+  function renderList(){
+    list.innerHTML = "";
+    const vis = visible();
+    if(!vis.length){
+      const e = document.createElement("div"); e.className = "ms-empty"; e.textContent = "Nada encontrado";
+      list.appendChild(e); return;
+    }
+    vis.forEach(o => {
+      const row = document.createElement("div");
+      row.className = "ms-opt" + (selected.has(o.value) ? " sel" : "");
+      row.setAttribute("role","option");
+      row.setAttribute("aria-selected", selected.has(o.value) ? "true" : "false");
+      row.innerHTML = '<span class="ms-check"></span><span class="ms-label"></span>';
+      row.querySelector(".ms-label").textContent = o.label;
+      row.addEventListener("click", () => {
+        if(selected.has(o.value)) selected.delete(o.value); else selected.add(o.value);
+        refresh(); onChange();
+      });
+      list.appendChild(row);
+    });
+  }
+  function refresh(){ renderTags(); renderList(); }
+
+  function close(){ mount.classList.remove("open"); }
+  function open(){
+    document.querySelectorAll(".ms.open").forEach(m => { if(m !== mount) m.classList.remove("open"); });
+    mount.classList.add("open");
+    if(search){ search.value = ""; renderList(); setTimeout(() => search.focus(), 30); }
+  }
+  trigger.addEventListener("click", e => { e.stopPropagation(); mount.classList.contains("open") ? close() : open(); });
+  panel.addEventListener("click", e => e.stopPropagation());
+  if(search) search.addEventListener("input", renderList);
+  mount.querySelector(".ms-all").addEventListener("click", () => {
+    visible().forEach(o => selected.add(o.value)); refresh(); onChange();
+  });
+  mount.querySelector(".ms-none").addEventListener("click", () => { selected.clear(); refresh(); onChange(); });
+
+  refresh();
+
+  return {
+    element: mount,
+    getValues(){ return options.filter(o => selected.has(o.value)).map(o => o.value); },
+    clear(){ selected.clear(); refresh(); },                  /* silencioso (não dispara onChange) */
+    setValues(arr){ selected.clear(); (arr||[]).forEach(v => selected.add(v)); refresh(); },
+    setOptions(newOpts){
+      options = (newOpts||[]).map(o => typeof o === "string" ? {value:o,label:o} : o);
+      const valid = new Set(options.map(o => o.value));
+      [...selected].forEach(v => { if(!valid.has(v)) selected.delete(v); });
+      refresh();
+    }
+  };
+}
+
+/* Fecha qualquer painel aberto ao clicar fora ou apertar Esc */
+document.addEventListener("click", () => { document.querySelectorAll(".ms.open").forEach(m => m.classList.remove("open")); });
+document.addEventListener("keydown", e => { if(e.key === "Escape") document.querySelectorAll(".ms.open").forEach(m => m.classList.remove("open")); });
+
+/* ===== Filtros multi-seleção do Dashboard: Modelo + Turno ===== */
+var dModeloMS = null, dTurnoMS = null;
+dModeloMS = createMultiSelect(document.getElementById("d-fmodelo-ms"), {
+  options: EMBALAGENS,
+  placeholder: "Todos os modelos",
+  searchable: true,
+  onChange: renderDash
+});
+dTurnoMS = createMultiSelect(document.getElementById("d-fturno-ms"), {
+  options: [{value:"1",label:"1º Turno"},{value:"2",label:"2º Turno"},{value:"3",label:"3º Turno"}],
+  placeholder: "Todos os turnos",
+  searchable: false,
+  onChange: renderDash
+});
+["d-fdata-de","d-fhora-de","d-fdata-ate","d-fhora-ate"].forEach(id=>
   document.getElementById(id).addEventListener("change",renderDash));
 document.getElementById("d-fglobal").addEventListener("click",()=>{
-  document.getElementById("d-fmodelo").value="";
-  document.getElementById("d-fturno").value="";
+  if(dModeloMS) dModeloMS.clear();
+  if(dTurnoMS)  dTurnoMS.clear();
   document.getElementById("d-fdata-de").value="";
   document.getElementById("d-fhora-de").value="";
   document.getElementById("d-fdata-ate").value="";
@@ -3076,9 +3243,9 @@ function openMotivoDrilldown(motivo, filteredParadas){
   /* scope label */
   const fde=document.getElementById("d-fdata-de").value;
   const fate=document.getElementById("d-fdata-ate").value;
-  const ft=document.getElementById("d-fturno").value;
+  const ftArr=(dTurnoMS?dTurnoMS.getValues():[]);
   const partes=[];
-  if(ft)partes.push(TLABEL[ft]);
+  if(ftArr.length)partes.push(ftArr.map(t=>TLABEL[t]).join(", "));
   if(fde){const[y,m,d]=fde.split("-");partes.push("De "+d+"/"+m+"/"+y);}
   if(fate){const[y,m,d]=fate.split("-");partes.push("Até "+d+"/"+m+"/"+y);}
   document.getElementById("detail-sub-scope").textContent=
@@ -3124,8 +3291,10 @@ document.addEventListener("keydown",e=>{
   }
 });
 function renderDash(){
-  const fm=document.getElementById("d-fmodelo").value;
-  const ft=document.getElementById("d-fturno").value;
+  const fmArr=(dModeloMS?dModeloMS.getValues():[]);
+  const ftArr=(dTurnoMS?dTurnoMS.getValues():[]);
+  const fmSet=new Set(fmArr);
+  const ftSet=new Set(ftArr);
   const fde=document.getElementById("d-fdata-de").value;
   const fhde=document.getElementById("d-fhora-de").value||"00:00";
   const fate=document.getElementById("d-fdata-ate").value;
@@ -3136,18 +3305,18 @@ function renderDash(){
 
   /* turno e intervalo filtram tudo; o modelo filtra somente as lavagens */
   const base=registros.filter(r=>{
-    if(ft&&r.turno!==ft)return false;
+    if(ftSet.size&&!ftSet.has(r.turno))return false;
     if(fde){const rv=dt(r.data,r.hi);if(rv<dt(fde,fhde))return false;}
     if(fate){const rv=dt(r.data,r.hf);if(rv>dt(fate,fhate))return false;}
     return true;
   });
-  const lav=base.filter(r=>r.tipo==="lav"&&(!fm||r.emb===fm||( r.itens&&r.itens.some(it=>it.emb===fm))));
+  const lav=base.filter(r=>r.tipo==="lav"&&(!fmSet.size||fmSet.has(r.emb)||( r.itens&&r.itens.some(it=>fmSet.has(it.emb)))));
   const par=base.filter(r=>r.tipo==="par");
 
   /* resumo do escopo selecionado */
   const partes=[];
-  if(fm)partes.push("Modelo: "+fm);
-  if(ft)partes.push(TLABEL[ft]);
+  if(fmSet.size)partes.push("Modelo: "+fmArr.join(", "));
+  if(ftSet.size)partes.push(ftArr.map(t=>TLABEL[t]).join(", "));
   if(fde){const[y,m,d]=fde.split("-");partes.push("De "+d+"/"+m+"/"+y+" "+fhde);}
   if(fate){const[y,m,d]=fate.split("-");partes.push("Até "+d+"/"+m+"/"+y+" "+fhate);}
   document.getElementById("d-scope").textContent=
@@ -3213,7 +3382,7 @@ function renderDash(){
   renderConsistencia(base);
 
   /* ===== Painel 07: Lavagem de Rack ===== */
-  renderDashRack(ft, fde, fate);
+  renderDashRack(ftArr, fde, fate);
 }
 
 /* ===== Renderiza cards de horas por turno COM CAUSAS ===== */
@@ -3841,13 +4010,13 @@ function renderConsistencia(base){
 }
 
 /* ===== Painel 07: Lavagem de Rack no Dashboard ===== */
-function renderDashRack(ft, fde, fate){
+function renderDashRack(ftArr, fde, fate){
   /* KPI total */
   const kpiEl = document.getElementById('d-rack-total');
 
   /* Filtra por turno e período (só data, rack não tem hora) */
   let lista = [...rackRegistros];
-  if(ft)  lista = lista.filter(r => String(r.turno) === String(ft));
+  if(ftArr && ftArr.length) lista = lista.filter(r => ftArr.includes(String(r.turno)));
   if(fde) lista = lista.filter(r => r.data >= fde);
   if(fate) lista = lista.filter(r => r.data <= fate);
 
@@ -4632,7 +4801,7 @@ function applyEmbalagens(){
     if(item.foto) FOTOS_EMB[item.nome] = item.foto;
     else delete FOTOS_EMB[item.nome];   // remove foto antiga se foi excluída
   });
-  ['embalagem','emb-vazia-sel','v-embalagem','vf-tipo','d-fmodelo'].forEach(selId=>{
+  ['embalagem','emb-vazia-sel','v-embalagem','vf-tipo'].forEach(selId=>{
     const sel = document.getElementById(selId);
     if(!sel) return;
     const val = sel.value;
@@ -4645,6 +4814,7 @@ function applyEmbalagens(){
     EMBALAGENS.forEach(e=> sel.add(new Option(e,e)));
     if(val && EMBALAGENS.includes(val)) sel.value = val;
   });
+  if(typeof dModeloMS !== "undefined" && dModeloMS) dModeloMS.setOptions(EMBALAGENS);
 }
 
 /* --------- Render da lista de cadastro --------- */
