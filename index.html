@@ -2833,6 +2833,7 @@ function checkDuracao(){
 
 function minsRaw(hi,hf){
   /* Igual a mins() mas sem descontar refeição — só para validação de duração bruta */
+  if(!hi||!hf)return 0;
   const[a,b]=hi.split(":").map(Number),[c,d]=hf.split(":").map(Number);
   let m=(c*60+d)-(a*60+b);if(m<0)m+=1440;
   return m;
@@ -2877,6 +2878,7 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
 }));
 
 function mins(hi,hf){
+  if(!hi||!hf)return 0;
   const[a,b]=hi.split(":").map(Number),[c,d]=hf.split(":").map(Number);
   let m=(c*60+d)-(a*60+b);if(m<0)m+=1440;
   /* Desconta refeição (12:00–13:00) se o intervalo cobrir esse período */
@@ -2887,6 +2889,7 @@ function mins(hi,hf){
 }
 function minsRef(hi,hf){
   /* Retorna quantos minutos de refeição (12–13h) foram descontados */
+  if(!hi||!hf)return 0;
   const[a,b]=hi.split(":").map(Number),[c,d]=hf.split(":").map(Number);
   let raw=(c*60+d)-(a*60+b);if(raw<0)raw+=1440;
   const startMin=a*60+b, endMin=c*60+d+(raw>=1440?1440:0);
@@ -2894,7 +2897,7 @@ function minsRef(hi,hf){
   if(startMin<refEnd && endMin>refStart) return Math.min(endMin,refEnd)-Math.max(startMin,refStart);
   return 0;
 }
-function fmtMin(m){return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");}
+function fmtMin(m){if(!isFinite(m))m=0;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");}
 /* Retorna string "HH:MM" para exportação Excel — o Excel reconhece como tempo calculável */
 function fmtMinXLS(m){return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");}
 
