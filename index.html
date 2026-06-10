@@ -3533,7 +3533,7 @@ function renderDash(){
   const fhate=document.getElementById("d-fhora-ate").value||"23:59";
 
   /* Converte data+hora em número comparável YYYYMMDDHHMM */
-  function dt(data,hora){return parseInt(data.replace(/-/g,""))*10000+parseInt(hora.replace(":",""));}
+  function dt(data,hora){return parseInt(data.replace(/-/g,""))*10000+(parseInt((hora||"").replace(":",""))||0);}
 
   /* turno e intervalo filtram tudo; o modelo filtra somente as lavagens */
   const base=registros.filter(r=>{
