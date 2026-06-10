@@ -1005,6 +1005,11 @@
     border-bottom:1px solid var(--line);border-left:none;border-right:none;
     font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);
     padding:0;height:28px;line-height:28px}
+  /* esconde as setinhas nativas do input number p/ permitir digitação limpa */
+  .rack-stepper input[type=number]{-moz-appearance:textfield}
+  .rack-stepper input[type=number]::-webkit-outer-spin-button,
+  .rack-stepper input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+  .rack-stepper input[type=number]:focus{outline:none;color:#9a6cf0}
 
   /* ===== Multi-seleção (filtros do dashboard) ===== */
   .ms{position:relative;display:inline-flex;flex-direction:column;font-family:'Poppins',sans-serif;vertical-align:top}
@@ -1562,7 +1567,7 @@
                 <label for="rack-item-1" style="font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;margin:0">Carrinho Trilogiq</label>
                 <div class="rack-stepper" id="rack-stepper-1">
                   <button type="button" class="rack-stepper-btn" onclick="rackStep(1,-1)">−</button>
-                  <input type="number" id="rack-qty-1" min="1" step="1" value="" readonly
+                  <input type="number" id="rack-qty-1" min="1" step="1" value="" inputmode="numeric" oninput="rackQtyType(1)" onblur="rackQtyBlur(1)"
                     style="width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-left:none;border-right:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);padding:0;height:28px">
                   <button type="button" class="rack-stepper-btn" onclick="rackStep(1,1)">+</button>
                 </div>
@@ -1573,7 +1578,7 @@
                 <label for="rack-item-2" style="font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;margin:0">Filtros da lavadora EA211</label>
                 <div class="rack-stepper" id="rack-stepper-2">
                   <button type="button" class="rack-stepper-btn" onclick="rackStep(2,-1)">−</button>
-                  <input type="number" id="rack-qty-2" min="1" step="1" value="" readonly
+                  <input type="number" id="rack-qty-2" min="1" step="1" value="" inputmode="numeric" oninput="rackQtyType(2)" onblur="rackQtyBlur(2)"
                     style="width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-left:none;border-right:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);padding:0;height:28px">
                   <button type="button" class="rack-stepper-btn" onclick="rackStep(2,1)">+</button>
                 </div>
@@ -1584,7 +1589,7 @@
                 <label for="rack-item-3" style="font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;margin:0">GLT</label>
                 <div class="rack-stepper" id="rack-stepper-3">
                   <button type="button" class="rack-stepper-btn" onclick="rackStep(3,-1)">−</button>
-                  <input type="number" id="rack-qty-3" min="1" step="1" value="" readonly
+                  <input type="number" id="rack-qty-3" min="1" step="1" value="" inputmode="numeric" oninput="rackQtyType(3)" onblur="rackQtyBlur(3)"
                     style="width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-left:none;border-right:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);padding:0;height:28px">
                   <button type="button" class="rack-stepper-btn" onclick="rackStep(3,1)">+</button>
                 </div>
@@ -1595,7 +1600,7 @@
                 <label for="rack-item-4" style="font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;margin:0">Paletes de ferro</label>
                 <div class="rack-stepper" id="rack-stepper-4">
                   <button type="button" class="rack-stepper-btn" onclick="rackStep(4,-1)">−</button>
-                  <input type="number" id="rack-qty-4" min="1" step="1" value="" readonly
+                  <input type="number" id="rack-qty-4" min="1" step="1" value="" inputmode="numeric" oninput="rackQtyType(4)" onblur="rackQtyBlur(4)"
                     style="width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-left:none;border-right:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);padding:0;height:28px">
                   <button type="button" class="rack-stepper-btn" onclick="rackStep(4,1)">+</button>
                 </div>
@@ -1606,7 +1611,7 @@
                 <label for="rack-item-5" style="font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;margin:0">Rack de motores</label>
                 <div class="rack-stepper" id="rack-stepper-5">
                   <button type="button" class="rack-stepper-btn" onclick="rackStep(5,-1)">−</button>
-                  <input type="number" id="rack-qty-5" min="1" step="1" value="" readonly
+                  <input type="number" id="rack-qty-5" min="1" step="1" value="" inputmode="numeric" oninput="rackQtyType(5)" onblur="rackQtyBlur(5)"
                     style="width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-left:none;border-right:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);padding:0;height:28px">
                   <button type="button" class="rack-stepper-btn" onclick="rackStep(5,1)">+</button>
                 </div>
@@ -1617,7 +1622,7 @@
                 <label for="rack-item-6" style="font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;margin:0">Racks virabrequim</label>
                 <div class="rack-stepper" id="rack-stepper-6">
                   <button type="button" class="rack-stepper-btn" onclick="rackStep(6,-1)">−</button>
-                  <input type="number" id="rack-qty-6" min="1" step="1" value="" readonly
+                  <input type="number" id="rack-qty-6" min="1" step="1" value="" inputmode="numeric" oninput="rackQtyType(6)" onblur="rackQtyBlur(6)"
                     style="width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-left:none;border-right:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);padding:0;height:28px">
                   <button type="button" class="rack-stepper-btn" onclick="rackStep(6,1)">+</button>
                 </div>
@@ -1628,7 +1633,7 @@
                 <label for="rack-item-7" style="font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;margin:0">Separação de divisórias</label>
                 <div class="rack-stepper" id="rack-stepper-7">
                   <button type="button" class="rack-stepper-btn" onclick="rackStep(7,-1)">−</button>
-                  <input type="number" id="rack-qty-7" min="1" step="1" value="" readonly
+                  <input type="number" id="rack-qty-7" min="1" step="1" value="" inputmode="numeric" oninput="rackQtyType(7)" onblur="rackQtyBlur(7)"
                     style="width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-left:none;border-right:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);padding:0;height:28px">
                   <button type="button" class="rack-stepper-btn" onclick="rackStep(7,1)">+</button>
                 </div>
@@ -1639,7 +1644,7 @@
                 <label for="rack-item-8" style="font-size:13px;font-weight:500;color:var(--txt);cursor:pointer;margin:0">Tampas de Bloco</label>
                 <div class="rack-stepper" id="rack-stepper-8">
                   <button type="button" class="rack-stepper-btn" onclick="rackStep(8,-1)">−</button>
-                  <input type="number" id="rack-qty-8" min="1" step="1" value="" readonly
+                  <input type="number" id="rack-qty-8" min="1" step="1" value="" inputmode="numeric" oninput="rackQtyType(8)" onblur="rackQtyBlur(8)"
                     style="width:40px;text-align:center;background:var(--panel-2);border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-left:none;border-right:none;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--txt);padding:0;height:28px">
                   <button type="button" class="rack-stepper-btn" onclick="rackStep(8,1)">+</button>
                 </div>
@@ -5625,6 +5630,33 @@ async function loadRack(){
     const atual = parseInt(qty.value)||0;
     const novo  = Math.max(1, atual+delta);
     qty.value   = novo;
+  };
+
+  /* ---- Digitação direta da quantidade ---- */
+  window.rackQtyType = function(i){
+    const cb  = document.getElementById('rack-item-'+i);
+    const qty = document.getElementById('rack-qty-'+i);
+    if(!cb||!qty) return;
+    /* só aceita dígitos */
+    qty.value = qty.value.replace(/[^0-9]/g,'');
+    if(qty.value!==''){
+      /* digitou um número → marca o item automaticamente */
+      if(!cb.checked){ cb.checked=true; rackSyncQty(i); }
+      const stepper=document.getElementById('rack-stepper-'+i);
+      if(stepper) stepper.classList.add('active');
+    }
+  };
+  window.rackQtyBlur = function(i){
+    const cb  = document.getElementById('rack-item-'+i);
+    const qty = document.getElementById('rack-qty-'+i);
+    if(!cb||!qty) return;
+    const n = parseInt(qty.value)||0;
+    if(cb.checked){
+      /* item marcado mas campo vazio/zero → volta pra 1 */
+      qty.value = Math.max(1, n);
+    } else {
+      qty.value = '';
+    }
   };
 
   /* ---- Seleção de área ---- */
