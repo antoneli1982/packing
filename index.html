@@ -242,6 +242,47 @@
   .emb-item .emb-del{cursor:pointer;background:none;border:none;color:var(--txt-faint);
     font-size:14px;padding:2px 5px;border-radius:4px;transition:.12s;line-height:1}
   .emb-item .emb-del:hover{color:var(--red);background:rgba(240,83,63,.12)}
+  /* ===== Divisórias danificadas/segregadas ===== */
+  .emb-item .emb-nome.is-divis{cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+  .emb-item .emb-nome.is-divis .divis-caret{font-size:9px;color:var(--txt-faint);transition:.15s;flex-shrink:0}
+  .emb-item .emb-nome.is-divis.open .divis-caret{transform:rotate(90deg);color:var(--red)}
+  .emb-danif-wrap{display:none;margin:-2px 0 7px;padding:9px 11px;background:var(--panel-2);
+    border:1px solid var(--line-soft);border-top:none;border-radius:0 0 6px 6px;
+    animation:embItemIn .18s ease}
+  .emb-danif-wrap.open{display:block}
+  .emb-danif-wrap .edl{display:block;font-size:10px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.6px;color:var(--txt-dim);margin-bottom:6px}
+  .emb-danif-row{display:flex;align-items:center;gap:8px}
+  .emb-danif-row input{width:90px;text-align:right;font-family:'Poppins',sans-serif;font-size:13px;
+    font-weight:700;color:var(--red);background:var(--panel);border:1px solid var(--line);
+    border-radius:5px;padding:6px 8px}
+  .emb-danif-row input:focus{outline:none;border-color:var(--red)}
+  .emb-danif-row .udl{font-size:11px;color:var(--txt-faint)}
+  .emb-danif-flag{display:none;margin-top:9px;padding:8px 11px;border-radius:6px;
+    font-family:'Poppins',sans-serif;font-size:12px;font-weight:800;letter-spacing:.4px;
+    color:#ff3b3b;background:rgba(255,30,40,.08);border:1px solid rgba(255,30,40,.5);
+    text-shadow:0 0 4px rgba(255,40,50,.9),0 0 9px rgba(255,30,40,.7),0 0 16px rgba(255,20,30,.5);
+    box-shadow:0 0 8px rgba(255,30,40,.25),inset 0 0 10px rgba(255,30,40,.08);
+    animation:neonPulse 1.6s ease-in-out infinite}
+  .emb-danif-flag.on{display:block}
+  @keyframes neonPulse{0%,100%{box-shadow:0 0 8px rgba(255,30,40,.25),inset 0 0 10px rgba(255,30,40,.08)}
+    50%{box-shadow:0 0 16px rgba(255,30,40,.55),inset 0 0 14px rgba(255,30,40,.14)}}
+  /* Bloco que surge ao SELECIONAR uma divisória no seletor (antes do +) */
+  .emb-danif-add{display:none;margin:9px 0 2px;padding:11px 12px;border-radius:8px;
+    background:var(--panel-2);border:1px solid rgba(255,30,40,.45);
+    box-shadow:0 0 0 1px rgba(255,30,40,.12),0 0 14px rgba(255,30,40,.14);
+    animation:embItemIn .18s ease}
+  .emb-danif-add.open{display:block}
+  .emb-danif-add .edl{display:block;font-size:10px;font-weight:800;text-transform:uppercase;
+    letter-spacing:.6px;color:#ff7a72;margin-bottom:7px}
+  .emb-danif-add .row{display:flex;align-items:center;gap:8px}
+  .emb-danif-add input{flex:1;min-width:0;font-family:'Poppins',sans-serif;font-size:14px;
+    font-weight:700;color:var(--red);background:var(--panel);border:1px solid rgba(255,30,40,.4);
+    border-radius:6px;padding:8px 10px}
+  .emb-danif-add input::placeholder{color:var(--txt-faint);font-weight:500}
+  .emb-danif-add input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 2px rgba(255,30,40,.18)}
+  .horas-opc-note{margin-top:8px;padding:7px 10px;border-radius:6px;font-size:11.5px;font-weight:600;
+    color:#ffb3ae;background:rgba(255,30,40,.07);border:1px solid rgba(255,30,40,.3)}
   .emb-total-bar{display:flex;align-items:center;justify-content:space-between;
     padding:8px 10px;background:rgba(56,102,247,.08);border:1px solid rgba(56,102,247,.2);
     border-radius:6px;margin-top:6px;font-family:'Poppins',sans-serif}
@@ -249,6 +290,9 @@
   .emb-total-bar .etb-label{font-size:10px;font-weight:700;text-transform:uppercase;
     letter-spacing:.8px;color:var(--txt-dim)}
   .emb-total-bar .etb-value{font-size:15px;font-weight:800;color:var(--blue-soft)}
+  .emb-total-bar .etb-vals{display:flex;align-items:center;gap:12px}
+  .emb-total-bar .etb-value.etb-danif{color:#ff3b3b;
+    text-shadow:0 0 4px rgba(255,40,50,.6),0 0 9px rgba(255,30,40,.4)}
 
   .edit-banner{display:none;background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.4);
     color:var(--green);border-radius:6px;padding:8px 10px;margin-bottom:14px;
@@ -1168,6 +1212,13 @@
               </div>
               <button type="button" class="btn-add-emb" id="btn-add-emb" title="Adicionar embalagem ao ciclo">+</button>
             </div>
+            <div class="emb-danif-add" id="emb-danif-add">
+              <label class="edl">⚠ Quantidade de divisória danificada / segregada</label>
+              <div class="row">
+                <input type="number" id="total-danif" min="0" step="1" placeholder="Quantidade danificada / segregada">
+              </div>
+              <div class="emb-danif-flag" id="emb-danif-add-flag"></div>
+            </div>
             <div class="emb-foto" id="emb-foto"></div>
             <div class="emb-list" id="emb-list"></div>
             <div class="emb-total-bar" id="emb-total-bar"></div>
@@ -1291,6 +1342,7 @@
                 </div>
               </div>
             </div>
+            <div class="horas-opc-note" id="horas-opc-note" style="display:none">ℹ Apontamento de divisória danificada / segregada — hora inicial e final são opcionais.</div>
           </div>
 
           <!-- Alerta de duração -->
@@ -1740,6 +1792,7 @@
       <div class="stat big-kpi" data-c="lav"><div class="v" id="d-mce" style="color:var(--green)">0,00</div><div class="k">Média Ciclos Extras</div></div>
       <div class="stat big-kpi" style="--before-bg:var(--orange)" data-c="ref"><div class="v" id="d-vaz" style="color:var(--orange)">0</div><div class="k">Embalagens Vazias Entradas</div></div>
       <div class="stat big-kpi" style="--before-bg:#9a6cf0"><div class="v" id="d-rack-total" style="color:#9a6cf0">0</div><div class="k">Lavagens de Rack</div></div>
+      <div class="stat big-kpi" style="--before-bg:var(--red)"><div class="v" id="d-danif" style="color:#ff3b3b">0</div><div class="k">Divisórias Danificadas / Segregadas</div></div>
     </div>
     <div class="dash-grid">
       <div class="panel">
@@ -2372,18 +2425,66 @@ function mostrarFotoEmb(nome){
     elEmbFoto.classList.remove("on");
   }
 }
-selEmb.addEventListener("change",()=>mostrarFotoEmb(selEmb.value));
-
 /* ===== Multi-embalagem: botão +, lista, total ===== */
+/* Detecta se a embalagem é uma divisória (ex.: DIVISORIA CANOA, DIVISÓRIAS EKLT…) */
+function ehDivisoria(nome){return (nome||"").toUpperCase().includes("DIVIS");}
+
+/* Bloco de divisória danificada que surge ao SELECIONAR a divisória no seletor */
+const embDanifAdd=document.getElementById("emb-danif-add");
+const totalDanifEl=document.getElementById("total-danif");
+const embDanifAddFlag=document.getElementById("emb-danif-add-flag");
+function atualizarFlagAdd(){
+  const q=parseInt(totalDanifEl.value,10);
+  if(q>0){
+    embDanifAddFlag.textContent="⚠ Apontamento registrado: "+q+" divisória(s) danificada(s) / segregada(s)";
+    embDanifAddFlag.classList.add("on");
+  }else{
+    embDanifAddFlag.textContent="";
+    embDanifAddFlag.classList.remove("on");
+  }
+  atualizarObrigatoriedadeHoras();
+}
+function toggleDanifAdd(){
+  if(ehDivisoria(selEmb.value)){
+    embDanifAdd.classList.add("open");
+  }else{
+    embDanifAdd.classList.remove("open");
+    totalDanifEl.value="";
+    embDanifAddFlag.textContent="";
+    embDanifAddFlag.classList.remove("on");
+  }
+  atualizarObrigatoriedadeHoras();
+}
+totalDanifEl.addEventListener("input",atualizarFlagAdd);
+selEmb.addEventListener("change",()=>{mostrarFotoEmb(selEmb.value);toggleDanifAdd();});
+
+/* Horas opcionais quando houver apontamento de divisória danificada/segregada */
+const fHorasEl=document.getElementById("f-horas");
+const horasOpcNote=document.getElementById("horas-opc-note");
+function temDivisoriaDanificada(){
+  const pend=ehDivisoria(selEmb.value)&&(parseInt(totalDanifEl.value,10)||0)>0;
+  const naLista=(typeof embItens!=="undefined"&&embItens)?embItens.some(it=>(it.danif||0)>0):false;
+  return pend||naLista;
+}
+function atualizarObrigatoriedadeHoras(){
+  const opc=(tipo==="lav")&&temDivisoriaDanificada();
+  if(fHorasEl){fHorasEl.querySelectorAll(".req").forEach(el=>{el.style.display=opc?"none":"";});}
+  if(horasOpcNote)horasOpcNote.style.display=opc?"block":"none";
+}
 function renderEmbList(){
   const list=document.getElementById("emb-list");
   const bar=document.getElementById("emb-total-bar");
   list.innerHTML="";bar.innerHTML="";
   if(!embItens.length)return;
   embItens.forEach((it,i)=>{
+    const wrap=document.createElement("div");wrap.className="emb-row-wrap";
     const div=document.createElement("div");div.className="emb-item";
-    div.innerHTML='<span class="emb-nome">'+it.emb+'</span>'+
-      '<input type="number" class="emb-qtd-edit" min="1" step="1" value="'+it.total+'" title="Editar quantidade">'+
+    const divis=ehDivisoria(it.emb);
+    const nomeHTML=divis
+      ? '<span class="emb-nome is-divis" title="Clique para registrar divisórias danificadas/segregadas"><span class="divis-caret">▶</span>'+it.emb+'</span>'
+      : '<span class="emb-nome">'+it.emb+'</span>';
+    div.innerHTML=nomeHTML+
+      '<input type="number" class="emb-qtd-edit" min="1" step="1" placeholder="Qtd" value="'+(it.total>0?it.total:"")+'" title="Editar quantidade (Qtd do ciclo)">'+
       '<button type="button" class="emb-del" title="Remover">✕</button>';
     const inp=div.querySelector(".emb-qtd-edit");
     inp.addEventListener("input",()=>{
@@ -2393,25 +2494,81 @@ function renderEmbList(){
     div.querySelector(".emb-del").addEventListener("click",()=>{
       embItens.splice(i,1);renderEmbList();
     });
-    list.appendChild(div);
+    wrap.appendChild(div);
+
+    if(divis){
+      const nomeEl=div.querySelector(".emb-nome");
+      const danifWrap=document.createElement("div");
+      danifWrap.className="emb-danif-wrap";
+      danifWrap.innerHTML=
+        '<span class="edl">Quantidade de divisória danificada / segregada</span>'+
+        '<div class="emb-danif-row">'+
+          '<input type="number" class="emb-danif-input" min="0" step="1" placeholder="0" value="'+(it.danif||"")+'">'+
+          '<span class="udl">divisória(s)</span>'+
+        '</div>'+
+        '<div class="emb-danif-flag"></div>';
+      const danifInp=danifWrap.querySelector(".emb-danif-input");
+      const flag=danifWrap.querySelector(".emb-danif-flag");
+      const atualizarFlag=()=>{
+        const q=parseInt(danifInp.value,10);
+        if(q>0){
+          embItens[i].danif=q;
+          flag.textContent="⚠ Apontamento registrado: "+q+" divisória(s) danificada(s) / segregada(s)";
+          flag.classList.add("on");
+        }else{
+          embItens[i].danif=0;
+          flag.textContent="";
+          flag.classList.remove("on");
+        }
+        atualizarObrigatoriedadeHoras();
+      };
+      danifInp.addEventListener("input",atualizarFlag);
+      /* Mostra o campo ao clicar na divisória */
+      nomeEl.addEventListener("click",()=>{
+        const aberto=danifWrap.classList.toggle("open");
+        nomeEl.classList.toggle("open",aberto);
+        if(aberto)danifInp.focus();
+      });
+      /* Se já houver apontamento (ex.: edição), abre e destaca em neon */
+      if(it.danif>0){
+        danifWrap.classList.add("open");
+        nomeEl.classList.add("open");
+        atualizarFlag();
+      }
+      wrap.appendChild(danifWrap);
+    }
+    list.appendChild(wrap);
   });
   atualizarBarraEmb();
+  atualizarObrigatoriedadeHoras();
 }
 function atualizarBarraEmb(){
   const bar=document.getElementById("emb-total-bar");
   if(!embItens.length){bar.innerHTML="";return;}
   const soma=embItens.reduce((a,it)=>a+it.total,0);
-  bar.innerHTML='<span class="etb-label">Total do ciclo: '+embItens.length+' tipo'+(embItens.length>1?'s':'')+'</span>'+
-    '<span class="etb-value">'+soma.toLocaleString("pt-BR")+' emb.</span>';
+  const somaDanif=embItens.reduce((a,it)=>a+(it.danif||0),0);
+  let valHTML="";
+  if(soma>0)valHTML+='<span class="etb-value">'+soma.toLocaleString("pt-BR")+' emb.</span>';
+  if(somaDanif>0)valHTML+='<span class="etb-value etb-danif">⚠ '+somaDanif.toLocaleString("pt-BR")+' danif./segr.</span>';
+  if(!valHTML)valHTML='<span class="etb-value">0 emb.</span>';
+  bar.innerHTML='<span class="etb-label">Total do ciclo: '+embItens.length+' tipo'+(embItens.length>1?'s':'')+'</span>'+'<span class="etb-vals">'+valHTML+'</span>';
 }
 document.getElementById("btn-add-emb").addEventListener("click",()=>{
   const emb=selEmb.value;
   const totalEl=document.getElementById("total");
   const total=parseInt(totalEl.value,10);
   if(!emb)return flash("Selecione a embalagem",false);
-  if(!total||total<1)return flash("Informe a quantidade",false);
-  embItens.push({emb:emb,total:total});
+  const divis=ehDivisoria(emb);
+  const danif=divis?(parseInt(totalDanifEl.value,10)||0):0;
+  /* Divisória: aceita só com a quantidade danificada/segregada (Qtd do ciclo é opcional) */
+  if(divis){
+    if((!total||total<1)&&danif<1)return flash("Informe a quantidade danificada / segregada (ou a Qtd do ciclo)",false);
+  }else if(!total||total<1){
+    return flash("Informe a quantidade",false);
+  }
+  embItens.push({emb:emb,total:(total>0?total:0),danif:danif});
   selEmb.selectedIndex=0;totalEl.value="";
+  totalDanifEl.value="";atualizarFlagAdd();embDanifAdd.classList.remove("open");
   mostrarFotoEmb("");
   renderEmbList();
   flash("",true); /* limpa msg de erro */
@@ -2584,6 +2741,7 @@ document.querySelectorAll(".tipo-btn").forEach(btn=>btn.addEventListener("click"
   document.getElementById("f-motivo").classList.toggle("hide",tipo!=="par");
   document.getElementById("f-obs").classList.toggle("hide",tipo!=="par");
   document.getElementById("f-rack-inline").classList.toggle("hide",tipo!=="rack");
+  if(typeof atualizarObrigatoriedadeHoras==="function")atualizarObrigatoriedadeHoras();
   document.getElementById("submit-btn").textContent=
     editingId?"Salvar Alterações":"Registrar "+(tipo==="rack"?"Lavagem de Rack":TPLABEL[tipo]);
   document.getElementById("submit-btn").classList.toggle("lav",tipo==="lav"&&!editingId);
@@ -2749,10 +2907,14 @@ document.getElementById("form").addEventListener("submit",async e=>{
   if(!turno)  return flash("Selecione o turno",false);
   /* Horas apenas para lav e par */
   if(tipo!=="vaz"&&tipo!=="rack"){
-    if(!hi||!hf)return flash("Informe hora inicial e final",false);
-    const mDur=minsRaw(hi,hf);
-    if(mDur>7*60) return flash("Duração superior a 7h — corrija os horários antes de salvar",false);
-    if(mDur>90&&!duracaoConfirmada){checkDuracao();return flash("Confirme se os horários estão corretos (duração: "+fmtMin(mDur)+")",false);}
+    /* Apontamento de divisória danificada/segregada dispensa hora inicial/final */
+    const horasOpcionais=(tipo==="lav")&&temDivisoriaDanificada();
+    if(!horasOpcionais && (!hi||!hf))return flash("Informe hora inicial e final",false);
+    if(hi&&hf){
+      const mDur=minsRaw(hi,hf);
+      if(mDur>7*60) return flash("Duração superior a 7h — corrija os horários antes de salvar",false);
+      if(mDur>90&&!duracaoConfirmada){checkDuracao();return flash("Confirme se os horários estão corretos (duração: "+fmtMin(mDur)+")",false);}
+    }
   }
   /* Lavagem de Rack — salva via persistRack */
   if(tipo==="rack"){
@@ -2840,17 +3002,22 @@ document.getElementById("form").addEventListener("submit",async e=>{
        seja em novo registro ou durante a edição */
     const embPend=selEmb.value;
     const totalPend=parseInt(document.getElementById("total").value,10);
-    if(embPend && totalPend>0){
-      embItens.push({emb:embPend,total:totalPend});
+    const divisPend=ehDivisoria(embPend);
+    const danifPend=divisPend?(parseInt(totalDanifEl.value,10)||0):0;
+    /* Adiciona se há Qtd do ciclo OU (divisória com quantidade danificada/segregada) */
+    if(embPend && (totalPend>0 || (divisPend && danifPend>0))){
+      embItens.push({emb:embPend,total:(totalPend>0?totalPend:0),danif:danifPend});
       selEmb.selectedIndex=0;document.getElementById("total").value="";
+      totalDanifEl.value="";atualizarFlagAdd();embDanifAdd.classList.remove("open");
       renderEmbList();
     }
     if(embItens.length===0){
       if(!embPend)            return flash("Selecione a embalagem e clique + para adicionar",false);
+      if(divisPend)           return flash("Informe a quantidade danificada / segregada (ou a Qtd do ciclo) e clique +",false);
       return flash("Informe a quantidade e clique + para adicionar",false);
     }
     /* Salvar array de itens + manter emb/total para retrocompatibilidade */
-    reg.itens=embItens.map(it=>({emb:it.emb,total:it.total}));
+    reg.itens=embItens.map(it=>({emb:it.emb,total:it.total,danif:it.danif||0}));
     reg.emb=embItens.map(it=>it.emb).join(", ");
     reg.total=embItens.reduce((a,it)=>a+it.total,0);
   }
@@ -2888,6 +3055,7 @@ document.getElementById("form").addEventListener("submit",async e=>{
 function limparCampos(){
   selEmb.selectedIndex=0;
   document.getElementById("total").value="";
+  if(totalDanifEl){totalDanifEl.value="";atualizarFlagAdd();embDanifAdd.classList.remove("open");}
   embItens=[];renderEmbList();
   /* Vazia form */
   const sVaz=document.getElementById("emb-vazia-sel");if(sVaz)sVaz.selectedIndex=0;
@@ -2937,10 +3105,11 @@ function editar(id){
   document.getElementById("hi").value=r.hi||"";
   document.getElementById("hf").value=r.hf||"";
   if(tipo==="lav"){
-    if(r.itens&&r.itens.length){embItens=r.itens.map(it=>({emb:it.emb,total:it.total}));}
+    if(r.itens&&r.itens.length){embItens=r.itens.map(it=>({emb:it.emb,total:it.total,danif:it.danif||0}));}
     else{embItens=[{emb:r.emb,total:r.total}];}
     renderEmbList();
     selEmb.selectedIndex=0;document.getElementById("total").value="";
+    if(totalDanifEl){totalDanifEl.value="";atualizarFlagAdd();embDanifAdd.classList.remove("open");}
   } else if(tipo==="vaz"){
     /* Carregar itens de embalagem vazia */
     formEmbItensVazia=(r.itens&&r.itens.length)?r.itens.map(it=>({emb:it.emb,total:it.total})):[{emb:r.emb,total:r.total}];
@@ -3020,11 +3189,23 @@ document.getElementById("f-clear").addEventListener("click",()=>{
   render();
 });
 
-function detalhe(r){
+function totalDanifReg(r){return (r.itens&&r.itens.length)?r.itens.reduce((a,it)=>a+(it.danif||0),0):0;}
+function detalhe(r,plain){
   if(r.tipo==="lav"){
     const itens=(r.itens&&r.itens.length)?r.itens:[{emb:r.emb,total:r.total}];
-    if(itens.length===1)return '<span style="font-weight:600">'+itens[0].emb+'</span> <span style="color:var(--blue-soft);font-weight:700;font-size:11px">('+itens[0].total.toLocaleString("pt-BR")+')</span>';
-    return itens.map((it,i)=>'<div style="line-height:1.7"><span style="color:var(--txt-faint);font-size:10px;margin-right:4px">'+(i+1)+'.</span><span style="font-weight:600">'+it.emb+'</span> <span style="color:var(--blue-soft);font-weight:700;font-size:11px">('+it.total.toLocaleString("pt-BR")+')</span></div>').join('');
+    if(plain){
+      const part=it=>{
+        let s=it.emb;
+        if(it.total>0)s+=" ("+it.total.toLocaleString("pt-BR")+")";
+        if((it.danif||0)>0)s+=" [⚠ "+it.danif.toLocaleString("pt-BR")+" danif./segr.]";
+        return s;
+      };
+      return itens.map(part).join(" + ");
+    }
+    const qtyHTML=it=> it.total>0?' <span style="color:var(--blue-soft);font-weight:700;font-size:11px">('+it.total.toLocaleString("pt-BR")+')</span>':'';
+    const danifHTML=it=> (it.danif||0)>0?' <span style="background:rgba(255,30,40,.12);color:#ff3b3b;font-weight:800;border-radius:4px;padding:1px 6px;font-size:10px;border:1px solid rgba(255,30,40,.45);white-space:nowrap">⚠ '+it.danif.toLocaleString("pt-BR")+' danif./segr.</span>':'';
+    if(itens.length===1)return '<span style="font-weight:600">'+itens[0].emb+'</span>'+qtyHTML(itens[0])+danifHTML(itens[0]);
+    return itens.map((it,i)=>'<div style="line-height:1.7"><span style="color:var(--txt-faint);font-size:10px;margin-right:4px">'+(i+1)+'.</span><span style="font-weight:600">'+it.emb+'</span>'+qtyHTML(it)+danifHTML(it)+'</div>').join('');
   }
   return r.obs?r.motivo+" — "+r.obs:r.motivo;
 }
@@ -3042,12 +3223,13 @@ function gerarXLS(fdDe,fhDe,fdAte,fhAte){
   ).reverse();
   if(!filtrado.length){alert("Nenhum apontamento no período selecionado.");return;}
   const periodoLabel=(fdDe||fdAte)?` (${fdDe?fdDe.split("-").reverse().join("/"):"início"} a ${fdAte?fdAte.split("-").reverse().join("/"):"hoje"})`:"";
-  const dados=[["Data","Turno","Tipo","Embalagem / Motivo","Hora Inicial","Hora Final","Duração","Embalagens Lavadas","Ciclo Extra","Ciclos Extras (calc)"]];
+  const dados=[["Data","Turno","Tipo","Embalagem / Motivo","Hora Inicial","Hora Final","Duração","Embalagens Lavadas","Divisórias Danif./Segr.","Ciclo Extra","Ciclos Extras (calc)"]];
   filtrado.forEach(r=>{
     const[y,m,d]=r.data.split("-");
     const ceVal=r.tipo==="lav"?calcCE(r.hi,r.hf):0;
-    dados.push([d+"/"+m+"/"+y,TLABEL[r.turno],TPLABEL[r.tipo],detalhe(r),
-                r.hi,r.hf,fmtMinXLS(mins(r.hi,r.hf)),r.tipo==="lav"?r.total:"",r.cicloExtra?(r.cicloExtraCount||1):"Não",
+    const danifTot=r.tipo==="lav"?totalDanifReg(r):0;
+    dados.push([d+"/"+m+"/"+y,TLABEL[r.turno],TPLABEL[r.tipo],detalhe(r,true),
+                r.hi,r.hf,fmtMinXLS(mins(r.hi,r.hf)),r.tipo==="lav"?r.total:"",r.tipo==="lav"?danifTot:"",r.cicloExtra?(r.cicloExtraCount||1):"Não",
                 r.tipo==="lav"?Math.round(ceVal*100)/100:""]);
   });
   const wsD=XLSX.utils.aoa_to_sheet(dados);
@@ -3063,7 +3245,7 @@ function gerarXLS(fdDe,fhDe,fdAte,fhAte){
     }
   }
   /* Mesmo para resumo por turno — coluna Tempo Trabalhado (índice 3) e Parado (índice 4) */
-  wsD["!cols"]=[{wch:12},{wch:11},{wch:20},{wch:28},{wch:12},{wch:12},{wch:11},{wch:20}];
+  wsD["!cols"]=[{wch:12},{wch:11},{wch:20},{wch:28},{wch:12},{wch:12},{wch:11},{wch:20},{wch:22}];
   const res=[["RESUMO POR TURNO"+periodoLabel],["Turno","Lavagens","Embalagens Lavadas","Tempo Trabalhado","Tempo Parado"]];
   ["1","2","3"].forEach(t=>{
     const rt=filtrado.filter(r=>r.turno===t);
@@ -3146,12 +3328,13 @@ function exportCSV(){
     (!dtDe||recDT(r)>=dtDe)&&(!dtAte||recDT(r)<=dtAte)
   ).reverse();
   if(!filtrado.length)return alert("Nenhum apontamento no período selecionado.");
-  const head=["Data","Turno","Tipo","Embalagem/Motivo","Hora Inicial","Hora Final","Duracao","Embalagens Lavadas","Ciclo Extra","Ciclos Extras (calc)"];
+  const head=["Data","Turno","Tipo","Embalagem/Motivo","Hora Inicial","Hora Final","Duracao","Embalagens Lavadas","Divisorias Danif./Segr.","Ciclo Extra","Ciclos Extras (calc)"];
   const rows=filtrado.map(r=>{
     const[y,m,d]=r.data.split("-");
     const ceVal=r.tipo==="lav"?calcCE(r.hi,r.hf):0;
-    return[d+"/"+m+"/"+y,TLABEL[r.turno],TPLABEL[r.tipo],detalhe(r),
-           r.hi,r.hf,fmtMin(mins(r.hi,r.hf)),r.tipo==="lav"?r.total:"",r.cicloExtra?(r.cicloExtraCount||1):"Não",
+    const danifTot=r.tipo==="lav"?totalDanifReg(r):0;
+    return[d+"/"+m+"/"+y,TLABEL[r.turno],TPLABEL[r.tipo],detalhe(r,true),
+           r.hi,r.hf,fmtMin(mins(r.hi,r.hf)),r.tipo==="lav"?r.total:"",r.tipo==="lav"?danifTot:"",r.cicloExtra?(r.cicloExtraCount||1):"Não",
            r.tipo==="lav"?(Math.round(ceVal*100)/100).toString().replace(".",","):""];
   });
   const csv=[head,...rows].map(l=>l.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(";")).join("\r\n");
@@ -3370,6 +3553,10 @@ function renderDash(){
   document.getElementById("d-ref").textContent=fmtMin([...lav,...par].reduce((a,r)=>a+minsRef(r.hi,r.hf),0));
   const dVazEl=document.getElementById("d-vaz");
   if(dVazEl)dVazEl.textContent=registrosVazia.reduce((a,r)=>a+(r.total||0),0).toLocaleString("pt-BR");
+
+  /* Total de divisórias danificadas / segregadas (apenas lavagens) */
+  const dDanifEl=document.getElementById("d-danif");
+  if(dDanifEl)dDanifEl.textContent=lav.reduce((a,r)=>a+totalDanifReg(r),0).toLocaleString("pt-BR");
 
   /* Média de ciclos extras no dashboard */
   if(lav.length>0){
@@ -3900,11 +4087,13 @@ function openDayDrilldown(dataStr, dia, mes, ano, regsDia){
       const tr=document.createElement("tr");
       let detalheStr;
       if(r.tipo==="lav"){
+        const danifBadge=it=>(it.danif||0)>0?' <span style="color:#ff3b3b;font-weight:800">⚠'+it.danif.toLocaleString("pt-BR")+' segr.</span>':'';
         if(r.itens&&r.itens.length>1){
-          detalheStr=r.itens.map(it=>it.emb+' <b style="color:var(--blue-soft)">('+it.total.toLocaleString("pt-BR")+')</b>').join(' + ')+
+          detalheStr=r.itens.map(it=>it.emb+' <b style="color:var(--blue-soft)">('+it.total.toLocaleString("pt-BR")+')</b>'+danifBadge(it)).join(' + ')+
             ' — <b>'+r.total.toLocaleString("pt-BR")+' emb.</b>';
         } else {
-          detalheStr=(r.itens?r.itens[0].emb:r.emb)+' — '+r.total.toLocaleString("pt-BR")+' emb.';
+          const it0=r.itens?r.itens[0]:{emb:r.emb,total:r.total,danif:0};
+          detalheStr=it0.emb+' — '+r.total.toLocaleString("pt-BR")+' emb.'+danifBadge(it0);
         }
         if(r.cicloExtra) detalheStr+=' <span class="badge-ce">+CICLO</span>';
       } else {
@@ -3991,7 +4180,7 @@ function renderConsistencia(base){
   }
   /* Calcular totais por embalagem */
   const dadosEmb={};
-  EMBALAGENS.forEach(e=>{dadosEmb[e]={entrada:0,lavado:0};});
+  EMBALAGENS.forEach(e=>{dadosEmb[e]={entrada:0,lavado:0,danif:0};});
   /* Entradas (vaz) */
   vazAll.forEach(r=>{
     if(r.itens&&r.itens.length){
@@ -4002,7 +4191,7 @@ function renderConsistencia(base){
   const lavAll=(base||registros).filter(r=>r.tipo==="lav");
   lavAll.forEach(r=>{
     if(r.itens&&r.itens.length){
-      r.itens.forEach(it=>{if(dadosEmb[it.emb]!==undefined)dadosEmb[it.emb].lavado+=it.total;});
+      r.itens.forEach(it=>{if(dadosEmb[it.emb]!==undefined){dadosEmb[it.emb].lavado+=it.total;dadosEmb[it.emb].danif+=(it.danif||0);}});
     }else if(r.emb&&dadosEmb[r.emb]!==undefined){dadosEmb[r.emb].lavado+=r.total||0;}
   });
   /* Só embalagens com dados */
@@ -4040,6 +4229,12 @@ function renderConsistencia(base){
           '<div class="consist-bar-track"><div class="consist-bar-fill consist-bar-lav" style="width:0%" data-pct="'+pLav+'"></div></div>'+
           '<div class="consist-val" style="color:var(--blue-soft)">'+d.lavado.toLocaleString("pt-BR")+'</div>'+
         '</div>'+
+        (d.danif>0?
+        '<div class="consist-row">'+
+          '<div class="consist-lbl" style="color:#ff3b3b">Danif./Segr.</div>'+
+          '<div class="consist-bar-track"><div class="consist-bar-fill" style="width:0%;background:#ff3b3b" data-pct="'+Math.round(d.danif/maxVal*100)+'"></div></div>'+
+          '<div class="consist-val" style="color:#ff3b3b">⚠ '+d.danif.toLocaleString("pt-BR")+'</div>'+
+        '</div>':'')+
         '<div class="consist-delta '+deltaClass+'">'+deltaLabel+'</div>'+
       '</div>';
   });
