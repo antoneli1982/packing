@@ -1808,6 +1808,11 @@
         <div class="chart" id="chart-emb"></div>
       </div>
 
+      <div class="panel" style="grid-column:1/-1">
+        <div class="panel-head"><span class="tag" style="background:var(--red)">⚠</span><h2>Divisórias Danificadas / Segregadas por Tipo</h2></div>
+        <div class="chart" id="chart-danif"></div>
+      </div>
+
       <!-- Horas Trabalhadas vs Paradas por Turno -->
       <div class="panel" style="grid-column:1/-1">
         <div class="panel-head"><span class="tag">04</span><h2>Horas Trabalhadas × Paradas por Turno</h2></div>
@@ -3572,15 +3577,15 @@ function renderDash(){
   /* Conta embalagens considerando multi-embalagem por ciclo.
      Também conta nº de ciclos em que cada embalagem aparece — para média/ciclo. */
   const porEmb=EMBALAGENS.map(e=>{
-    let v=0, ciclos=0;
+    let v=0, ciclos=0, danif=0;
     lav.forEach(r=>{
       let teve=false;
       if(r.itens&&r.itens.length){
-        r.itens.forEach(it=>{if(it.emb===e){v+=it.total; teve=true;}});
+        r.itens.forEach(it=>{if(it.emb===e){v+=it.total; danif+=(it.danif||0); teve=true;}});
       } else if(r.emb===e){v+=r.total; teve=true;}
       if(teve) ciclos++;
     });
-    return{k:e, v:v, ciclos:ciclos, media: ciclos>0 ? v/ciclos : 0};
+    return{k:e, v:v, ciclos:ciclos, danif:danif, media: ciclos>0 ? v/ciclos : 0};
   });
   const top=[...porEmb].sort((a,b)=>b.v-a.v)[0];
   document.getElementById("d-top").textContent=(top&&top.v>0)?top.k:"—";
@@ -3598,10 +3603,24 @@ function renderDash(){
     {clickable:true, onClick:function(r){openMotivoDrilldown(r.motivo||r.k, currentPar);}});
 
   bars(document.getElementById("chart-emb"),
-    porEmb.filter(r=>r.v>0).sort((a,b)=>b.v-a.v).map(r=>({
+    porEmb.filter(r=>r.v>0||r.danif>0).sort((a,b)=>b.v-a.v).map(r=>({
       k:r.k, v:r.v,
-      sub: r.media.toLocaleString("pt-BR",{maximumFractionDigits:1})+' / ciclo'
+      sub: r.media.toLocaleString("pt-BR",{maximumFractionDigits:1})+' / ciclo'+(r.danif>0?' · ⚠ '+r.danif.toLocaleString("pt-BR")+' danif./segr.':'')
     })),{});
+
+  /* ===== Divisórias Danificadas / Segregadas por Tipo =====
+     Aparece mesmo quando a divisória não teve lavadas nem entradas. */
+  const porDanif=EMBALAGENS.map(e=>{
+    let v=0;
+    lav.forEach(r=>{
+      if(r.itens&&r.itens.length){
+        r.itens.forEach(it=>{if(it.emb===e)v+=(it.danif||0);});
+      }
+    });
+    return{k:e, v:v};
+  }).filter(r=>r.v>0).sort((a,b)=>b.v-a.v);
+  bars(document.getElementById("chart-danif"),
+    porDanif.map(r=>({k:r.k, v:r.v, color:"#ff3b3b"})),{});
 
   /* ===== Painel 04: Horas Trabalhadas × Paradas por Turno ===== */
   renderTurnoHours(lav,par);
@@ -4197,13 +4216,13 @@ function renderConsistencia(base){
       r.itens.forEach(it=>{if(dadosEmb[it.emb]!==undefined){dadosEmb[it.emb].lavado+=it.total;dadosEmb[it.emb].danif+=(it.danif||0);}});
     }else if(r.emb&&dadosEmb[r.emb]!==undefined){dadosEmb[r.emb].lavado+=r.total||0;}
   });
-  /* Só embalagens com dados */
-  const ativos=EMBALAGENS.filter(e=>dadosEmb[e].entrada>0||dadosEmb[e].lavado>0);
+  /* Só embalagens com dados (inclui as que só têm danificadas/segregadas) */
+  const ativos=EMBALAGENS.filter(e=>dadosEmb[e].entrada>0||dadosEmb[e].lavado>0||dadosEmb[e].danif>0);
   if(!ativos.length){
     el.innerHTML='<div class="empty"><div class="big">▦</div><div class="txt">SEM DADOS NO PERÍODO FILTRADO</div></div>';
     return;
   }
-  const maxVal=Math.max(...ativos.map(e=>Math.max(dadosEmb[e].entrada,dadosEmb[e].lavado)),1);
+  const maxVal=Math.max(...ativos.map(e=>Math.max(dadosEmb[e].entrada,dadosEmb[e].lavado,dadosEmb[e].danif)),1);
   let html='<div class="consist-grid">';
   ativos.forEach(emb=>{
     const d=dadosEmb[emb];
