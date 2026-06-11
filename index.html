@@ -117,6 +117,16 @@
     background-repeat:no-repeat;background-position:right 11px center;padding-right:30px}
   input[type="time"],input[type="date"]{font-family:'Poppins',sans-serif}
   ::-webkit-calendar-picker-indicator{filter:invert(.6)}
+  /* ===== Cadeado da data ===== */
+  .data-wrap{position:relative}
+  .data-wrap input[type="date"]{width:100%}
+  /* mantém a DATA totalmente visível: overlay transparente, só o cadeado à direita */
+  .data-wrap input[type="date"]::-webkit-calendar-picker-indicator{opacity:0}
+  .data-wrap.unlocked input[type="date"]::-webkit-calendar-picker-indicator{opacity:1;filter:invert(.6)}
+  .data-lock-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-end;
+    padding:0 11px;cursor:pointer;border-radius:6px;background:transparent;transition:.13s}
+  .data-wrap.unlocked .data-lock-overlay{display:none}
+  .data-lock-ico{font-size:15px;opacity:.95}
   .row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
 
   .submit{width:100%;cursor:pointer;border:none;border-radius:6px;background:var(--green);
@@ -1204,7 +1214,7 @@
             </div>
           </div>
 
-          <div class="field"><label>Data</label><input type="date" id="data"></div>
+          <div class="field"><label>Data</label><div class="data-wrap" id="data-wrap"><input type="date" id="data" readonly><div class="data-lock-overlay" id="data-lock" title="Para realizar a alteração, solicite ao seu Gestor | KPI | Qualidade"><span class="data-lock-ico">🔒</span></div></div></div>
 
           <div class="field hide" id="f-embalagem">
             <label>Embalagens do Ciclo <span class="req">*</span></label>
@@ -2722,9 +2732,48 @@ document.getElementById("d-fglobal").addEventListener("click",()=>{
   document.getElementById("d-fhora-ate").value="";
   renderDash();
 });
-const h=new Date();
-document.getElementById("data").value=
-  h.getFullYear()+"-"+String(h.getMonth()+1).padStart(2,"0")+"-"+String(h.getDate()).padStart(2,"0");
+/* ===== Data com cadeado: senha dinâmica = data de hoje no formato DDMMAA ===== */
+function ddmmaaHoje(){
+  const h=new Date();
+  return String(h.getDate()).padStart(2,"0")
+        +String(h.getMonth()+1).padStart(2,"0")
+        +String(h.getFullYear()).slice(-2);
+}
+function setDataHoje(){
+  const h=new Date();
+  document.getElementById("data").value=
+    h.getFullYear()+"-"+String(h.getMonth()+1).padStart(2,"0")+"-"+String(h.getDate()).padStart(2,"0");
+}
+function bloquearData(){
+  const w=document.getElementById("data-wrap");
+  const inp=document.getElementById("data");
+  if(w)w.classList.remove("unlocked");
+  if(inp)inp.setAttribute("readonly","readonly");
+}
+function desbloquearData(){
+  const w=document.getElementById("data-wrap");
+  const inp=document.getElementById("data");
+  if(w)w.classList.add("unlocked");
+  if(inp)inp.removeAttribute("readonly");
+}
+/* Estado inicial: data de hoje + bloqueada */
+setDataHoje();
+bloquearData();
+(function(){
+  const lock=document.getElementById("data-lock");
+  if(!lock)return;
+  lock.addEventListener("click",()=>{
+    const s=prompt("PARA REALIZAR A ALTERAÇÃO, SOLICITE AO SEU GESTOR | KPI | QUALIDADE");
+    if(s===null)return;                       /* cancelou */
+    if(s.trim()===ddmmaaHoje()){
+      desbloquearData();
+      const inp=document.getElementById("data");
+      setTimeout(()=>{ inp.focus(); try{ if(inp.showPicker) inp.showPicker(); }catch(_){} },40);
+    }else{
+      alert("Código incorreto. A data permanece bloqueada.");
+    }
+  });
+})();
 
 document.querySelectorAll(".tipo-btn").forEach(btn=>btn.addEventListener("click",e=>{
   const b=e.target.closest(".tipo-btn");if(!b)return;
@@ -2956,6 +3005,7 @@ document.getElementById("form").addEventListener("submit",async e=>{
     document.getElementById('submit-btn').textContent='Registrar '+TPLABEL['lav'];
     document.getElementById('submit-btn').classList.add('lav');
     document.getElementById('submit-btn').style.background='';
+    setDataHoje();bloquearData();
     return;
   }
   /* Embalagem Vazia — salva em coleção separada */
@@ -3007,6 +3057,7 @@ document.getElementById("form").addEventListener("submit",async e=>{
     document.getElementById('submit-btn').classList.add('lav');
     document.getElementById('submit-btn').style.background='';
     if(document.getElementById("view-dash").classList.contains("on"))renderDash();
+    setDataHoje();bloquearData();
     return;
   }
   const reg={id:editingId||Date.now(),tipo,data,turno,hi,hf,cicloExtra:cicloExtra==='sim',cicloExtraCount:cicloExtraCount};
@@ -3090,6 +3141,9 @@ function limparCampos(){
   document.getElementById("submit-btn").disabled=false;
   document.getElementById("submit-btn").style.opacity="";
   duracaoConfirmada=false;
+  /* Após registrar/limpar: volta a data para hoje e bloqueia novamente */
+  setDataHoje();
+  bloquearData();
 }
 function setEditMode(on){
   const btn=document.getElementById("submit-btn");
