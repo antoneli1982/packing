@@ -1360,6 +1360,16 @@
             <div class="horas-opc-note" id="horas-opc-note" style="display:none">ℹ Apontamento de divisória danificada / segregada — hora inicial e final são opcionais.</div>
           </div>
 
+          <!-- ===== Lançamento da Virada (apontamento esquecido) ===== -->
+          <div class="virada-banner" id="virada-banner" style="display:none;background:rgba(154,108,240,.12);border:1px solid var(--t3);border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--txt);line-height:1.5">
+            🌙 <b>Calendário liberado</b> — escolha o dia (ontem) e lance o apontamento esquecido. Hora inicial permitida a partir das 23:00.
+            <a href="#" id="virada-cancelar" style="color:var(--blue-soft);margin-left:6px">cancelar</a>
+          </div>
+          <button type="button" id="btn-virada" style="display:none;width:100%;cursor:pointer;border:1px solid var(--t3);background:transparent;color:var(--t3);border-radius:6px;padding:9px;font-family:'Poppins',sans-serif;font-weight:600;font-size:12px;letter-spacing:.3px;margin-bottom:12px">
+            🌙 Apontar turno anterior (esqueci antes da meia-noite)
+          </button>
+          <div class="virada-info" id="virada-info" style="display:none;font-size:10px;color:var(--txt-faint);margin-top:-4px;margin-bottom:12px;line-height:1.45"></div>
+
           <!-- Alerta de duração -->
           <div class="dur-alert" id="dur-alert">
             <span id="dur-alert-msg"></span>
@@ -2834,10 +2844,19 @@ function nowTime(){
   const n=new Date();
   return String(n.getHours()).padStart(2,"0")+":"+String(n.getMinutes()).padStart(2,"0");
 }
-document.getElementById("btn-agora-hi").addEventListener("click",()=>{document.getElementById("hi").value=nowTime();checkDuracao();});
-document.getElementById("btn-agora-hf").addEventListener("click",()=>{document.getElementById("hf").value=nowTime();checkDuracao();});
+document.getElementById("btn-agora-hi").addEventListener("click",()=>{document.getElementById("hi").value=nowTime();checkDuracao();atualizarVirada();});
+document.getElementById("btn-agora-hf").addEventListener("click",()=>{document.getElementById("hf").value=nowTime();checkDuracao();atualizarVirada();});
 document.getElementById("hi").addEventListener("change",checkDuracao);
 document.getElementById("hf").addEventListener("change",checkDuracao);
+document.getElementById("hi").addEventListener("change",atualizarVirada);
+document.getElementById("hf").addEventListener("change",atualizarVirada);
+/* Botão "Lançamento da Virada": visibilidade pela janela + ações */
+document.getElementById("btn-virada").addEventListener("click",ativarVirada);
+document.getElementById("virada-cancelar").addEventListener("click",e=>{e.preventDefault();cancelarVirada();});
+document.getElementById("virada-modal-continuar").addEventListener("click",confirmarVirada);
+document.getElementById("virada-modal-cancelar").addEventListener("click",fecharModalVirada);
+document.getElementById("virada-modal-overlay").addEventListener("click",e=>{ if(e.target.id==="virada-modal-overlay") fecharModalVirada(); });
+atualizarBtnVirada(); setInterval(atualizarBtnVirada,30000);
 
 /* ===== Validação de duração ===== */
 let duracaoConfirmada=false; // usuário confirmou duração entre 1h30 e 7h
@@ -2959,6 +2978,101 @@ function minsRef(hi,hf){
 function fmtMin(m){if(!isFinite(m))m=0;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");}
 /* Retorna string "HH:MM" para exportação Excel — o Excel reconhece como tempo calculável */
 function fmtMinXLS(m){return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");}
+
+/* ===================================================================
+   LANÇAMENTO DA VIRADA (apontamento esquecido antes da meia-noite)
+   - Botão só aparece na janela 00:00–02:00 (relógio local).
+   - Libera o calendário; data aceita no submit = somente ONTEM.
+   - Hora Inicial (hi) com piso 23:00; abaixo disso fala com o líder.
+   - Se hf < hi (cruza 00:00), grava 2 registros vinculados:
+       principal (hi -> 00:00, carrega qtd/ciclo/motivo)
+       continuação (00:00 -> hf, só tempo, cont:true)
+   =================================================================== */
+let viradaModo=false;
+function dentroJanelaVirada(){ const h=new Date().getHours(); return h>=0 && h<2; }   // 00:00–01:59
+function ontem(){
+  const d=new Date(); d.setDate(d.getDate()-1);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function viradaInicioValido(hi){
+  if(!hi) return false;
+  const[a,b]=hi.split(":").map(Number);
+  return (a*60+b) >= 23*60;                                          // a partir das 23:00
+}
+function cruzaMeiaNoite(hi,hf){
+  if(!hi||!hf) return false;
+  const[a,b]=hi.split(":").map(Number),[c,d]=hf.split(":").map(Number);
+  return (c*60+d) < (a*60+b);                                        // fim numericamente antes do início ⇒ cruzou 00:00
+}
+function proximoDia(s){
+  const d=new Date(s+"T12:00:00"); d.setDate(d.getDate()+1);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function brData(s){ if(!s) return ""; const[y,m,d]=s.split("-"); return d+"/"+m+"/"+y; }
+
+/* mostra/oculta o botão conforme a janela (página pode ficar aberta cruzando 02:00) */
+function atualizarBtnVirada(){
+  const btn=document.getElementById("btn-virada");
+  if(!btn || viradaModo) return;
+  btn.style.display = dentroJanelaVirada() ? "" : "none";
+}
+
+function ativarVirada(){
+  if(!dentroJanelaVirada()){ flash("Lançamento da virada disponível apenas entre 00:00 e 02:00.",false); return; }
+  const ov=document.getElementById("virada-modal-overlay");
+  if(ov) ov.style.display="flex";          // abre o aviso grande; só libera após "Entendi, continuar"
+}
+function fecharModalVirada(){
+  const ov=document.getElementById("virada-modal-overlay");
+  if(ov) ov.style.display="none";
+}
+function confirmarVirada(){
+  fecharModalVirada();
+  if(!dentroJanelaVirada()){ flash("Lançamento da virada disponível apenas entre 00:00 e 02:00.",false); return; }
+  viradaModo=true;
+  const el=document.getElementById("data");
+  if(el) el.removeAttribute("readonly");
+  const wrap=document.getElementById("data-wrap"); if(wrap) wrap.classList.add("unlocked");
+  const banner=document.getElementById("virada-banner"); if(banner) banner.style.display="block";
+  const btn=document.getElementById("btn-virada"); if(btn) btn.style.display="none";
+  atualizarVirada();
+}
+function cancelarVirada(){
+  viradaModo=false;
+  const banner=document.getElementById("virada-banner"); if(banner) banner.style.display="none";
+  const el=document.getElementById("data"); if(el) el.setAttribute("readonly","");
+  if(typeof setDataHoje==="function") setDataHoje();
+  if(typeof bloquearData==="function") bloquearData();
+  const wrap=document.getElementById("data-wrap"); if(wrap) wrap.classList.remove("unlocked");
+  const info=document.getElementById("virada-info"); if(info){ info.style.display="none"; info.style.color=""; }
+  const hiEl=document.getElementById("hi"); if(hiEl) hiEl.classList.remove("dur-warn");
+  atualizarBtnVirada();
+}
+
+/* feedback ao vivo: erro do piso 23:00 / prévia de gravação (1 ou 2 registros) */
+function atualizarVirada(){
+  const info=document.getElementById("virada-info");
+  if(!info) return;
+  if(!viradaModo){ info.style.display="none"; return; }
+  const hi=document.getElementById("hi").value, hf=document.getElementById("hf").value;
+  const hiEl=document.getElementById("hi");
+  if(hi && !viradaInicioValido(hi)){
+    if(hiEl) hiEl.classList.add("dur-warn");
+    info.style.display="block"; info.style.color="var(--red)";
+    info.textContent="⛔ Hora inicial deve ser 23:00 ou depois. Para horários anteriores, fale com o líder.";
+    return;
+  }
+  if(hiEl) hiEl.classList.remove("dur-warn"); info.style.color="";
+  const dataStr=document.getElementById("data").value;
+  if(hi && hf && cruzaMeiaNoite(hi,hf)){
+    const d2=proximoDia(dataStr);
+    info.style.display="block";
+    info.innerHTML='Gravará <b>2 registros</b>:<br>• '+brData(dataStr)+' — '+hi+' → 00:00<br>• '+brData(d2)+' — 00:00 → '+hf+' <i>(só tempo)</i>';
+  } else if(hi && hf){
+    info.style.display="block";
+    info.innerHTML='Gravará <b>1 registro</b>: '+brData(dataStr)+' — '+hi+' → '+hf;
+  } else info.style.display="none";
+}
 
 document.getElementById("form").addEventListener("submit",async e=>{
   e.preventDefault();
@@ -3095,7 +3209,48 @@ document.getElementById("form").addEventListener("submit",async e=>{
     reg.obs=obs;
   }
   const eraEdicao=!!editingId;
+
+  /* ===== Gate do Lançamento da Virada ===== */
+  if(viradaModo){
+    if(!dentroJanelaVirada())        return flash("Fora da janela 00:00–02:00. Fale com o líder.",false);
+    if(!viradaInicioValido(reg.hi))  return flash("Lançamento da virada: hora inicial deve ser 23:00 ou depois.",false);
+    if(reg.data!==ontem())           return flash("Lançamento da virada: data permitida somente ontem ("+brData(ontem())+"). Para outros dias, fale com o líder.",false);
+    reg.retroVirada=true;
+  }
+
+  /* ===== Quebra de meia-noite: grava 2 registros vinculados ===== */
+  if(!eraEdicao && viradaModo && cruzaMeiaNoite(reg.hi,reg.hf)){
+    const vid=reg.id, dataFim=proximoDia(reg.data);
+    const principal={...reg, hf:"00:00", viradaId:vid, viradaParte:1};
+    const continuacao={
+      id:vid+1, tipo:reg.tipo, data:dataFim, turno:reg.turno,
+      hi:"00:00", hf:reg.hf, cicloExtra:false, cicloExtraCount:0,
+      cont:true, viradaId:vid, viradaParte:2, retroVirada:true,
+      ...(reg.tipo==="lav" ? {itens:[], emb:reg.emb||"", total:0} : {}),
+      ...(reg.tipo==="par" ? {motivo:reg.motivo, obs:reg.obs} : {})
+    };
+    await persistAdd(continuacao,false);
+    await persistAdd(principal,false);
+    flash(TPLABEL[tipo]+" registrada (virada de meia-noite: 2 registros)",true);
+    editingId=null; setEditMode(false); limparCampos(); cancelarVirada();
+    document.querySelectorAll('.tipo-btn').forEach(x=>x.classList.remove('on'));
+    document.querySelector('.tipo-btn[data-tp="lav"]').classList.add('on'); tipo='lav';
+    document.getElementById('f-embalagem').classList.remove('hide');
+    document.getElementById('f-emb-vazia').classList.add('hide');
+    document.getElementById('f-rack-inline').classList.add('hide');
+    document.getElementById('f-horas').classList.remove('hide');
+    document.getElementById('f-cicloextra').classList.remove('hide');
+    document.getElementById('f-motivo').classList.add('hide');
+    document.getElementById('f-obs').classList.add('hide');
+    document.getElementById('siren-banner').classList.remove('on');
+    document.getElementById('submit-btn').textContent='Registrar '+TPLABEL['lav'];
+    document.getElementById('submit-btn').classList.add('lav');
+    document.getElementById('submit-btn').style.background='';
+    return;
+  }
+
   await persistAdd(reg,eraEdicao);
+  if(viradaModo) cancelarVirada();
   flash(eraEdicao?"Apontamento atualizado com sucesso"
                  :TPLABEL[tipo]+" registrada com sucesso",true);
   editingId=null; setEditMode(false);
@@ -3158,6 +3313,7 @@ function setEditMode(on){
 function editar(id){
   const r=registros.find(x=>x.id===id);
   if(!r)return;
+  if(r.viradaId){ flash("Apontamento de virada de meia-noite: exclua o par (🌙) e recadastre para alterar.",false); return; }
   tipo=r.tipo;
   document.querySelectorAll(".tipo-btn").forEach(x=>x.classList.toggle("on",x.dataset.tp===tipo));
   document.getElementById("f-embalagem").classList.toggle("hide",tipo!=="lav");
@@ -3220,6 +3376,14 @@ function flash(msg,ok){
 }
 
 async function excluir(id){
+  const r=registros.find(x=>x.id===id);
+  if(r&&r.viradaId){
+    const pares=registros.filter(x=>x.viradaId===r.viradaId);
+    if(pares.length>1 && !confirm("Este apontamento faz parte de uma virada de meia-noite (2 registros vinculados). Excluir os dois?")) return;
+    if(editingId&&pares.some(x=>x.id===editingId)){editingId=null;setEditMode(false);limparCampos();}
+    for(const p of pares) await persistDel(p.id);
+    return;
+  }
   if(editingId===id){editingId=null;setEditMode(false);limparCampos();}
   await persistDel(id);
 }
@@ -3290,14 +3454,14 @@ function gerarXLS(fdDe,fhDe,fdAte,fhAte){
   ).reverse();
   if(!filtrado.length){alert("Nenhum apontamento no período selecionado.");return;}
   const periodoLabel=(fdDe||fdAte)?` (${fdDe?fdDe.split("-").reverse().join("/"):"início"} a ${fdAte?fdAte.split("-").reverse().join("/"):"hoje"})`:"";
-  const dados=[["Data","Turno","Tipo","Embalagem / Motivo","Hora Inicial","Hora Final","Duração","Embalagens Lavadas","Divisórias Danif./Segr.","Ciclo Extra","Ciclos Extras (calc)"]];
+  const dados=[["Data","Turno","Tipo","Embalagem / Motivo","Hora Inicial","Hora Final","Duração","Embalagens Lavadas","Divisórias Danif./Segr.","Ciclo Extra","Ciclos Extras (calc)","Virada (retroativo)"]];
   filtrado.forEach(r=>{
     const[y,m,d]=r.data.split("-");
     const ceVal=r.tipo==="lav"?calcCE(r.hi,r.hf):0;
     const danifTot=r.tipo==="lav"?totalDanifReg(r):0;
     dados.push([d+"/"+m+"/"+y,TLABEL[r.turno],TPLABEL[r.tipo],detalhe(r,true),
                 r.hi,r.hf,fmtMinXLS(mins(r.hi,r.hf)),r.tipo==="lav"?r.total:"",r.tipo==="lav"?danifTot:"",r.cicloExtra?(r.cicloExtraCount||1):"Não",
-                r.tipo==="lav"?Math.round(ceVal*100)/100:""]);
+                r.tipo==="lav"?Math.round(ceVal*100)/100:"",r.retroVirada?(r.cont?"SIM (continuação)":"SIM"):""]);
   });
   const wsD=XLSX.utils.aoa_to_sheet(dados);
   /* Formata coluna G (Duração, índice 6) como tempo hh:mm em todas as linhas de dados */
@@ -3395,14 +3559,14 @@ function exportCSV(){
     (!dtDe||recDT(r)>=dtDe)&&(!dtAte||recDT(r)<=dtAte)
   ).reverse();
   if(!filtrado.length)return alert("Nenhum apontamento no período selecionado.");
-  const head=["Data","Turno","Tipo","Embalagem/Motivo","Hora Inicial","Hora Final","Duracao","Embalagens Lavadas","Divisorias Danif./Segr.","Ciclo Extra","Ciclos Extras (calc)"];
+  const head=["Data","Turno","Tipo","Embalagem/Motivo","Hora Inicial","Hora Final","Duracao","Embalagens Lavadas","Divisorias Danif./Segr.","Ciclo Extra","Ciclos Extras (calc)","Virada (retroativo)"];
   const rows=filtrado.map(r=>{
     const[y,m,d]=r.data.split("-");
     const ceVal=r.tipo==="lav"?calcCE(r.hi,r.hf):0;
     const danifTot=r.tipo==="lav"?totalDanifReg(r):0;
     return[d+"/"+m+"/"+y,TLABEL[r.turno],TPLABEL[r.tipo],detalhe(r,true),
            r.hi,r.hf,fmtMin(mins(r.hi,r.hf)),r.tipo==="lav"?r.total:"",r.tipo==="lav"?danifTot:"",r.cicloExtra?(r.cicloExtraCount||1):"Não",
-           r.tipo==="lav"?(Math.round(ceVal*100)/100).toString().replace(".",","):""];
+           r.tipo==="lav"?(Math.round(ceVal*100)/100).toString().replace(".",","):"",r.retroVirada?(r.cont?"SIM (continuacao)":"SIM"):""];
   });
   const csv=[head,...rows].map(l=>l.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(";")).join("\r\n");
   const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
@@ -3449,16 +3613,17 @@ function render(){
   const lav=view.filter(r=>r.tipo==="lav");
   const par=view.filter(r=>r.tipo==="par");
   document.getElementById("s-emb").textContent=lav.reduce((a,r)=>a+r.total,0).toLocaleString("pt-BR");
-  document.getElementById("s-qtd").textContent=lav.length;
+  document.getElementById("s-qtd").textContent=lav.filter(r=>!r.cont).length;
   document.getElementById("s-trab").textContent=fmtMin(lav.reduce((a,r)=>a+mins(r.hi,r.hf),0));
   document.getElementById("s-par").textContent=fmtMin(par.reduce((a,r)=>a+mins(r.hi,r.hf),0));
   document.getElementById("s-pqt").textContent=par.length;
   document.getElementById("s-ref").textContent=fmtMin([...lav,...par].reduce((a,r)=>a+minsRef(r.hi,r.hf),0));
 
-  /* Média de ciclos extras — apenas lavagens */
-  if(lav.length>0){
-    const somaCE=lav.reduce((a,r)=>a+calcCE(r.hi,r.hf),0);
-    document.getElementById("s-mce").textContent=fmtCE(somaCE/lav.length);
+  /* Média de ciclos extras — apenas lavagens (exclui continuação da virada) */
+  const lavCE=lav.filter(r=>!r.cont);
+  if(lavCE.length>0){
+    const somaCE=lavCE.reduce((a,r)=>a+calcCE(r.hi,r.hf),0);
+    document.getElementById("s-mce").textContent=fmtCE(somaCE/lavCE.length);
   } else {
     document.getElementById("s-mce").textContent="0,00";
   }
@@ -3477,8 +3642,9 @@ function render(){
     const ceVal=r.tipo==="lav"?calcCE(r.hi,r.hf):0;
     const ceDisp=r.tipo==="lav"?fmtCE(ceVal):"—";
     const ceColor=ceVal>0?"color:var(--green)":"color:var(--txt-faint)";
+    const viradaSelo=(r.viradaId||r.retroVirada)?' <span title="Lançamento da virada" style="cursor:help">🌙</span>':'';
     tr.innerHTML=
-      '<td class="mono">'+d+"/"+m+"/"+y.slice(2)+'</td>'+
+      '<td class="mono">'+d+"/"+m+"/"+y.slice(2)+viradaSelo+'</td>'+
       '<td><span class="pill" data-t="'+r.turno+'">'+r.turno+'º</span></td>'+
       '<td><span class="pill" data-tp="'+r.tipo+'">'+TPSHORT[r.tipo]+'</span></td>'+
       '<td>'+detalhe(r)+(r.cicloExtra?'<span class="badge-ce">+CICLO'+(r.cicloExtraCount>1?' ×'+r.cicloExtraCount:'')+'</span>':'')+'</td>'+
@@ -3625,10 +3791,11 @@ function renderDash(){
   const dDanifEl=document.getElementById("d-danif");
   if(dDanifEl)dDanifEl.textContent=lav.reduce((a,r)=>a+totalDanifReg(r),0).toLocaleString("pt-BR");
 
-  /* Média de ciclos extras no dashboard */
-  if(lav.length>0){
-    const somaCE=lav.reduce((a,r)=>a+calcCE(r.hi,r.hf),0);
-    document.getElementById("d-mce").textContent=fmtCE(somaCE/lav.length);
+  /* Média de ciclos extras no dashboard (exclui continuação da virada) */
+  const lavCEd=lav.filter(r=>!r.cont);
+  if(lavCEd.length>0){
+    const somaCE=lavCEd.reduce((a,r)=>a+calcCE(r.hi,r.hf),0);
+    document.getElementById("d-mce").textContent=fmtCE(somaCE/lavCEd.length);
   } else {
     document.getElementById("d-mce").textContent="0,00";
   }
@@ -4923,6 +5090,33 @@ function atualizarTickerVelocidade(){
   document.getElementById('submit-btn').style.background = '';
 })();
 </script>
+
+<!-- ===== MODAL AVISO — LANÇAMENTO DA VIRADA (fora de qualquer form/wrap) ===== -->
+<div id="virada-modal-overlay" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.78);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--panel);border:2px solid var(--orange);border-radius:16px;width:620px;max-width:96vw;max-height:92vh;overflow:auto;box-shadow:0 28px 80px rgba(0,0,0,.6)">
+    <div style="background:linear-gradient(180deg,rgba(240,149,63,.18),transparent);padding:26px 30px 18px;display:flex;align-items:center;gap:18px;border-bottom:1px solid var(--line-soft)">
+      <div style="width:60px;height:60px;border-radius:14px;background:rgba(240,149,63,.15);border:1px solid rgba(240,149,63,.4);display:flex;align-items:center;justify-content:center;font-size:32px;flex-shrink:0">⚠️</div>
+      <div>
+        <div style="font-family:'Poppins',sans-serif;font-weight:800;font-size:22px;letter-spacing:.3px;color:var(--orange);line-height:1.1">ATENÇÃO — LANÇAMENTO DA VIRADA</div>
+        <div style="font-size:12px;color:var(--txt-dim);margin-top:5px;text-transform:uppercase;letter-spacing:1.5px">Leia antes de prosseguir</div>
+      </div>
+    </div>
+    <div style="padding:26px 30px 22px">
+      <p style="font-family:'Poppins',sans-serif;font-size:18px;line-height:1.55;color:var(--txt);margin:0 0 18px">
+        Esta opção destina-se <b>exclusivamente</b> ao registro de apontamentos cujo <b>horário inicial seja igual ou posterior às <span style="color:var(--orange)">23:00</span></b> — ou seja, do turno que começou antes da meia-noite e não foi apontado a tempo.
+      </p>
+      <div style="background:rgba(240,83,63,.10);border:1px solid rgba(240,83,63,.35);border-radius:10px;padding:16px 18px">
+        <p style="font-family:'Poppins',sans-serif;font-size:17px;line-height:1.5;color:var(--txt);margin:0">
+          Caso seja necessário registrar <b>horário inferior às 23:00</b> (por exemplo, <b>22:45</b>), <b style="color:var(--red)">PROCURE A GESTÃO</b> — Líder · KPI · Qualidade.
+        </p>
+      </div>
+    </div>
+    <div style="padding:0 30px 26px;display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap">
+      <button type="button" id="virada-modal-cancelar" style="cursor:pointer;border:1px solid var(--line);background:var(--panel-2);color:var(--txt-dim);border-radius:8px;padding:13px 22px;font-family:'Poppins',sans-serif;font-weight:700;font-size:14px">✕ Cancelar</button>
+      <button type="button" id="virada-modal-continuar" style="cursor:pointer;border:none;background:var(--orange);color:#1a1205;border-radius:8px;padding:13px 26px;font-family:'Poppins',sans-serif;font-weight:800;font-size:14px;letter-spacing:.3px">Entendi, continuar →</button>
+    </div>
+  </div>
+</div>
 
 <!-- ===== MODAL EDITAR TICKER — fora de qualquer form/wrap ===== -->
 <div class="ticker-modal-overlay" id="ticker-modal-overlay">
