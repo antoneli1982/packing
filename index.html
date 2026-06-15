@@ -2850,12 +2850,10 @@ document.getElementById("hi").addEventListener("change",checkDuracao);
 document.getElementById("hf").addEventListener("change",checkDuracao);
 document.getElementById("hi").addEventListener("change",atualizarVirada);
 document.getElementById("hf").addEventListener("change",atualizarVirada);
-/* Botão "Lançamento da Virada": visibilidade pela janela + ações */
+/* Botão "Lançamento da Virada": visibilidade pela janela + ações
+   (os listeners do MODAL são religados no fim da página, após o modal existir no DOM) */
 document.getElementById("btn-virada").addEventListener("click",ativarVirada);
 document.getElementById("virada-cancelar").addEventListener("click",e=>{e.preventDefault();cancelarVirada();});
-document.getElementById("virada-modal-continuar").addEventListener("click",confirmarVirada);
-document.getElementById("virada-modal-cancelar").addEventListener("click",fecharModalVirada);
-document.getElementById("virada-modal-overlay").addEventListener("click",e=>{ if(e.target.id==="virada-modal-overlay") fecharModalVirada(); });
 atualizarBtnVirada(); setInterval(atualizarBtnVirada,30000);
 
 /* ===== Validação de duração ===== */
@@ -2988,7 +2986,7 @@ function fmtMinXLS(m){return String(Math.floor(m/60)).padStart(2,"0")+":"+String
        principal (hi -> 00:00, carrega qtd/ciclo/motivo)
        continuação (00:00 -> hf, só tempo, cont:true)
    =================================================================== */
-let viradaModo=false;
+var viradaModo=false;
 function dentroJanelaVirada(){ const h=new Date().getHours(); return h>=0 && h<2; }   // 00:00–01:59
 function ontem(){
   const d=new Date(); d.setDate(d.getDate()-1);
@@ -6194,6 +6192,18 @@ function salvarRackMotivo(){
 
   console.log('[Ausência de Rack] Motivo salvo:', motivo);
 }
+</script>
+
+<!-- Religa os botões do modal da virada após o modal existir no DOM (evita erro de ordem de carregamento) -->
+<script>
+(function(){
+  var c=document.getElementById("virada-modal-continuar");
+  if(c) c.addEventListener("click",confirmarVirada);
+  var x=document.getElementById("virada-modal-cancelar");
+  if(x) x.addEventListener("click",fecharModalVirada);
+  var o=document.getElementById("virada-modal-overlay");
+  if(o) o.addEventListener("click",function(e){ if(e.target.id==="virada-modal-overlay") fecharModalVirada(); });
+})();
 </script>
 </body>
 </html>
