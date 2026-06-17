@@ -838,6 +838,13 @@
   .metas-total{background:var(--panel-2);border-top:1px solid var(--line)}
   .metas-total .metas-nome{font-weight:700;text-transform:uppercase;letter-spacing:.5px;font-size:10.5px;color:var(--txt-dim)}
   .metas-total .metas-val{color:var(--green)}
+  .metas-input{width:84px;flex-shrink:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:#b08cff;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;text-align:right;padding:6px 9px;outline:none;color-scheme:dark}
+  .metas-input:focus{border-color:#9a6cf0}
+  .metas-input::placeholder{color:var(--txt-faint);font-weight:600}
+  .metas-hint-edit{font-size:10.5px;color:var(--txt-faint);line-height:1.5;margin-bottom:12px}
+  .mbtn.save{background:#9a6cf0;border:none;color:#fff;padding:10px 22px}
+  .mbtn.save:hover{background:#a87ff5}
+  .mbtn.save:active{transform:translateY(1px)}
 
   /* ===== TICKER CNN ===== */
   .ticker-bar{
@@ -1127,12 +1134,13 @@
       <div class="modal-icon" style="background:rgba(154,108,240,.15);border-color:rgba(154,108,240,.35)">🎯</div>
       <div>
         <h3>Metas de Embalagens</h3>
-        <p>Meta de lavagem por tipo de embalagem</p>
+        <p>Veja e edite a meta de cada embalagem</p>
       </div>
     </div>
     <div class="modal-body" id="metas-body" style="max-height:60vh;overflow:auto"></div>
     <div class="modal-footer">
-      <button class="mbtn cancel" id="metas-close">Fechar</button>
+      <button class="mbtn cancel" id="metas-cancel">Cancelar</button>
+      <button class="mbtn save" id="metas-save">💾 Salvar</button>
     </div>
   </div>
 </div>
@@ -2354,6 +2362,7 @@ async function load(){
   const box=document.getElementById("state-box");
   box.innerHTML='<div class="loading">Carregando banco de dados…</div>';
   await initDB();
+  metasInit();
   await initEmbalagens();
   initCadEmbForm();
   /* Carrega IDB primeiro — exibe imediatamente no F5 */
@@ -2365,6 +2374,7 @@ async function load(){
     await migrateLocalToFirebase();
     /* Carrega registros de rack do Firebase — listener em tempo real */
     rackLoadFromFirebase().catch(()=>{});
+    _metasSincFirebase().catch(()=>{});
     /* SEMPRE busca do Firebase antes do listener para garantir dados atualizados */
     try{
       const snap=await fb.collection(COLECAO).orderBy("id","desc").get();
@@ -3602,29 +3612,105 @@ document.getElementById("modal-confirm").addEventListener("click",()=>{
   gerarXLS(fdDe,fhDe,fdAte,fhAte);
 });
 
-/* ===== Modal Metas de Embalagens ===== */
-function renderMetasTabela(){
+/* ===================================================================
+   METAS DE EMBALAGENS — visualizar e editar pelo próprio app
+   Salva no localStorage (sempre) e, se o Firebase estiver ativo,
+   sincroniza entre todos os computadores (mesmo esquema das embalagens).
+   =================================================================== */
+const KEY_METAS = 'sas_metas_v1';
+let _metasEditOrder = [];
+
+/* Substitui o conteúdo de METAS_EMBALAGENS (só guarda metas > 0) */
+function _metasReplace(obj){
+  Object.keys(METAS_EMBALAGENS).forEach(k=>delete METAS_EMBALAGENS[k]);
+  Object.keys(obj||{}).forEach(k=>{ const v=parseInt(obj[k],10); if(v>0) METAS_EMBALAGENS[k]=v; });
+}
+function metasLS_load(){
+  try{ const raw=localStorage.getItem(KEY_METAS); if(raw){const o=JSON.parse(raw); if(o&&typeof o==='object') return o;} }catch(e){}
+  return null;
+}
+function metasLS_save(){
+  try{ localStorage.setItem(KEY_METAS, JSON.stringify(METAS_EMBALAGENS)); }catch(e){}
+}
+/* Carrega metas salvas (chamado no load()) — se não houver, mantém os padrões do código */
+function metasInit(){
+  const saved=metasLS_load();
+  if(saved) _metasReplace(saved);
+}
+/* Firebase: salvar (1 documento só) */
+async function _metasSalvarFirebase(){
+  if(backend!=='firebase' || !fb) return;
+  try{ await fb.collection('config').doc('metas').set({valores:Object.assign({},METAS_EMBALAGENS)}); }
+  catch(e){ console.warn('metasSalvarFirebase:',e.message); }
+}
+/* Firebase: buscar e aplicar (chamado no load() quando online) */
+async function _metasSincFirebase(){
+  if(backend!=='firebase' || !fb) return;
+  try{
+    const snap=await fb.collection('config').doc('metas').get();
+    if(snap.exists){
+      const d=snap.data();
+      if(d&&d.valores&&typeof d.valores==='object'){
+        _metasReplace(d.valores);
+        metasLS_save();
+        if(document.getElementById('view-dash').classList.contains('on')) renderDash();
+      }
+    }
+  }catch(e){ console.warn('metasSincFirebase:',e.message); }
+}
+
+/* Monta o editor (uma linha com input por embalagem cadastrada) */
+function renderMetasEditor(){
   const body=document.getElementById("metas-body");
   if(!body)return;
-  let total=0,rows="";
-  Object.keys(METAS_EMBALAGENS).forEach(nome=>{
+  _metasEditOrder = EMBALAGENS.slice();
+  let rows="";
+  _metasEditOrder.forEach((nome,i)=>{
     const m=METAS_EMBALAGENS[nome];
-    total+=m;
-    rows+='<div class="metas-row"><span class="metas-nome">'+nome+'</span><span class="metas-val">'+m.toLocaleString("pt-BR")+'</span></div>';
+    rows+='<div class="metas-row"><span class="metas-nome">'+nome+'</span>'+
+          '<input type="number" class="metas-input" data-i="'+i+'" min="0" inputmode="numeric" placeholder="—" value="'+(m!==undefined?m:'')+'"></div>';
   });
   body.innerHTML=
+    '<div class="metas-hint-edit">Edite a meta de cada embalagem e toque em <b>Salvar</b>. Deixe em branco para deixar a embalagem <b>sem meta</b>.</div>'+
     '<div class="metas-table">'+
       '<div class="metas-row metas-head"><span class="metas-nome">Embalagem</span><span class="metas-val">Meta</span></div>'+
       rows+
-      '<div class="metas-row metas-total"><span class="metas-nome">Total</span><span class="metas-val">'+total.toLocaleString("pt-BR")+'</span></div>'+
+      '<div class="metas-row metas-total"><span class="metas-nome">Total</span><span class="metas-val" id="metas-total-val">0</span></div>'+
     '</div>';
+  _metasAtualizaTotal();
+}
+function _metasAtualizaTotal(){
+  const el=document.getElementById("metas-total-val");
+  if(!el)return;
+  let t=0;
+  document.querySelectorAll("#metas-body .metas-input").forEach(inp=>{ const v=parseInt(inp.value,10); if(v>0)t+=v; });
+  el.textContent=t.toLocaleString("pt-BR");
+}
+function salvarMetas(){
+  const novo={};
+  document.querySelectorAll("#metas-body .metas-input").forEach(inp=>{
+    const nome=_metasEditOrder[+inp.dataset.i];
+    const v=parseInt(inp.value,10);
+    if(nome && v>0) novo[nome]=v;
+  });
+  _metasReplace(novo);
+  metasLS_save();
+  _metasSalvarFirebase();
+  if(typeof renderDash==='function') renderDash();
 }
 document.getElementById("btn-metas").addEventListener("click",()=>{
-  renderMetasTabela();
+  renderMetasEditor();
   document.getElementById("modal-metas").classList.add("on");
 });
-document.getElementById("metas-close").addEventListener("click",()=>{
+document.getElementById("metas-body").addEventListener("input",_metasAtualizaTotal);
+document.getElementById("metas-cancel").addEventListener("click",()=>{
   document.getElementById("modal-metas").classList.remove("on");
+});
+document.getElementById("metas-save").addEventListener("click",function(){
+  salvarMetas();
+  const b=this, txt=b.innerHTML;
+  b.innerHTML="✓ Salvo!";
+  setTimeout(()=>{ document.getElementById("modal-metas").classList.remove("on"); b.innerHTML=txt; },700);
 });
 document.getElementById("modal-metas").addEventListener("click",e=>{
   if(e.target===document.getElementById("modal-metas"))
