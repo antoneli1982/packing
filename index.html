@@ -358,6 +358,9 @@
   .consist-delta.under{background:rgba(240,149,63,.12);color:var(--orange)}
   .consist-delta.over{background:rgba(240,83,63,.12);color:var(--red)}
   .consist-delta.zero{background:var(--panel);color:var(--txt-faint)}
+  .consist-meta{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding:5px 9px;border-radius:5px;background:rgba(154,108,240,.1);border:1px solid rgba(154,108,240,.28)}
+  .consist-meta-lbl{font-family:'Poppins',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#b08cff}
+  .consist-meta-val{font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;color:#b08cff}
 
   /* ============ RESPONSIVO — celulares iOS e Android ============ */
   html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -824,6 +827,17 @@
   .mbtn.confirm{background:var(--green);border:none;color:#fff;padding:10px 22px}
   .mbtn.confirm:hover{background:#4cd166}
   .mbtn.confirm:active{transform:translateY(1px)}
+  /* ===== Tabela de Metas (modal) ===== */
+  .metas-table{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .metas-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 14px;border-bottom:1px solid var(--line-soft)}
+  .metas-row:last-child{border-bottom:none}
+  .metas-nome{font-family:'Poppins',sans-serif;font-size:11.5px;font-weight:600;color:var(--txt);line-height:1.3}
+  .metas-val{font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:#b08cff;flex-shrink:0}
+  .metas-head{background:var(--panel-2)}
+  .metas-head .metas-nome,.metas-head .metas-val{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt-dim)}
+  .metas-total{background:var(--panel-2);border-top:1px solid var(--line)}
+  .metas-total .metas-nome{font-weight:700;text-transform:uppercase;letter-spacing:.5px;font-size:10.5px;color:var(--txt-dim)}
+  .metas-total .metas-val{color:var(--green)}
 
   /* ===== TICKER CNN ===== */
   .ticker-bar{
@@ -1103,6 +1117,22 @@
     <div class="modal-footer">
       <button class="mbtn cancel" id="modal-cancel">Cancelar</button>
       <button class="mbtn confirm" id="modal-confirm">⤓ Exportar</button>
+    </div>
+  </div>
+</div>
+<!-- ===== Modal Metas de Embalagens ===== -->
+<div class="modal-overlay" id="modal-metas">
+  <div class="modal" style="width:460px">
+    <div class="modal-header">
+      <div class="modal-icon" style="background:rgba(154,108,240,.15);border-color:rgba(154,108,240,.35)">🎯</div>
+      <div>
+        <h3>Metas de Embalagens</h3>
+        <p>Meta de lavagem por tipo de embalagem</p>
+      </div>
+    </div>
+    <div class="modal-body" id="metas-body" style="max-height:60vh;overflow:auto"></div>
+    <div class="modal-footer">
+      <button class="mbtn cancel" id="metas-close">Fechar</button>
     </div>
   </div>
 </div>
@@ -1878,7 +1908,7 @@
 
       <!-- Painel 06: Consistência Entrada vs Lavagem -->
       <div class="panel" style="grid-column:1/-1">
-        <div class="panel-head"><span class="tag" style="background:var(--orange)">06</span><h2>Consistência — Embalagem Vazia vs Lavagem</h2></div>
+        <div class="panel-head"><span class="tag" style="background:var(--orange)">06</span><h2>Consistência — Embalagem Vazia vs Lavagem</h2><button type="button" class="btn-ghost" id="btn-metas" style="margin-left:auto;flex:0 0 auto">🎯 Metas</button></div>
         <div id="chart-consistencia" style="padding:16px">
           <div class="empty"><div class="big">▦</div><div class="txt">SEM ENTRADAS DE EMBALAGEM VAZIA REGISTRADAS</div></div>
         </div>
@@ -2132,6 +2162,36 @@ const EMBALAGENS_DEFAULT=[
   /* ── OUTROS ── */
   "BERÇO VOLANTE / EMBREAGEM"];
 let EMBALAGENS=[...EMBALAGENS_DEFAULT].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
+/* ===================================================================
+   METAS DE EMBALAGENS
+   👉 Para mudar qualquer meta, basta editar o número aqui embaixo.
+      O nome (à esquerda) precisa ser IGUAL ao nome da embalagem cadastrada.
+      Para dar meta a uma embalagem que ainda não tem, é só adicionar
+      uma nova linha no mesmo formato:  "NOME DA EMBALAGEM": 0,
+
+   ⚠ CONFIRA OS NÚMEROS: os valores abaixo foram lidos da sua planilha
+      (anexo). A soma das linhas que consegui ler dá 1.554, mas o TOTAL
+      da imagem mostra 1.569 (diferença de 15) — ou seja, pelo menos um
+      valor pode estar diferente. Ajuste o que precisar.
+   =================================================================== */
+const METAS_EMBALAGENS={
+  "DIVISORIA CABEÇOTE RDH (EA111/EA211)":180,
+  "DIVISORIA CANOA":90,
+  "DIVISORIA USINAGEM (BLOCOS, CABEÇOTE)":90,
+  "DIVISÓRIAS EKLT (POLIONDAS)":60,
+  "COBERTURAS (BLOCOS, CABEÇOTE)":90,
+  "COBERTURA CANOAS / TAMPA":75,
+  "EKLT6428":90,
+  "EKLT6414":120,
+  "EKLT6421":75,
+  "EKLT4314":75,
+  "EKLT3214":75,
+  "TAMPAS EKLT 64**":75,
+  "TAMPAS EKLT 4314":300,
+  "TAMPAS EKLT 3214":75,
+  "DIVISORIA VIBRABREQUIM":60,
+  "BERÇO VOLANTE / EMBREAGEM":24
+};
 const MOTIVOS=["Abastecimento de água na máquina","Falta de embalagem","Falta de energia","Manutenção geral (descreva na observação)","Parada por máquina","Quebra de espinho","Trabalho em outro setor","Troca de filtro"];
 const TLABEL={"1":"1º Turno","2":"2º Turno","3":"3º Turno"};
 const TCOLOR={"1":"var(--t1)","2":"var(--t2)","3":"var(--t3)"};
@@ -3542,6 +3602,35 @@ document.getElementById("modal-confirm").addEventListener("click",()=>{
   gerarXLS(fdDe,fhDe,fdAte,fhAte);
 });
 
+/* ===== Modal Metas de Embalagens ===== */
+function renderMetasTabela(){
+  const body=document.getElementById("metas-body");
+  if(!body)return;
+  let total=0,rows="";
+  Object.keys(METAS_EMBALAGENS).forEach(nome=>{
+    const m=METAS_EMBALAGENS[nome];
+    total+=m;
+    rows+='<div class="metas-row"><span class="metas-nome">'+nome+'</span><span class="metas-val">'+m.toLocaleString("pt-BR")+'</span></div>';
+  });
+  body.innerHTML=
+    '<div class="metas-table">'+
+      '<div class="metas-row metas-head"><span class="metas-nome">Embalagem</span><span class="metas-val">Meta</span></div>'+
+      rows+
+      '<div class="metas-row metas-total"><span class="metas-nome">Total</span><span class="metas-val">'+total.toLocaleString("pt-BR")+'</span></div>'+
+    '</div>';
+}
+document.getElementById("btn-metas").addEventListener("click",()=>{
+  renderMetasTabela();
+  document.getElementById("modal-metas").classList.add("on");
+});
+document.getElementById("metas-close").addEventListener("click",()=>{
+  document.getElementById("modal-metas").classList.remove("on");
+});
+document.getElementById("modal-metas").addEventListener("click",e=>{
+  if(e.target===document.getElementById("modal-metas"))
+    document.getElementById("modal-metas").classList.remove("on");
+});
+
 function exportCSV(){
   if(!registros.length)return alert("Não há apontamentos para exportar.");
   const fdDe=document.getElementById("f-data-de").value;
@@ -4481,6 +4570,7 @@ function renderConsistencia(base){
           '<div class="consist-bar-track"><div class="consist-bar-fill" style="width:0%;background:#ff3b3b" data-pct="'+Math.round(d.danif/maxVal*100)+'"></div></div>'+
           '<div class="consist-val" style="color:#ff3b3b">⚠ '+d.danif.toLocaleString("pt-BR")+'</div>'+
         '</div>':'')+
+        '<div class="consist-meta"><span class="consist-meta-lbl">🎯 Meta</span><span class="consist-meta-val">'+(METAS_EMBALAGENS[emb]!==undefined?METAS_EMBALAGENS[emb].toLocaleString("pt-BR"):'—')+'</span></div>'+
         '<div class="consist-delta '+deltaClass+'">'+deltaLabel+'</div>'+
       '</div>';
   });
