@@ -11,6 +11,9 @@
 <meta name="format-detection" content="telephone=no">
 <title>SAS · Lavadora de Embalagem — SESÉ</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- jsPDF + autotable — exportação do relatório por embalagem em PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
 <!-- Firebase — sincroniza os apontamentos entre todos os computadores -->
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -1400,7 +1403,7 @@
 
           <!-- ===== Lançamento da Virada (apontamento esquecido) ===== -->
           <div class="virada-banner" id="virada-banner" style="display:none;background:rgba(154,108,240,.12);border:1px solid var(--t3);border-radius:6px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--txt);line-height:1.5">
-            🌙 <b>Calendário liberado</b> — escolha o dia (ontem) e lance o apontamento esquecido. Hora inicial permitida a partir das 23:00.
+            🌙 <b>Calendário liberado</b> — escolha o dia (ontem) e lance o apontamento esquecido. Hora inicial liberada para qualquer horário.
             <a href="#" id="virada-cancelar" style="color:var(--blue-soft);margin-left:6px">cancelar</a>
           </div>
           <button type="button" id="btn-virada" style="display:none;width:100%;cursor:pointer;border:1px solid var(--t3);background:transparent;color:var(--t3);border-radius:6px;padding:9px;font-family:'Poppins',sans-serif;font-weight:600;font-size:12px;letter-spacing:.3px;margin-bottom:12px">
@@ -1952,6 +1955,63 @@
             <tbody id="dash-rack-tbody"></tbody>
           </table>
           <div id="dash-rack-empty"></div>
+        </div>
+      </div>
+
+      <!-- Painel 08: Relatório Analítico por Embalagem -->
+      <div class="panel" style="grid-column:1/-1">
+        <div class="panel-head">
+          <span class="tag" style="background:var(--green)">08</span>
+          <h2>Relatório Analítico por Embalagem</h2>
+        </div>
+        <div class="toolbar" style="flex-wrap:wrap;gap:10px">
+          <div class="range-group">
+            <div class="range-field">
+              <span class="range-lbl">De</span>
+              <input type="date" id="rel-emb-de" style="color-scheme:dark">
+            </div>
+            <span class="range-sep">→</span>
+            <div class="range-field">
+              <span class="range-lbl">Até</span>
+              <input type="date" id="rel-emb-ate" style="color-scheme:dark">
+            </div>
+          </div>
+          <button class="btn-ghost" id="rel-emb-clear" title="Limpar período (mostra todos)">↺ Limpar</button>
+          <div class="spacer"></div>
+          <button class="btn-ghost" id="rel-emb-xls" title="Exportar relatório em Excel"
+            style="border-color:rgba(63,185,80,.5);color:var(--green)">⤓ Excel</button>
+          <button class="btn-ghost" id="rel-emb-pdf" title="Exportar relatório em PDF"
+            style="border-color:rgba(240,83,63,.5);color:var(--red)">⤓ PDF</button>
+        </div>
+        <div class="dash-filter-info" id="rel-emb-period">Período: todos os registros</div>
+        <div style="padding:0 16px 10px;font-family:'Poppins',sans-serif;font-size:9.5px;color:var(--txt-faint);line-height:1.5">
+          <b style="color:var(--txt-dim)">Tempo de lavagem</b> = tempo decorrido (Hora Final − Hora Inicial) de cada ciclo de lavagem.
+          <b style="color:var(--txt-dim)">Nº de ciclos</b> = tempo decorrido ÷ 20,8 min (mesma base de cálculo dos ciclos da máquina).
+          Cada lavagem em que a embalagem aparece conta como uma ocorrência.
+        </div>
+        <div class="table-scroll" style="border-top:1px solid var(--line-soft)">
+          <table>
+            <colgroup>
+              <col style="width:auto"><col style="width:78px"><col style="width:96px">
+              <col style="width:84px"><col style="width:84px"><col style="width:84px">
+              <col style="width:92px"><col style="width:92px"><col style="width:92px">
+            </colgroup>
+            <thead>
+              <tr>
+                <th rowspan="2">Embalagem</th>
+                <th rowspan="2">Ocorr.</th>
+                <th rowspan="2">Total<br>Lavadas</th>
+                <th colspan="3" style="border-bottom:1px solid var(--line-soft);color:var(--blue-soft)">Tempo de Lavagem (HH:MM)</th>
+                <th colspan="3" style="border-bottom:1px solid var(--line-soft);color:var(--green)">Nº de Ciclos (calc.)</th>
+              </tr>
+              <tr>
+                <th>Maior</th><th>Menor</th><th>Média</th>
+                <th>Maior</th><th>Menor</th><th>Média</th>
+              </tr>
+            </thead>
+            <tbody id="rel-emb-tbody"></tbody>
+          </table>
+          <div id="rel-emb-empty"></div>
         </div>
       </div>
     </div>
@@ -3017,7 +3077,7 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".view").forEach(x=>x.classList.remove("on"));
   t.classList.add("on");
   document.getElementById("view-"+t.dataset.view).classList.add("on");
-  if(t.dataset.view==="dash")renderDash();
+  if(t.dataset.view==="dash"){renderDash(); if(typeof renderRelatorioEmb==="function")renderRelatorioEmb();}
   if(t.dataset.view==="vazia")renderVazia();
   if(t.dataset.view==="cadEmb")renderCadEmb();
   if(t.dataset.view==="rack" && typeof renderRack==="function")renderRack();
@@ -3051,7 +3111,7 @@ function fmtMinXLS(m){return String(Math.floor(m/60)).padStart(2,"0")+":"+String
    LANÇAMENTO DA VIRADA (apontamento esquecido antes da meia-noite)
    - Botão só aparece na janela 00:00–02:00 (relógio local).
    - Libera o calendário; data aceita no submit = somente ONTEM.
-   - Hora Inicial (hi) com piso 23:00; abaixo disso fala com o líder.
+   - Hora Inicial (hi) liberada para qualquer horário; a janela 00:00–02:00 é o único limite de uso.
    - Se hf < hi (cruza 00:00), grava 2 registros vinculados:
        principal (hi -> 00:00, carrega qtd/ciclo/motivo)
        continuação (00:00 -> hf, só tempo, cont:true)
@@ -3063,9 +3123,7 @@ function ontem(){
   return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 }
 function viradaInicioValido(hi){
-  if(!hi) return false;
-  const[a,b]=hi.split(":").map(Number);
-  return (a*60+b) >= 23*60;                                          // a partir das 23:00
+  return !!hi;                                                       // hora inicial liberada p/ qualquer horário (basta estar preenchida)
 }
 function cruzaMeiaNoite(hi,hf){
   if(!hi||!hf) return false;
@@ -3117,19 +3175,13 @@ function cancelarVirada(){
   atualizarBtnVirada();
 }
 
-/* feedback ao vivo: erro do piso 23:00 / prévia de gravação (1 ou 2 registros) */
+/* feedback ao vivo: prévia de gravação (1 ou 2 registros) */
 function atualizarVirada(){
   const info=document.getElementById("virada-info");
   if(!info) return;
   if(!viradaModo){ info.style.display="none"; return; }
   const hi=document.getElementById("hi").value, hf=document.getElementById("hf").value;
   const hiEl=document.getElementById("hi");
-  if(hi && !viradaInicioValido(hi)){
-    if(hiEl) hiEl.classList.add("dur-warn");
-    info.style.display="block"; info.style.color="var(--red)";
-    info.textContent="⛔ Hora inicial deve ser 23:00 ou depois. Para horários anteriores, fale com o líder.";
-    return;
-  }
   if(hiEl) hiEl.classList.remove("dur-warn"); info.style.color="";
   const dataStr=document.getElementById("data").value;
   if(hi && hf && cruzaMeiaNoite(hi,hf)){
@@ -3281,7 +3333,7 @@ document.getElementById("form").addEventListener("submit",async e=>{
   /* ===== Gate do Lançamento da Virada ===== */
   if(viradaModo){
     if(!dentroJanelaVirada())        return flash("Fora da janela 00:00–02:00. Fale com o líder.",false);
-    if(!viradaInicioValido(reg.hi))  return flash("Lançamento da virada: hora inicial deve ser 23:00 ou depois.",false);
+    if(!viradaInicioValido(reg.hi))  return flash("Lançamento da virada: informe a hora inicial.",false);
     if(reg.data!==ontem())           return flash("Lançamento da virada: data permitida somente ontem ("+brData(ontem())+"). Para outros dias, fale com o líder.",false);
     reg.retroVirada=true;
   }
@@ -3611,6 +3663,218 @@ document.getElementById("modal-confirm").addEventListener("click",()=>{
   document.getElementById("modal-export").classList.remove("on");
   gerarXLS(fdDe,fhDe,fdAte,fhAte);
 });
+
+/* ===================================================================
+   RELATÓRIO ANALÍTICO POR EMBALAGEM (Dashboard · painel 08)
+   - Tempo de lavagem  = decorrido (Hora Final − Hora Inicial), via minsRaw
+   - Nº de ciclos      = decorrido ÷ 20,8 min (mesma base do calcCE)
+   - Estatísticas por embalagem: maior / menor / média de cada métrica
+   - Filtro por período (calendário De/Até) · exporta Excel e PDF
+   =================================================================== */
+const CICLO_MIN = 20.8;   /* minutos por ciclo da máquina (base do cálculo) */
+
+function calcRelatorioEmb(fde, fate){
+  const dnum = d => parseInt(String(d).replace(/-/g,"")) || 0;
+  const deN  = fde  ? dnum(fde)  : null;
+  const ateN = fate ? dnum(fate) : null;
+  /* Apenas lavagens de embalagem; exclui a continuação da virada de meia-noite */
+  const lavR = registros.filter(r=>{
+    if(r.tipo!=="lav" || r.cont) return false;
+    const rv = dnum(r.data);
+    if(deN  && rv < deN ) return false;
+    if(ateN && rv > ateN) return false;
+    return true;
+  });
+  const map = {};
+  EMBALAGENS.forEach(e=>{ map[e] = {durs:[], ciclos:[], total:0}; });
+  lavR.forEach(r=>{
+    const d = minsRaw(r.hi, r.hf);          /* tempo de lavagem (min) */
+    if(!(d > 0)) return;
+    const nc = d / CICLO_MIN;               /* nº de ciclos calculado */
+    let embs;
+    if(r.itens && r.itens.length) embs = r.itens.map(it=>it.emb);
+    else if(r.emb)                embs = r.emb.split(",").map(s=>s.trim());
+    else                          embs = [];
+    const seen = new Set();
+    embs.forEach(e=>{
+      if(!e || seen.has(e)) return;
+      seen.add(e);
+      if(!map[e]) map[e] = {durs:[], ciclos:[], total:0};
+      map[e].durs.push(d);
+      map[e].ciclos.push(nc);
+      if(r.itens && r.itens.length){
+        const it = r.itens.find(x=>x.emb===e);
+        map[e].total += (it && it.total) || 0;
+      } else {
+        map[e].total += r.total || 0;
+      }
+    });
+  });
+  const rows = [];
+  Object.keys(map).forEach(e=>{
+    const m = map[e];
+    if(!m.durs.length) return;
+    const n = m.durs.length;
+    const sum = arr => arr.reduce((a,b)=>a+b,0);
+    rows.push({
+      emb:e, ocor:n, total:m.total,
+      maxT: Math.max.apply(null, m.durs),
+      minT: Math.min.apply(null, m.durs),
+      avgT: sum(m.durs)/n,
+      maxC: Math.max.apply(null, m.ciclos),
+      minC: Math.min.apply(null, m.ciclos),
+      avgC: sum(m.ciclos)/n
+    });
+  });
+  rows.sort((a,b)=>a.emb.localeCompare(b.emb,'pt-BR',{sensitivity:'base'}));
+  return rows;
+}
+
+function relEmbPeriodoLabel(fde, fate){
+  if(!fde && !fate) return "todos os registros";
+  return (fde?brData(fde):"início") + " a " + (fate?brData(fate):"hoje");
+}
+
+function renderRelatorioEmb(){
+  const deEl = document.getElementById("rel-emb-de");
+  const ateEl= document.getElementById("rel-emb-ate");
+  if(!deEl || !ateEl) return;
+  const fde = deEl.value, fate = ateEl.value;
+  const rows = calcRelatorioEmb(fde, fate);
+  const tbody = document.getElementById("rel-emb-tbody");
+  const empty = document.getElementById("rel-emb-empty");
+  const periodEl = document.getElementById("rel-emb-period");
+  periodEl.textContent = "Período: " + relEmbPeriodoLabel(fde, fate)
+    + (rows.length ? "  ·  " + rows.length + " embalagem" + (rows.length>1?"s":"") : "");
+  if(!rows.length){
+    tbody.innerHTML = "";
+    empty.innerHTML = '<div class="empty"><div class="big">▦</div><div class="txt">NENHUMA LAVAGEM DE EMBALAGEM NO PERÍODO</div></div>';
+    return;
+  }
+  empty.innerHTML = "";
+  tbody.innerHTML = rows.map(r=>
+    '<tr>'+
+      '<td style="font-weight:600">'+r.emb+'</td>'+
+      '<td>'+r.ocor+'</td>'+
+      '<td>'+r.total.toLocaleString("pt-BR")+'</td>'+
+      '<td style="color:var(--blue-soft);font-weight:600">'+fmtMin(Math.round(r.maxT))+'</td>'+
+      '<td>'+fmtMin(Math.round(r.minT))+'</td>'+
+      '<td>'+fmtMin(Math.round(r.avgT))+'</td>'+
+      '<td style="color:var(--green);font-weight:600">'+fmtCE(r.maxC)+'</td>'+
+      '<td>'+fmtCE(r.minC)+'</td>'+
+      '<td>'+fmtCE(r.avgC)+'</td>'+
+    '</tr>'
+  ).join("");
+}
+
+/* ---- Exportar Excel ---- */
+function exportRelatorioEmbXLS(){
+  if(typeof XLSX==="undefined"){ alert("Biblioteca XLSX não carregada."); return; }
+  const fde = document.getElementById("rel-emb-de").value;
+  const fate= document.getElementById("rel-emb-ate").value;
+  const rows = calcRelatorioEmb(fde, fate);
+  if(!rows.length){ alert("Nenhuma lavagem de embalagem no período selecionado."); return; }
+  const periodo = relEmbPeriodoLabel(fde, fate);
+  const aoa = [
+    ["RELATÓRIO ANALÍTICO POR EMBALAGEM"],
+    ["Período: " + periodo],
+    ["Tempo de lavagem = tempo decorrido (Hora Final − Hora Inicial).  Nº de ciclos = tempo decorrido ÷ 20,8 min."],
+    [],
+    ["Embalagem","Ocorrências","Total Lavadas",
+     "Maior Tempo","Menor Tempo","Média Tempo",
+     "Maior Nº Ciclos","Menor Nº Ciclos","Média Nº Ciclos"]
+  ];
+  const dataStart = aoa.length;   /* índice da 1ª linha de dados */
+  rows.forEach(r=>{
+    aoa.push([
+      r.emb, r.ocor, r.total,
+      fmtMinXLS(Math.round(r.maxT)), fmtMinXLS(Math.round(r.minT)), fmtMinXLS(Math.round(r.avgT)),
+      Math.round(r.maxC*100)/100, Math.round(r.minC*100)/100, Math.round(r.avgC*100)/100
+    ]);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(aoa);
+  /* Colunas de tempo (D,E,F = 3,4,5) como [h]:mm calculável */
+  for(let i=dataStart; i<aoa.length; i++){
+    [3,4,5].forEach(c=>{
+      const addr = XLSX.utils.encode_cell({r:i,c});
+      if(ws[addr]){
+        const p = String(ws[addr].v).split(":");
+        const tot = parseInt(p[0]||0)*60 + parseInt(p[1]||0);
+        ws[addr] = {t:'n', v: tot/1440, z:'[h]:mm'};
+      }
+    });
+  }
+  ws["!cols"] = [{wch:16},{wch:12},{wch:13},{wch:12},{wch:12},{wch:12},{wch:15},{wch:15},{wch:15}];
+  ws["!merges"] = [
+    {s:{r:0,c:0},e:{r:0,c:8}},
+    {s:{r:1,c:0},e:{r:1,c:8}},
+    {s:{r:2,c:0},e:{r:2,c:8}}
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Relatório Embalagens");
+  const nome = "SAS-Relatorio-Embalagens" + (fde?"-"+fde:"") + (fate?"-a-"+fate:"") + ".xlsx";
+  XLSX.writeFile(wb, nome);
+}
+
+/* ---- Exportar PDF ---- */
+function exportRelatorioEmbPDF(){
+  if(!window.jspdf || !window.jspdf.jsPDF){
+    alert("Biblioteca de PDF não carregada. Verifique a conexão com a internet e tente novamente.");
+    return;
+  }
+  const fde = document.getElementById("rel-emb-de").value;
+  const fate= document.getElementById("rel-emb-ate").value;
+  const rows = calcRelatorioEmb(fde, fate);
+  if(!rows.length){ alert("Nenhuma lavagem de embalagem no período selecionado."); return; }
+  const periodo = relEmbPeriodoLabel(fde, fate);
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:"landscape", unit:"pt", format:"a4" });
+
+  doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.setTextColor(20,30,45);
+  doc.text("SAS · Relatório Analítico por Embalagem", 40, 42);
+  doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(90,100,110);
+  doc.text("Período: " + periodo, 40, 60);
+  doc.text("Tempo de lavagem = decorrido (Hora Final − Hora Inicial)   •   Nº de ciclos = decorrido ÷ 20,8 min", 40, 74);
+
+  const head = [[
+    "Embalagem","Ocorr.","Total\nLavadas",
+    "Maior\nTempo","Menor\nTempo","Média\nTempo",
+    "Maior\nNº Ciclos","Menor\nNº Ciclos","Média\nNº Ciclos"
+  ]];
+  const body = rows.map(r=>[
+    r.emb, String(r.ocor), r.total.toLocaleString("pt-BR"),
+    fmtMin(Math.round(r.maxT)), fmtMin(Math.round(r.minT)), fmtMin(Math.round(r.avgT)),
+    fmtCE(r.maxC), fmtCE(r.minC), fmtCE(r.avgC)
+  ]);
+  doc.autoTable({
+    head: head, body: body, startY: 88, theme:"grid",
+    styles:{ font:"helvetica", fontSize:8.5, cellPadding:5, halign:"center", lineColor:[210,216,224], lineWidth:0.5 },
+    headStyles:{ fillColor:[56,102,247], textColor:255, fontStyle:"bold", halign:"center", valign:"middle" },
+    columnStyles:{ 0:{ halign:"left", fontStyle:"bold" } },
+    alternateRowStyles:{ fillColor:[244,247,252] },
+    margin:{ left:40, right:40 }
+  });
+  const fy = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 88) + 18;
+  doc.setFontSize(7.5); doc.setTextColor(140,150,160);
+  doc.text("Gerado em " + new Date().toLocaleString("pt-BR") + " — SAS · Lavadora de Embalagem (SESÉ)", 40, fy);
+
+  const nome = "SAS-Relatorio-Embalagens" + (fde?"-"+fde:"") + (fate?"-a-"+fate:"") + ".pdf";
+  doc.save(nome);
+}
+
+/* ---- Eventos do painel 08 ---- */
+(function(){
+  const de = document.getElementById("rel-emb-de");
+  const ate= document.getElementById("rel-emb-ate");
+  const clr= document.getElementById("rel-emb-clear");
+  const xls= document.getElementById("rel-emb-xls");
+  const pdf= document.getElementById("rel-emb-pdf");
+  if(de)  de.addEventListener("change", renderRelatorioEmb);
+  if(ate) ate.addEventListener("change", renderRelatorioEmb);
+  if(clr) clr.addEventListener("click", ()=>{ if(de)de.value=""; if(ate)ate.value=""; renderRelatorioEmb(); });
+  if(xls) xls.addEventListener("click", exportRelatorioEmbXLS);
+  if(pdf) pdf.addEventListener("click", exportRelatorioEmbPDF);
+})();
 
 /* ===================================================================
    METAS DE EMBALAGENS — visualizar e editar pelo próprio app
@@ -5277,11 +5541,11 @@ function atualizarTickerVelocidade(){
     </div>
     <div style="padding:26px 30px 22px">
       <p style="font-family:'Poppins',sans-serif;font-size:18px;line-height:1.55;color:var(--txt);margin:0 0 18px">
-        Esta opção destina-se <b>exclusivamente</b> ao registro de apontamentos cujo <b>horário inicial seja igual ou posterior às <span style="color:var(--orange)">23:00</span></b> — ou seja, do turno que começou antes da meia-noite e não foi apontado a tempo.
+        Esta opção destina-se ao registro de <b>apontamentos do turno anterior que não foram lançados antes da meia-noite</b>. A <b>hora inicial está liberada para qualquer horário</b> que tenha sido necessário.
       </p>
       <div style="background:rgba(240,83,63,.10);border:1px solid rgba(240,83,63,.35);border-radius:10px;padding:16px 18px">
         <p style="font-family:'Poppins',sans-serif;font-size:17px;line-height:1.5;color:var(--txt);margin:0">
-          Caso seja necessário registrar <b>horário inferior às 23:00</b> (por exemplo, <b>22:45</b>), <b style="color:var(--red)">PROCURE A GESTÃO</b> — Líder · KPI · Qualidade.
+          O lançamento só fica disponível <b style="color:var(--orange)">entre 00:00 e 02:00</b> e a data aceita é <b>somente ontem</b>. Use com responsabilidade — em caso de dúvida, <b style="color:var(--red)">PROCURE A GESTÃO</b> (Líder · KPI · Qualidade).
         </p>
       </div>
     </div>
