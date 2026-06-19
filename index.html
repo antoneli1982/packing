@@ -64,7 +64,7 @@
   .clock .time{font-size:25px;font-weight:600;letter-spacing:1px;color:var(--blue-soft)}
   .clock .date{font-size:10.5px;color:var(--txt-dim);text-transform:uppercase;letter-spacing:1.5px}
 
-  .tabs{display:flex;gap:6px;margin-bottom:22px}
+  .tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px}
   .tab{cursor:pointer;border:1px solid var(--line);background:var(--panel);
     color:var(--txt-dim);border-radius:7px;padding:10px 20px;
     font-family:'Poppins',sans-serif;font-weight:700;font-size:13px;letter-spacing:.4px;
@@ -1191,6 +1191,7 @@
     <div class="tab" data-view="rack"><span class="dot"></span>Lavagem de Rack</div>
     <div class="tab" data-view="dash"><span class="dot"></span>Dashboard</div>
     <div class="tab" data-view="cadEmb"><span class="dot"></span>Cadastro de Embalagens</div>
+    <div class="tab" data-view="sim"><span class="dot"></span>Simulação</div>
   </div>
 
   <!-- ===== TICKER CNN ===== -->
@@ -2201,6 +2202,135 @@
     </div>
   </div>
 
+  <!-- ===== SIMULAÇÃO ===== -->
+  <div class="view" id="view-sim">
+    <style>
+      #view-sim .sim-grid{max-width:920px;margin:0 auto}
+      #view-sim .sim-rows{display:flex;flex-direction:column;gap:10px}
+      #view-sim .sim-row{display:grid;grid-template-columns:46px 1fr 96px auto;gap:9px;align-items:center;
+        background:var(--panel-2);border:1px solid var(--line-soft);border-radius:12px;padding:10px 11px}
+      #view-sim .sim-foto{width:46px;height:46px;border-radius:8px;object-fit:cover;background:var(--bg);border:1px solid var(--line);display:block}
+      #view-sim .sim-foto-ph{display:flex;align-items:center;justify-content:center;color:var(--txt-faint);font-size:20px}
+      #view-sim .sim-row.bad{border-color:rgba(240,83,63,.45)}
+      #view-sim .sim-row select,#view-sim .sim-row input[type=number]{width:100%;background:var(--bg);
+        border:1px solid var(--line);color:var(--txt);font-family:'Poppins',sans-serif;font-size:13px;
+        font-weight:500;border-radius:9px;padding:9px 10px;height:38px;outline:none}
+      #view-sim .sim-row select{appearance:none;cursor:pointer;padding-right:28px;
+        background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%238b97a5' stroke-width='1.6' fill='none'/></svg>");
+        background-repeat:no-repeat;background-position:right 9px center}
+      #view-sim .sim-row input[type=number]{text-align:center;font-weight:700}
+      #view-sim .sim-row select:focus,#view-sim .sim-row input:focus{border-color:var(--blue-soft)}
+      #view-sim .sim-q{display:flex;flex-direction:column}
+      #view-sim .sim-qlbl{font-size:9px;color:var(--txt-faint);text-align:center;text-transform:uppercase;
+        letter-spacing:.5px;margin-bottom:3px;font-weight:600}
+      #view-sim .sim-rm{width:34px;height:34px;border:1px solid var(--line);background:var(--bg);
+        color:var(--txt-faint);border-radius:9px;cursor:pointer;font-size:17px;line-height:1;transition:.15s}
+      #view-sim .sim-rm:hover{border-color:var(--red);color:var(--red)}
+      #view-sim .sim-res{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;padding-top:9px;
+        border-top:1px dashed var(--line);font-size:11px}
+      #view-sim .sim-chip{display:inline-flex;align-items:center;gap:5px;background:var(--bg);
+        border:1px solid var(--line);border-radius:20px;padding:4px 10px;color:var(--txt-dim);font-weight:500}
+      #view-sim .sim-chip b{color:var(--txt);font-weight:700;font-variant-numeric:tabular-nums}
+      #view-sim .sim-chip.blue b{color:var(--blue-soft)}
+      #view-sim .sim-chip.warn{border-color:rgba(240,149,63,.4);color:var(--orange)}
+      #view-sim .sim-add{margin-top:12px;width:100%;border:1.5px dashed var(--line);background:transparent;
+        color:var(--blue-soft);font-family:'Poppins',sans-serif;font-size:13px;font-weight:600;border-radius:11px;
+        padding:11px;cursor:pointer;transition:.15s}
+      #view-sim .sim-add:hover{border-color:var(--blue-soft);background:rgba(56,102,247,.06)}
+      #view-sim .sim-totals{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:14px 16px;
+        background:var(--panel-2);border-top:1px solid var(--line-soft)}
+      #view-sim .sim-stat{background:var(--bg);border:1px solid var(--line-soft);border-radius:12px;
+        padding:13px 12px;text-align:center;position:relative;overflow:hidden}
+      #view-sim .sim-stat::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--bb,var(--blue))}
+      #view-sim .sim-stat .v{font-size:23px;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+      #view-sim .sim-stat .k{font-size:10px;color:var(--txt-dim);margin-top:5px;font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+      #view-sim .sim-ctl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt-dim);
+        background:var(--panel-2);border:1px solid var(--line-soft);border-radius:10px;padding:7px 11px}
+      #view-sim .sim-ctl label{font-weight:600;color:var(--txt)}
+      #view-sim .sim-ctl input{width:62px;height:30px;padding:5px;text-align:center;font-weight:700;
+        background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:8px;
+        font-family:'Poppins',sans-serif;font-size:13px}
+      #view-sim .sim-cfg-note{padding:0 16px 12px;font-size:11px;color:var(--txt-dim);line-height:1.55}
+      #view-sim .sim-tbl{overflow-x:auto;border-top:1px solid var(--line-soft)}
+      #view-sim table.sim-table{width:100%;border-collapse:collapse;font-size:12px;min-width:480px}
+      #view-sim .sim-table thead th{background:var(--panel-2);color:var(--txt-dim);font-weight:600;font-size:10px;
+        text-transform:uppercase;letter-spacing:.4px;padding:9px 12px;text-align:left}
+      #view-sim .sim-table tbody td{padding:7px 12px;border-bottom:1px solid var(--line-soft)}
+      #view-sim .sim-table tbody tr:hover{background:rgba(255,255,255,.015)}
+      #view-sim .sim-name{color:var(--txt);font-weight:500}
+      #view-sim .sim-badge{display:inline-block;margin-left:6px;font-size:8.5px;background:rgba(240,149,63,.14);
+        color:var(--orange);border-radius:4px;padding:1px 5px;font-weight:700;letter-spacing:.3px}
+      #view-sim .sim-sub{color:var(--txt-faint);font-size:10px}
+      #view-sim .sim-cfg-inp{width:72px;height:32px;text-align:center;font-weight:700;background:var(--bg);
+        border:1px solid var(--line);color:var(--txt);border-radius:8px;font-family:'Poppins',sans-serif;font-size:12px;padding:4px}
+      #view-sim .sim-cfg-inp:focus{border-color:var(--blue-soft);outline:none}
+      #view-sim .sim-cfg-inp.empty{border-color:rgba(240,149,63,.5)}
+      #view-sim .sim-explain{padding:6px 16px 14px;font-size:11.5px;color:var(--txt-dim);line-height:1.65}
+      #view-sim .sim-explain code{background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;
+        padding:1px 6px;font-size:11px;color:var(--blue-soft);font-family:ui-monospace,monospace}
+      #view-sim details.sim-acc{margin-top:16px;background:var(--panel);border:1px solid var(--line-soft);border-radius:14px;overflow:hidden}
+      #view-sim details.sim-acc>summary{padding:12px 16px;cursor:pointer;font-size:13px;font-weight:600;list-style:none;
+        display:flex;align-items:center;gap:9px;user-select:none}
+      #view-sim details.sim-acc>summary::-webkit-details-marker{display:none}
+      @media(max-width:560px){#view-sim .sim-totals{grid-template-columns:1fr}#view-sim .sim-row{grid-template-columns:40px 1fr 78px auto}#view-sim .sim-foto{width:40px;height:40px}}
+    </style>
+
+    <div class="sim-grid">
+      <div class="panel">
+        <div class="panel-head">
+          <span class="tag" style="background:var(--green)">SIM</span><h2>Simulação de Lavagem</h2>
+          <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            <div class="sim-ctl"><label for="sim-gpc">Gaiolas/ciclo</label><input type="number" id="sim-gpc" min="1" step="1" value="25" inputmode="numeric"></div>
+            <button class="btn-ghost" id="sim-clear">↺ Limpar</button>
+          </div>
+        </div>
+        <div style="padding:11px 16px 0;font-size:11px;color:var(--txt-faint);line-height:1.5">
+          Informe a quantidade de cada embalagem. O tempo médio por ciclo vem automaticamente do
+          <b style="color:var(--txt-dim)">Relatório Analítico por Embalagem (Dashboard · 08)</b>.
+        </div>
+        <div style="padding:14px 16px">
+          <div class="sim-rows" id="sim-rows"></div>
+          <button class="sim-add" id="sim-add">＋ Adicionar embalagem</button>
+        </div>
+        <div class="sim-totals">
+          <div class="sim-stat" style="--bb:var(--purple)"><div class="v" id="sim-t-cestos">0</div><div class="k">Cestos / Gaiolas</div></div>
+          <div class="sim-stat" style="--bb:var(--green)"><div class="v" id="sim-t-ciclos">0</div><div class="k">Ciclos de lavagem</div></div>
+          <div class="sim-stat" style="--bb:var(--blue)"><div class="v" id="sim-t-tempo">00:00:00</div><div class="k">Tempo total (h:min:s)</div></div>
+        </div>
+      </div>
+
+      <details class="sim-acc">
+        <summary><span class="tag" style="background:#9a6cf0">DADOS</span>Capacidades por cesto e tempos médios</summary>
+        <div class="sim-cfg-note">
+          <b>Emb. por cesto</b> vieram do seu anexo e são editáveis (salvas neste navegador).
+          <b>Tempo médio/ciclo</b> é lido da tela 08 — o número entre parênteses é a quantidade de
+          ocorrências usadas na média. <span style="color:var(--orange);font-weight:600">CONFERIR</span> =
+          leitura com dúvida ou que não estava no anexo.
+        </div>
+        <div class="sim-tbl">
+          <table class="sim-table">
+            <thead><tr><th>Embalagem</th><th style="text-align:center">Emb. por cesto</th><th style="text-align:center">Tempo médio/ciclo<br>(tela 08)</th></tr></thead>
+            <tbody id="sim-cfg-body"></tbody>
+          </table>
+        </div>
+      </details>
+
+      <details class="sim-acc">
+        <summary><span class="tag" style="background:var(--blue)">i</span>Como o cálculo funciona</summary>
+        <div class="sim-explain">
+          Para cada embalagem: <code>cestos = ⌈qtd ÷ emb. por cesto⌉</code>,
+          <code>ciclos = ⌈cestos ÷ gaiolas por ciclo⌉</code> e
+          <code>tempo = ciclos × tempo médio por ciclo</code>. Os totais somam tudo.
+          <br><br>
+          O tempo médio por ciclo é a média de tempo decorrido das lavagens daquela embalagem (tela 08).
+          Embalagem sem histórico usa a base de 20,8 min/ciclo até existirem apontamentos.
+          Premissa: um ciclo comporta até as gaiolas definidas no topo e dura o mesmo tempo independentemente
+          de estar cheio; cada tipo é contado em seus próprios ciclos.
+        </div>
+      </details>
+    </div>
+  </div>
+
   <footer>
     <span id="db-status" class="dbstat">● Iniciando banco de dados…</span>
     <span style="opacity:.6"> &nbsp;·&nbsp; SESÉ · SAS — Lavadora de Embalagem &nbsp;·&nbsp; faça backup pelo botão Exportar Excel</span>
@@ -3081,6 +3211,7 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   if(t.dataset.view==="vazia")renderVazia();
   if(t.dataset.view==="cadEmb")renderCadEmb();
   if(t.dataset.view==="rack" && typeof renderRack==="function")renderRack();
+  if(t.dataset.view==="sim" && typeof renderSim==="function")renderSim();
 }));
 
 function mins(hi,hf){
@@ -3766,6 +3897,176 @@ function renderRelatorioEmb(){
     '</tr>'
   ).join("");
 }
+
+/* ===================================================================
+   SIMULAÇÃO DE LAVAGEM (aba "Simulação")
+   - Emb. por cesto: lidas do anexo, editáveis (salvas no navegador)
+   - Tempo médio por ciclo: lido da tela 08 (avgT por embalagem, via calcRelatorioEmb)
+   - cestos = ⌈qtd/cap⌉ ; ciclos = ⌈cestos/gaiolas⌉ ; tempo = ciclos × tempo médio
+   - Tempo exibido em h:min:s (HH:MM:SS)
+   =================================================================== */
+const SIM_CAP_BASE = {
+  "EKLT3214":15,"EKLT4314":9,"EKLT6414":4,"EKLT6421":4,"EKLT6428":4,
+  "TAMPAS EKLT 3214":15,"TAMPAS EKLT 4314":12,"TAMPAS EKLT 64**":5,
+  "COBERTURAS (BLOCOS, CABEÇOTE)":1,"COBERTURA CANOAS / TAMPA":2,
+  "DIVISORIA CANOA":2,"DIVISÓRIAS EKLT (POLIONDAS)":5,
+  "DIVISORIA USINAGEM (BLOCOS, CABEÇOTE)":1,"DIVISORIA CABEÇOTE RDH (EA111/EA211)":1,
+  "BERÇO VOLANTE / EMBREAGEM":6
+};
+/* embalagens com leitura duvidosa OU que não constavam no anexo */
+const SIM_FLAG = new Set([
+  "COBERTURAS (BLOCOS, CABEÇOTE)","COBERTURA CANOAS / TAMPA","CANOA PLASTICA (VW)",
+  "DIVISORIA VIBRABREQUIM","Divisoria BLO/ CAB","Cobertura da usinagem",
+  "Divisoria de bomba","Divisoria de cárter"
+]);
+const SIM_LS_CAP = "sas-sim-cap";
+const SIM_LS_GPC = "sas-sim-gpc";
+let simState = null;     /* [{emb, qtd}] */
+let simGpc = 25;
+let simCapOv = {};
+(function simLoadCfg(){
+  try{ simCapOv = JSON.parse(localStorage.getItem(SIM_LS_CAP)||"{}")||{}; }catch(e){ simCapOv={}; }
+  try{ const g=parseInt(localStorage.getItem(SIM_LS_GPC),10); if(g>0) simGpc=g; }catch(e){}
+})();
+
+function simCap(emb){
+  if(simCapOv[emb]!==undefined) return simCapOv[emb];
+  return (SIM_CAP_BASE[emb]!==undefined) ? SIM_CAP_BASE[emb] : null;
+}
+function simTempoMap(){
+  const map={};
+  try{ calcRelatorioEmb(null,null).forEach(r=>{ if(r.avgT>0) map[r.emb]={min:r.avgT,ocor:r.ocor}; }); }
+  catch(e){}
+  return map;
+}
+function simFmtHMS(min){
+  let s = Math.round((isFinite(min)?min:0)*60); if(s<0) s=0;
+  const h=Math.floor(s/3600); s-=h*3600;
+  const m=Math.floor(s/60); s-=m*60;
+  const p=n=>String(n).padStart(2,"0");
+  return p(h)+":"+p(m)+":"+p(s);
+}
+function simCalcLinha(ln, tmap){
+  const cap = simCap(ln.emb);
+  const qtd = Math.max(0, parseInt(ln.qtd,10)||0);
+  const t = tmap[ln.emb];
+  const min = t ? t.min : CICLO_MIN;            /* base 20,8 se sem histórico */
+  const capOk = (typeof cap==="number" && cap>0);
+  if(qtd<=0 || !capOk) return {qtd,cap,capOk,min,temHist:!!t,cestos:0,ciclos:0,tempo:0,ocor:t?t.ocor:0};
+  const cestos = Math.ceil(qtd/cap);
+  const ciclos = Math.ceil(cestos/Math.max(1,simGpc));
+  return {qtd,cap,capOk,min,temHist:!!t,cestos,ciclos,tempo:ciclos*min,ocor:t?t.ocor:0};
+}
+function renderSim(){
+  if(!simState) simState = [{emb:(EMBALAGENS[0]||""), qtd:""}];
+  simState.forEach(ln=>{ if(!EMBALAGENS.includes(ln.emb)) ln.emb = EMBALAGENS[0]||""; });
+  const tmap = simTempoMap();
+  const gpcEl=document.getElementById("sim-gpc"); if(gpcEl) gpcEl.value=simGpc;
+  const rowsEl=document.getElementById("sim-rows"); if(!rowsEl) return;
+  rowsEl.innerHTML = simState.map((ln,i)=>{
+    const opts = EMBALAGENS.map(e=>'<option value="'+e+'"'+(e===ln.emb?" selected":"")+'>'+e+'</option>').join("");
+    const foto = FOTOS_EMB[ln.emb]
+      ? '<img class="sim-foto" src="'+FOTOS_EMB[ln.emb]+'" alt="'+ln.emb+'" loading="lazy">'
+      : '<div class="sim-foto sim-foto-ph" title="sem foto cadastrada">▦</div>';
+    return '<div class="sim-row">'+
+      foto+
+      '<select class="sim-sel" data-i="'+i+'">'+opts+'</select>'+
+      '<div class="sim-q"><span class="sim-qlbl">Quantidade</span>'+
+        '<input type="number" min="0" step="1" inputmode="numeric" class="sim-qtd" data-i="'+i+'" value="'+ln.qtd+'" placeholder="0"></div>'+
+      '<button class="sim-rm" data-i="'+i+'" title="Remover">×</button>'+
+      '<div class="sim-res" data-res="'+i+'"></div>'+
+    '</div>';
+  }).join("");
+  simRecalc(tmap);
+  simRenderCfg(tmap);
+}
+function simRecalc(tmap){
+  if(!simState) return;
+  tmap = tmap || simTempoMap();
+  let tc=0,tk=0,tt=0;
+  simState.forEach((ln,i)=>{
+    const r=simCalcLinha(ln,tmap);
+    tc+=r.cestos; tk+=r.ciclos; tt+=r.tempo;
+    const el=document.querySelector('#sim-rows [data-res="'+i+'"]'); if(!el) return;
+    const row=el.closest(".sim-row");
+    if(!r.capOk){ if(row)row.classList.add("bad");
+      el.innerHTML='<span class="sim-chip warn">⚠ Defina &quot;Emb. por cesto&quot; na aba Dados</span>'; return; }
+    if(row)row.classList.remove("bad");
+    if(r.qtd<=0){ el.innerHTML='<span class="sim-chip">Informe a quantidade</span>'; return; }
+    const histChip = r.temHist
+      ? '<span class="sim-chip" title="'+r.ocor+' ocorrência(s) na tela 08">média tela 08 · <b>'+simFmtHMS(r.min)+'</b>/ciclo</span>'
+      : '<span class="sim-chip warn" title="sem histórico — base de '+CICLO_MIN+' min">sem histórico · base <b>'+simFmtHMS(r.min)+'</b>/ciclo</span>';
+    el.innerHTML =
+      '<span class="sim-chip">Cestos <b>'+r.cestos+'</b></span>'+
+      '<span class="sim-chip">Ciclos <b>'+r.ciclos+'</b></span>'+
+      '<span class="sim-chip blue">Tempo <b>'+simFmtHMS(r.tempo)+'</b></span>'+
+      histChip;
+  });
+  const set=(id,v)=>{const e=document.getElementById(id); if(e)e.textContent=v;};
+  set("sim-t-cestos",tc); set("sim-t-ciclos",tk); set("sim-t-tempo",simFmtHMS(tt));
+}
+function simRenderCfg(tmap){
+  tmap = tmap || simTempoMap();
+  const body=document.getElementById("sim-cfg-body"); if(!body) return;
+  body.innerHTML = EMBALAGENS.map(e=>{
+    const cap=simCap(e);
+    const capVal=(typeof cap==="number")?cap:"";
+    const flag=SIM_FLAG.has(e)||cap===null;
+    const t=tmap[e];
+    const tCell = t ? (simFmtHMS(t.min)+' <span class="sim-sub">('+t.ocor+')</span>')
+                    : '<span class="sim-sub">sem histórico</span>';
+    return '<tr>'+
+      '<td class="sim-name">'+e+(flag?'<span class="sim-badge">CONFERIR</span>':'')+'</td>'+
+      '<td style="text-align:center"><input class="sim-cfg-inp'+(capVal===""?" empty":"")+'" data-emb="'+e+'" type="number" min="0" step="1" inputmode="numeric" value="'+capVal+'" placeholder="?"></td>'+
+      '<td style="text-align:center;color:var(--txt-dim)">'+tCell+'</td>'+
+    '</tr>';
+  }).join("");
+}
+/* listeners (delegados; ligados uma vez — os elementos já existem no DOM) */
+(function simSetup(){
+  const rows=document.getElementById("sim-rows");
+  const cfg=document.getElementById("sim-cfg-body");
+  if(!rows||!cfg) return;
+  rows.addEventListener("change", e=>{
+    const s=e.target.closest(".sim-sel"); if(!s||!simState) return;
+    simState[+s.dataset.i].emb=s.value; renderSim();
+  });
+  rows.addEventListener("input", e=>{
+    const q=e.target.closest(".sim-qtd"); if(!q||!simState) return;
+    simState[+q.dataset.i].qtd=q.value; simRecalc();
+  });
+  rows.addEventListener("click", e=>{
+    const b=e.target.closest(".sim-rm"); if(!b||!simState) return;
+    const i=+b.dataset.i;
+    if(simState.length===1) simState[0].qtd=""; else simState.splice(i,1);
+    renderSim();
+  });
+  cfg.addEventListener("input", e=>{
+    const inp=e.target.closest(".sim-cfg-inp"); if(!inp) return;
+    const emb=inp.dataset.emb, raw=inp.value.trim();
+    simCapOv[emb] = raw==="" ? null : Math.max(0,parseInt(raw,10)||0);
+    inp.classList.toggle("empty", raw==="");
+    try{ localStorage.setItem(SIM_LS_CAP, JSON.stringify(simCapOv)); }catch(e2){}
+    simRecalc();
+  });
+  const addB=document.getElementById("sim-add");
+  if(addB) addB.addEventListener("click", ()=>{
+    if(!simState) simState=[];
+    const used=new Set(simState.map(l=>l.emb));
+    const next=EMBALAGENS.find(e=>!used.has(e))||EMBALAGENS[0]||"";
+    simState.push({emb:next,qtd:""}); renderSim();
+  });
+  const clrB=document.getElementById("sim-clear");
+  if(clrB) clrB.addEventListener("click", ()=>{
+    if(simState) simState.forEach(l=>l.qtd=""); renderSim();
+  });
+  const g=document.getElementById("sim-gpc");
+  if(g) g.addEventListener("input", ()=>{
+    simGpc=Math.max(1,parseInt(g.value,10)||1);
+    try{ localStorage.setItem(SIM_LS_GPC,String(simGpc)); }catch(e2){}
+    simRecalc();
+  });
+})();
 
 /* ---- Exportar Excel ---- */
 function exportRelatorioEmbXLS(){
