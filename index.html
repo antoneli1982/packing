@@ -10,6 +10,7 @@
 <meta name="apple-mobile-web-app-title" content="SAS Lavadora">
 <meta name="format-detection" content="telephone=no">
 <title>SAS · Lavadora de Embalagem — SESÉ</title>
+<script>(function(){try{if(localStorage.getItem('sas-theme')==='light')document.documentElement.setAttribute('data-theme','light');}catch(e){}})();</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <!-- jsPDF + autotable — exportação do relatório por embalagem em PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -29,6 +30,43 @@
     --green:#3fb950;--red:#f0533f;--orange:#f0953f;
     --t1:#3866f7;--t2:#00b8a3;--t3:#9a6cf0;
     --c-lav:#3866f7;--c-par:#f0533f;--c-ref:#f0953f;
+    --purple:#9a6cf0;--purple-txt:#b08cff;--focus-bg:#212a35;
+    color-scheme:dark;
+  }
+  /* ===== TEMA CLARO ===== fundo claro + textos escuros (alto contraste) */
+  [data-theme="light"]{
+    --bg:#eef1f6;--panel:#ffffff;--panel-2:#f3f5f9;
+    --line:#d3dae3;--line-soft:#e4e9f0;
+    --txt:#16202e;--txt-dim:#505b69;--txt-faint:#7a8694;
+    --blue:#2f5ae0;--blue-soft:#2f5ae0;
+    --green:#2c9a3e;--red:#d8392a;--orange:#c87718;
+    --t1:#2f5ae0;--t2:#0a9486;--t3:#7c4fd0;
+    --c-lav:#2f5ae0;--c-par:#d8392a;--c-ref:#c87718;
+    --purple:#7c4fd0;--purple-txt:#6a3fc0;--focus-bg:#e7ecf4;
+    color-scheme:light;
+  }
+  [data-theme="light"] body{
+    background-image:
+      radial-gradient(circle at 90% -10%, rgba(47,90,224,.07), transparent 45%),
+      linear-gradient(rgba(20,30,45,.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(20,30,45,.03) 1px, transparent 1px);
+  }
+  /* contraste de elementos com cor fixa, no modo claro */
+  [data-theme="light"] :where(.seg-btn.on,.qs-btn.on){background:var(--blue);border-color:var(--blue);color:#fff}
+  [data-theme="light"] .ciclo-btn.on[data-ce="nao"]{background:#525d6b;border-color:#525d6b}
+  [data-theme="light"] .mc.on{border-color:#16202e !important}
+  [data-theme="light"] .metas-input{color-scheme:light}
+  [data-theme="light"] .horas-opc-note{color:#b22a1b;background:rgba(216,57,42,.08);border-color:rgba(216,57,42,.32)}
+  [data-theme="light"] .emb-danif-add .edl{color:#bd2818}
+  [data-theme="light"] .brasil-chip{background:linear-gradient(180deg,#0b8b3c,#06401f);border-color:rgba(255,223,0,.55);box-shadow:0 2px 8px rgba(0,0,0,.18)}
+  [data-theme="light"] .logo-chip{box-shadow:0 1px 5px rgba(0,0,0,.1)}
+  /* ===== IMPRESSÃO ===== oculta o que é interativo e garante cores/quebra de página */
+  @media print{
+    .tabs,.theme-toggle,#btn-print,.lamp-btn{display:none !important}
+    body{padding:8px !important}
+    .wrap{max-width:100% !important}
+    .panel{break-inside:avoid;page-break-inside:avoid;box-shadow:none !important}
+    *{-webkit-print-color-adjust:exact !important;print-color-adjust:exact !important}
   }
   *{box-sizing:border-box;margin:0;padding:0}
   body{
@@ -63,6 +101,13 @@
   .clock{font-family:'Poppins',sans-serif;text-align:right}
   .clock .time{font-size:25px;font-weight:600;letter-spacing:1px;color:var(--blue-soft)}
   .clock .date{font-size:10.5px;color:var(--txt-dim);text-transform:uppercase;letter-spacing:1.5px}
+  .header-right{display:flex;align-items:center;gap:14px}
+  .theme-toggle{cursor:pointer;display:inline-flex;align-items:center;gap:7px;background:var(--panel-2);
+    border:1px solid var(--line);color:var(--txt-dim);border-radius:20px;padding:7px 13px;
+    font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;transition:.15s;white-space:nowrap}
+  .theme-toggle:hover{border-color:var(--blue-soft);color:var(--txt)}
+  .theme-toggle .tt-ico{font-size:13px;line-height:1}
+  @media(max-width:560px){.theme-toggle .tt-lbl{display:none}.theme-toggle{padding:8px 10px}}
 
   .tabs{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:22px}
   .tab{cursor:pointer;border:1px solid var(--line);background:var(--panel);
@@ -114,7 +159,7 @@
   input,select{width:100%;background:var(--panel-2);border:1px solid var(--line);
     color:var(--txt);border-radius:6px;padding:10px 11px;
     font-family:'Poppins',sans-serif;font-size:14px;transition:.13s}
-  input:focus,select:focus{outline:none;border-color:var(--blue);background:#212a35}
+  input:focus,select:focus{outline:none;border-color:var(--blue);background:var(--focus-bg)}
   select{appearance:none;cursor:pointer;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'><path d='M2 4l4 4 4-4' stroke='%238b97a5' stroke-width='1.6' fill='none'/></svg>");
     background-repeat:no-repeat;background-position:right 11px center;padding-right:30px}
@@ -362,8 +407,8 @@
   .consist-delta.over{background:rgba(240,83,63,.12);color:var(--red)}
   .consist-delta.zero{background:var(--panel);color:var(--txt-faint)}
   .consist-meta{display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding:5px 9px;border-radius:5px;background:rgba(154,108,240,.1);border:1px solid rgba(154,108,240,.28)}
-  .consist-meta-lbl{font-family:'Poppins',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#b08cff}
-  .consist-meta-val{font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;color:#b08cff}
+  .consist-meta-lbl{font-family:'Poppins',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--purple-txt)}
+  .consist-meta-val{font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;color:var(--purple-txt)}
 
   /* ============ RESPONSIVO — celulares iOS e Android ============ */
   html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
@@ -521,7 +566,7 @@
     color:var(--txt-dim);border-radius:6px;padding:10px 9px;
     font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;
     white-space:nowrap;transition:.13s;flex-shrink:0;line-height:1.2}
-  .btn-agora:hover{border-color:var(--blue);color:var(--blue-soft);background:#1e2a38}
+  .btn-agora:hover{border-color:var(--blue);color:var(--blue-soft);background:var(--focus-bg)}
   .btn-agora:active{transform:translateY(1px)}
 
   /* ===== Ciclo Extra ===== */
@@ -677,12 +722,17 @@
   /* Paradas ocultas no gráfico */
   .day-bars-wrap.hide-paradas .day-seg.par{height:0!important;min-height:0!important;overflow:hidden}
   .day-bars-wrap.hide-paradas .siren-lamp{display:none}
-  .day-col{display:flex;flex-direction:column;align-items:center;flex:1;min-width:20px;
+  .day-col{display:flex;flex-direction:column;align-items:center;flex:1;min-width:34px;
     position:relative;cursor:pointer;border-radius:4px;transition:background .12s}
   .day-col:hover{background:rgba(255,255,255,.04)}
   .day-col .day-stack{width:100%;display:flex;flex-direction:column-reverse;gap:1px;
     min-height:2px;padding:0 2px}
-  .day-col .day-seg{border-radius:2px;min-height:0;transition:height .4s cubic-bezier(.2,.7,.2,1)}
+  .day-col .day-seg{border-radius:2px;min-height:0;transition:height .4s cubic-bezier(.2,.7,.2,1);
+    display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .day-col .day-seg.par{overflow:visible}
+  .day-col .day-seg .seg-val{font-family:'Poppins',sans-serif;font-size:7px;font-weight:700;
+    color:#fff;line-height:1;text-align:center;width:100%;pointer-events:none;
+    white-space:nowrap;text-shadow:0 1px 1px rgba(0,0,0,.4)}
   .day-col .day-seg.trab{background:var(--blue)}
   .day-col .day-seg.par{background:var(--c-par)}
   .day-col:hover .day-seg.trab{background:var(--blue-soft)}
@@ -728,23 +778,64 @@
   .day-legend-dot{width:10px;height:10px;border-radius:3px}
   .day-legend-dot.trab{background:var(--blue)}
   .day-legend-dot.par{background:var(--c-par)}
+  .day-legend{flex-wrap:wrap;row-gap:6px}
+  .day-legend-item .dl-hrs{margin-left:5px;font-weight:700;color:var(--txt);font-variant-numeric:tabular-nums}
 
-  .month-summary-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;
+  .month-summary-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;
     padding:0 16px 14px}
   .month-summary-item{background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;
     padding:10px 12px;text-align:center}
   .month-summary-item .ms-v{font-family:'Poppins',sans-serif;font-size:18px;font-weight:700}
   .month-summary-item .ms-v.trab{color:var(--blue-soft)}
   .month-summary-item .ms-v.par{color:var(--c-par)}
+  .month-summary-item .ms-v.emb{color:var(--green)}
   .month-summary-item .ms-k{font-family:'Poppins',sans-serif;font-size:8.5px;
     text-transform:uppercase;letter-spacing:.8px;color:var(--txt-faint);margin-top:3px}
+  /* Detalhamento "o que foi lavado" abaixo do gráfico mensal */
+  .month-emb-breakdown{padding:0 16px 16px}
+  .meb-filter{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin:0 0 12px;
+    padding:10px 12px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px}
+  .meb-filter-lbl{font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.6px;color:var(--txt-dim)}
+  .meb-f-grp{display:inline-flex;align-items:center;gap:6px;font-family:'Poppins',sans-serif;
+    font-size:11px;font-weight:600;color:var(--txt-dim)}
+  .meb-filter input{width:auto;flex:0 0 auto;padding:6px 8px;font-size:11px}
+  .meb-filter input[type=time]{max-width:98px}
+  .meb-clear{cursor:pointer;background:var(--panel);border:1px solid var(--line);color:var(--txt-dim);
+    border-radius:6px;padding:6px 12px;font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;transition:.13s}
+  .meb-clear:hover{border-color:var(--red);color:var(--red)}
+  .meb-tot{margin-left:9px;color:var(--green);font-weight:700}
+  .meb-escopo{font-family:'Poppins',sans-serif;font-size:10px;color:var(--txt-faint);margin:-3px 0 10px}
+  .meb-title{font-family:'Poppins',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.8px;color:var(--txt-dim);margin:0 0 9px;display:flex;align-items:center;gap:7px}
+  .meb-title::before{content:"📦";font-size:12px}
+  .meb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px}
+  .meb-item{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;padding:8px 11px}
+  .meb-nome{font-family:'Poppins',sans-serif;font-size:11px;color:var(--txt);line-height:1.25}
+  .meb-qtd{font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--green);
+    flex-shrink:0;white-space:nowrap}
+  .meb-empty{font-family:'Poppins',sans-serif;font-size:11px;color:var(--txt-faint);
+    text-align:center;padding:10px 0}
+  /* Consolidado "embalagens lavadas no dia" no drill-down do dia */
+  .dia-emb-box{padding:14px 16px;border-bottom:1px solid var(--line-soft)}
+  .dia-emb-title{font-family:'Poppins',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.8px;color:var(--txt-dim);margin:0 0 9px;display:flex;align-items:center;gap:7px}
+  .dia-emb-title::before{content:"📦";font-size:12px}
+  .dia-emb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:7px}
+  .dia-emb-item{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;padding:8px 11px}
+  .dia-emb-nome{font-family:'Poppins',sans-serif;font-size:11px;color:var(--txt);line-height:1.25}
+  .dia-emb-qtd{font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--blue-soft);
+    flex-shrink:0;white-space:nowrap}
 
   @media(max-width:600px){
     .turno-hours-grid{grid-template-columns:minmax(0,1fr);gap:8px;padding:11px}
     .turno-hours-card .th-value{font-size:13px}
-    .day-col{min-width:13px}
+    .day-col{min-width:30px}
     .day-col .day-lbl{font-size:7px}
     .day-col .day-val{font-size:7px}
+    .day-col .day-seg .seg-val{font-size:6.5px}
     .month-nav{flex-wrap:wrap;gap:6px;padding:9px 12px}
     .month-summary-row{padding:0 11px 10px}
     .month-summary-item .ms-v{font-size:15px}
@@ -835,13 +926,13 @@
   .metas-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 14px;border-bottom:1px solid var(--line-soft)}
   .metas-row:last-child{border-bottom:none}
   .metas-nome{font-family:'Poppins',sans-serif;font-size:11.5px;font-weight:600;color:var(--txt);line-height:1.3}
-  .metas-val{font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:#b08cff;flex-shrink:0}
+  .metas-val{font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--purple-txt);flex-shrink:0}
   .metas-head{background:var(--panel-2)}
   .metas-head .metas-nome,.metas-head .metas-val{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--txt-dim)}
   .metas-total{background:var(--panel-2);border-top:1px solid var(--line)}
   .metas-total .metas-nome{font-weight:700;text-transform:uppercase;letter-spacing:.5px;font-size:10.5px;color:var(--txt-dim)}
   .metas-total .metas-val{color:var(--green)}
-  .metas-input{width:84px;flex-shrink:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:#b08cff;font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;text-align:right;padding:6px 9px;outline:none;color-scheme:dark}
+  .metas-input{width:84px;flex-shrink:0;background:var(--panel);border:1px solid var(--line);border-radius:6px;color:var(--purple-txt);font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;text-align:right;padding:6px 9px;outline:none;color-scheme:dark}
   .metas-input:focus{border-color:#9a6cf0}
   .metas-input::placeholder{color:var(--txt-faint);font-weight:600}
   .metas-hint-edit{font-size:10.5px;color:var(--txt-faint);line-height:1.5;margin-bottom:12px}
@@ -1009,7 +1100,7 @@
     pointer-events:all !important;cursor:text !important;
     user-select:text !important;-webkit-user-select:text !important;
   }
-  .msg-input:focus{outline:none;border-color:var(--blue);background:#212a35}
+  .msg-input:focus{outline:none;border-color:var(--blue);background:var(--focus-bg)}
   .msg-color-row{display:flex;align-items:center;gap:6px;padding-left:26px}
   .msg-color-lbl{font-size:9px;color:var(--txt-faint);font-weight:600;text-transform:uppercase;letter-spacing:.8px;flex-shrink:0}
   .mc{width:18px;height:18px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:.13s;flex-shrink:0}
@@ -1050,7 +1141,7 @@
   .ms-trigger{display:flex;align-items:center;gap:8px;min-height:33px;width:auto;min-width:152px;max-width:280px;
     background:var(--panel-2);border:1px solid var(--line);color:var(--txt);border-radius:6px;
     padding:5px 10px;font-family:'Poppins',sans-serif;font-size:12px;cursor:pointer;transition:.13s;text-align:left}
-  .ms.open .ms-trigger,.ms-trigger:focus{outline:none;border-color:var(--blue);background:#212a35}
+  .ms.open .ms-trigger,.ms-trigger:focus{outline:none;border-color:var(--blue);background:var(--focus-bg)}
   .ms-tags{flex:1;display:flex;flex-wrap:wrap;gap:4px;align-items:center;min-width:0;overflow:hidden}
   .ms-ph{color:var(--txt-faint);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .ms-chip{display:inline-flex;align-items:center;gap:5px;background:rgba(56,102,247,.16);color:var(--blue-soft);
@@ -1179,9 +1270,12 @@
         <div class="sub">Sistema de Apontamento &middot; Departamento de Lavagem</div>
       </div>
     </div>
-    <div class="clock">
-      <div class="time" id="clock">--:--</div>
-      <div class="date" id="today">—</div>
+    <div class="header-right">
+      <button type="button" class="theme-toggle" id="theme-toggle" title="Alternar tema claro / escuro" aria-label="Alternar tema"><span class="tt-ico">☀️</span><span class="tt-lbl">Tema claro</span></button>
+      <div class="clock">
+        <div class="time" id="clock">--:--</div>
+        <div class="date" id="today">—</div>
+      </div>
     </div>
   </header>
 
@@ -1827,7 +1921,7 @@
   <!-- ============ VIEW: DASHBOARD ============ -->
   <div class="view" id="view-dash">
     <div class="panel" style="margin-bottom:22px">
-      <div class="panel-head"><span class="tag">FILTRO</span><h2>Filtros do Dashboard</h2></div>
+      <div class="panel-head"><span class="tag">FILTRO</span><h2>Filtros do Dashboard</h2><button type="button" class="btn-ghost" id="btn-print" style="margin-left:auto;flex:0 0 auto">🖨 Imprimir</button></div>
       <div class="toolbar">
         <div class="ms" id="d-fmodelo-ms"></div>
         <div class="ms" id="d-fturno-ms"></div>
@@ -1903,9 +1997,9 @@
           </select>
         </div>
         <div class="day-legend" id="day-legend">
-          <div class="day-legend-item"><div class="day-legend-dot" style="background:var(--t1)"></div>1º Turno</div>
-          <div class="day-legend-item"><div class="day-legend-dot" style="background:var(--t2)"></div>2º Turno</div>
-          <div class="day-legend-item"><div class="day-legend-dot" style="background:var(--t3)"></div>3º Turno</div>
+          <div class="day-legend-item"><div class="day-legend-dot" style="background:var(--t1)"></div>1º Turno<b class="dl-hrs" id="dl-hrs-1"></b></div>
+          <div class="day-legend-item"><div class="day-legend-dot" style="background:var(--t2)"></div>2º Turno<b class="dl-hrs" id="dl-hrs-2"></b></div>
+          <div class="day-legend-item"><div class="day-legend-dot" style="background:var(--t3)"></div>3º Turno<b class="dl-hrs" id="dl-hrs-3"></b></div>
           <button class="lamp-btn on" id="lamp-paradas" title="Mostrar/ocultar paradas no gráfico">
             <div class="lamp-bulb"></div>
             <span>Paradas</span>
@@ -1914,8 +2008,18 @@
         <div class="month-summary-row" id="month-summary-row">
           <div class="month-summary-item"><div class="ms-v trab" id="ms-trab-total">00:00</div><div class="ms-k">Total Trabalhadas no Mês</div></div>
           <div class="month-summary-item"><div class="ms-v par" id="ms-par-total">00:00</div><div class="ms-k">Total Paradas no Mês</div></div>
+          <div class="month-summary-item"><div class="ms-v emb" id="ms-emb-total">0</div><div class="ms-k">Total de Embalagens no Mês</div></div>
         </div>
         <div class="month-day-chart" id="month-day-chart"></div>
+        <div class="month-emb-breakdown" id="month-emb-breakdown">
+          <div class="meb-filter">
+            <span class="meb-filter-lbl">Detalhar por período (opcional):</span>
+            <span class="meb-f-grp">De <input type="date" id="meb-de-data"><input type="time" id="meb-de-hora"></span>
+            <span class="meb-f-grp">Até <input type="date" id="meb-ate-data"><input type="time" id="meb-ate-hora"></span>
+            <button type="button" class="meb-clear" id="meb-limpar">Limpar</button>
+          </div>
+          <div id="meb-content"></div>
+        </div>
       </div>
 
       <!-- Painel 06: Consistência Entrada vs Lavagem -->
@@ -2211,6 +2315,14 @@
         background:var(--panel-2);border:1px solid var(--line-soft);border-radius:12px;padding:10px 11px}
       #view-sim .sim-foto{width:46px;height:46px;border-radius:8px;object-fit:cover;background:var(--bg);border:1px solid var(--line);display:block}
       #view-sim .sim-foto-ph{display:flex;align-items:center;justify-content:center;color:var(--txt-faint);font-size:20px}
+      #view-sim .sim-extra{grid-column:1/-1;display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding-top:9px;border-top:1px dashed var(--line)}
+      #view-sim .sim-extra-lbl{font-size:11px;color:var(--txt-dim);font-weight:600}
+      #view-sim .sim-extra-btn{width:26px;height:26px;border:1px solid var(--line);background:var(--bg);color:var(--txt);border-radius:7px;cursor:pointer;font-size:16px;line-height:1;font-weight:700;display:flex;align-items:center;justify-content:center;transition:.12s;padding:0}
+      #view-sim .sim-extra-btn:hover{border-color:var(--blue-soft);color:var(--blue-soft)}
+      #view-sim .sim-extra-minus:hover{border-color:var(--orange);color:var(--orange)}
+      #view-sim .sim-extra-n{min-width:22px;text-align:center;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums;color:var(--txt)}
+      #view-sim .sim-extra-hint{font-size:10px;color:var(--txt-faint);margin-left:2px}
+      #view-sim .sim-extra-tag{font-size:9.5px;color:var(--orange);font-weight:700}
       #view-sim .sim-row.bad{border-color:rgba(240,83,63,.45)}
       #view-sim .sim-row select,#view-sim .sim-row input[type=number]{width:100%;background:var(--bg);
         border:1px solid var(--line);color:var(--txt);font-family:'Poppins',sans-serif;font-size:13px;
@@ -3949,13 +4061,15 @@ function simFmtHMS(min){
 function simCalcLinha(ln, tmap){
   const cap = simCap(ln.emb);
   const qtd = Math.max(0, parseInt(ln.qtd,10)||0);
+  const extra = Math.max(0, parseInt(ln.extra,10)||0);   /* ciclos extras manuais */
+  const tExtra = extra * CICLO_MIN;                       /* cada ciclo extra = 20,8 min */
   const t = tmap[ln.emb];
   const min = t ? t.min : CICLO_MIN;            /* base 20,8 se sem histórico */
   const capOk = (typeof cap==="number" && cap>0);
-  if(qtd<=0 || !capOk) return {qtd,cap,capOk,min,temHist:!!t,cestos:0,ciclos:0,tempo:0,ocor:t?t.ocor:0};
+  if(qtd<=0 || !capOk) return {qtd,cap,capOk,min,temHist:!!t,ocor:t?t.ocor:0,cestos:0,ciclosCalc:0,extra,ciclos:extra,tempo:tExtra};
   const cestos = Math.ceil(qtd/cap);
-  const ciclos = Math.ceil(cestos/Math.max(1,simGpc));
-  return {qtd,cap,capOk,min,temHist:!!t,cestos,ciclos,tempo:ciclos*min,ocor:t?t.ocor:0};
+  const ciclosCalc = Math.ceil(cestos/Math.max(1,simGpc));
+  return {qtd,cap,capOk,min,temHist:!!t,ocor:t?t.ocor:0,cestos,ciclosCalc,extra,ciclos:ciclosCalc+extra,tempo:ciclosCalc*min+tExtra};
 }
 function renderSim(){
   if(!simState) simState = [{emb:(EMBALAGENS[0]||""), qtd:""}];
@@ -3975,6 +4089,11 @@ function renderSim(){
         '<input type="number" min="0" step="1" inputmode="numeric" class="sim-qtd" data-i="'+i+'" value="'+ln.qtd+'" placeholder="0"></div>'+
       '<button class="sim-rm" data-i="'+i+'" title="Remover">×</button>'+
       '<div class="sim-res" data-res="'+i+'"></div>'+
+      '<div class="sim-extra"><span class="sim-extra-lbl">Ciclo extra</span>'+
+        '<button class="sim-extra-btn sim-extra-minus" data-i="'+i+'" title="Remover ciclo">−</button>'+
+        '<span class="sim-extra-n" data-extra-n="'+i+'">'+(parseInt(ln.extra,10)||0)+'</span>'+
+        '<button class="sim-extra-btn sim-extra-plus" data-i="'+i+'" title="+1 ciclo (00:20:48)">+</button>'+
+        '<span class="sim-extra-hint">cada +1 = 00:20:48</span></div>'+
     '</div>';
   }).join("");
   simRecalc(tmap);
@@ -3987,18 +4106,31 @@ function simRecalc(tmap){
   simState.forEach((ln,i)=>{
     const r=simCalcLinha(ln,tmap);
     tc+=r.cestos; tk+=r.ciclos; tt+=r.tempo;
+    const nEl=document.querySelector('#sim-rows [data-extra-n="'+i+'"]'); if(nEl) nEl.textContent=r.extra;
     const el=document.querySelector('#sim-rows [data-res="'+i+'"]'); if(!el) return;
     const row=el.closest(".sim-row");
-    if(!r.capOk){ if(row)row.classList.add("bad");
-      el.innerHTML='<span class="sim-chip warn">⚠ Defina &quot;Emb. por cesto&quot; na aba Dados</span>'; return; }
+    const ciclosTag = r.extra>0 ? ' <span class="sim-extra-tag">+'+r.extra+' extra</span>' : '';
+    if(!r.capOk && r.qtd>0){
+      if(row)row.classList.add("bad");
+      el.innerHTML='<span class="sim-chip warn">⚠ Defina &quot;Emb. por cesto&quot; na aba Dados</span>'
+        + (r.extra>0 ? '<span class="sim-chip">Ciclos extra <b>'+r.extra+'</b></span><span class="sim-chip blue">Tempo <b>'+simFmtHMS(r.tempo)+'</b></span>' : '');
+      return;
+    }
     if(row)row.classList.remove("bad");
-    if(r.qtd<=0){ el.innerHTML='<span class="sim-chip">Informe a quantidade</span>'; return; }
+    if(r.qtd<=0){
+      el.innerHTML = (r.capOk ? '<span class="sim-chip">Por cesto <b>'+r.cap+'</b></span>' : '')
+        + (r.extra>0
+            ? '<span class="sim-chip">Ciclos <b>'+r.ciclos+'</b>'+ciclosTag+'</span><span class="sim-chip blue">Tempo <b>'+simFmtHMS(r.tempo)+'</b></span>'
+            : '<span class="sim-chip">Informe a quantidade</span>');
+      return;
+    }
     const histChip = r.temHist
       ? '<span class="sim-chip" title="'+r.ocor+' ocorrência(s) na tela 08">média tela 08 · <b>'+simFmtHMS(r.min)+'</b>/ciclo</span>'
       : '<span class="sim-chip warn" title="sem histórico — base de '+CICLO_MIN+' min">sem histórico · base <b>'+simFmtHMS(r.min)+'</b>/ciclo</span>';
     el.innerHTML =
+      '<span class="sim-chip">Por cesto <b>'+r.cap+'</b></span>'+
       '<span class="sim-chip">Cestos <b>'+r.cestos+'</b></span>'+
-      '<span class="sim-chip">Ciclos <b>'+r.ciclos+'</b></span>'+
+      '<span class="sim-chip">Ciclos <b>'+r.ciclos+'</b>'+ciclosTag+'</span>'+
       '<span class="sim-chip blue">Tempo <b>'+simFmtHMS(r.tempo)+'</b></span>'+
       histChip;
   });
@@ -4036,10 +4168,17 @@ function simRenderCfg(tmap){
     simState[+q.dataset.i].qtd=q.value; simRecalc();
   });
   rows.addEventListener("click", e=>{
-    const b=e.target.closest(".sim-rm"); if(!b||!simState) return;
-    const i=+b.dataset.i;
-    if(simState.length===1) simState[0].qtd=""; else simState.splice(i,1);
-    renderSim();
+    if(!simState) return;
+    const rm=e.target.closest(".sim-rm");
+    if(rm){ const i=+rm.dataset.i;
+      if(simState.length===1){ simState[0].qtd=""; simState[0].extra=0; } else simState.splice(i,1);
+      renderSim(); return; }
+    const plus=e.target.closest(".sim-extra-plus");
+    if(plus){ const i=+plus.dataset.i;
+      simState[i].extra=(parseInt(simState[i].extra,10)||0)+1; simRecalc(); return; }
+    const minus=e.target.closest(".sim-extra-minus");
+    if(minus){ const i=+minus.dataset.i;
+      simState[i].extra=Math.max(0,(parseInt(simState[i].extra,10)||0)-1); simRecalc(); return; }
   });
   cfg.addEventListener("input", e=>{
     const inp=e.target.closest(".sim-cfg-inp"); if(!inp) return;
@@ -4058,7 +4197,7 @@ function simRenderCfg(tmap){
   });
   const clrB=document.getElementById("sim-clear");
   if(clrB) clrB.addEventListener("click", ()=>{
-    if(simState) simState.forEach(l=>l.qtd=""); renderSim();
+    if(simState) simState.forEach(l=>{l.qtd="";l.extra=0;}); renderSim();
   });
   const g=document.getElementById("sim-gpc");
   if(g) g.addEventListener("input", ()=>{
@@ -4066,6 +4205,48 @@ function simRenderCfg(tmap){
     try{ localStorage.setItem(SIM_LS_GPC,String(simGpc)); }catch(e2){}
     simRecalc();
   });
+})();
+
+/* ===== TEMA CLARO / ESCURO ===== */
+(function themeSetup(){
+  const root=document.documentElement;
+  const btn=document.getElementById("theme-toggle");
+  const meta=document.querySelector('meta[name="theme-color"]');
+  function apply(theme){
+    if(theme==="light") root.setAttribute("data-theme","light");
+    else root.removeAttribute("data-theme");
+    if(btn){
+      const ico=btn.querySelector(".tt-ico"), lbl=btn.querySelector(".tt-lbl");
+      if(ico) ico.textContent = theme==="light" ? "🌙" : "☀️";
+      if(lbl) lbl.textContent = theme==="light" ? "Tema escuro" : "Tema claro";
+    }
+    if(meta) meta.setAttribute("content", theme==="light" ? "#eef1f6" : "#0e1116");
+  }
+  let cur="dark";
+  try{ if(localStorage.getItem("sas-theme")==="light") cur="light"; }catch(e){}
+  apply(cur);
+  if(btn) btn.addEventListener("click", ()=>{
+    cur = (root.getAttribute("data-theme")==="light") ? "dark" : "light";
+    try{ localStorage.setItem("sas-theme", cur); }catch(e){}
+    apply(cur);
+  });
+})();
+
+/* ===== IMPRESSÃO ===== Botão imprime com tema claro (fundo branco, economiza tinta).
+   Usa beforeprint/afterprint para também cobrir o atalho Ctrl+P. */
+(function printSetup(){
+  const root=document.documentElement;
+  window.addEventListener("beforeprint",()=>{
+    root.dataset.prevTheme=root.getAttribute("data-theme")||"";
+    root.setAttribute("data-theme","light");
+  });
+  window.addEventListener("afterprint",()=>{
+    const prev=root.dataset.prevTheme||"";
+    if(prev) root.setAttribute("data-theme",prev); else root.removeAttribute("data-theme");
+    delete root.dataset.prevTheme;
+  });
+  const btn=document.getElementById("btn-print");
+  if(btn) btn.addEventListener("click",()=>{ setTimeout(()=>window.print(),50); });
 })();
 
 /* ---- Exportar Excel ---- */
@@ -4682,6 +4863,55 @@ function dataInicioTurno(r){
   return r.data;
 }
 
+/* ===== Detalhamento "o que foi lavado" — com filtro opcional de período (de/até por dia e hora).
+   Sem período: mostra o mês selecionado (_monthRegsDoMes). Com período: filtra todos os
+   registros pelo intervalo data+hora. O total do topo continua sendo do mês. ===== */
+function renderMonthBreakdown(){
+  const cont=document.getElementById("meb-content");
+  if(!cont) return;
+  const g=id=>document.getElementById(id);
+  const deD=(g("meb-de-data")||{}).value||"";
+  const deH=(g("meb-de-hora")||{}).value||"00:00";
+  const ateD=(g("meb-ate-data")||{}).value||"";
+  const ateH=(g("meb-ate-hora")||{}).value||"23:59";
+  const turnoSel=(g("d-fmes-turno")||{}).value||"";
+  const usaPeriodo=!!(deD||ateD);
+  let fonte;
+  if(usaPeriodo){
+    const dtv=(data,hora)=>parseInt(String(data).replace(/-/g,""))*10000+(parseInt(String(hora||"").replace(":",""))||0);
+    fonte=(typeof registros!=="undefined"?registros:[]).filter(r=>{
+      if(r.tipo!=="lav") return false;
+      if(turnoSel&&r.turno!==turnoSel) return false;
+      if(deD&&dtv(r.data,r.hi)<dtv(deD,deH)) return false;
+      if(ateD&&dtv(r.data,r.hf)>dtv(ateD,ateH)) return false;
+      return true;
+    });
+  } else {
+    fonte=((typeof _monthRegsDoMes!=="undefined"&&_monthRegsDoMes)||[]).filter(r=>r.tipo==="lav");
+  }
+  let tot=0; const map={};
+  fonte.forEach(r=>{
+    if(r.itens&&r.itens.length){ r.itens.forEach(it=>{const q=it.total||0; tot+=q; map[it.emb]=(map[it.emb]||0)+q;}); }
+    else { const q=r.total||0; tot+=q; map[r.emb]=(map[r.emb]||0)+q; }
+  });
+  const lista=Object.keys(map).map(k=>({k,v:map[k]})).filter(o=>o.v>0).sort((a,b)=>b.v-a.v);
+  const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+  const fmtD=d=>{ if(!d) return ""; const p=d.split("-"); return p[2]+"/"+p[1]+"/"+p[0]; };
+  if(lista.length===0){
+    cont.innerHTML='<div class="meb-empty">Nenhuma embalagem lavada '+(usaPeriodo?'no período selecionado':'neste mês')+'.</div>';
+    return;
+  }
+  const escopo=usaPeriodo
+    ? ('De '+(deD?fmtD(deD)+' '+deH:'início')+' até '+(ateD?fmtD(ateD)+' '+ateH:'fim'))
+    : '';
+  cont.innerHTML=
+    '<div class="meb-title">O que foi lavado '+(usaPeriodo?'no período':'no mês')+' · quantidade<span class="meb-tot">'+tot.toLocaleString("pt-BR")+' emb.</span></div>'+
+    (escopo?'<div class="meb-escopo">'+esc(escopo)+'</div>':'')+
+    '<div class="meb-grid">'+
+    lista.map(o=>'<div class="meb-item"><span class="meb-nome">'+esc(o.k)+'</span><span class="meb-qtd">'+o.v.toLocaleString("pt-BR")+'</span></div>').join('')+
+    '</div>';
+}
+
 function renderMonthChart(base){
   const sel=document.getElementById("d-fmes");
   const turnoSel=document.getElementById("d-fmes-turno").value;
@@ -4741,6 +4971,28 @@ function renderMonthChart(base){
   document.getElementById("ms-trab-total").textContent=fmtMin(totalTrab);
   document.getElementById("ms-par-total").textContent=fmtMin(totalPar);
 
+  /* horas trabalhadas por turno (fixas na legenda — visíveis sem hover, p/ impressão) */
+  const totalPorTurno={"1":0,"2":0,"3":0};
+  dadosDia.forEach(dd=>{["1","2","3"].forEach(t=>{totalPorTurno[t]+=dd.porTurno[t].min;});});
+  ["1","2","3"].forEach(t=>{const el=document.getElementById("dl-hrs-"+t); if(el) el.textContent=fmtMin(totalPorTurno[t]);});
+
+  /* ===== Total de embalagens + detalhamento "o que foi lavado" no mês =====
+     Mesma lógica multi-embalagem usada nos demais gráficos. Respeita o
+     filtro de turno (regsDoMes já está filtrado). */
+  let totalEmbMes=0; const embMapMes={};
+  regsDoMes.filter(r=>r.tipo==="lav").forEach(r=>{
+    if(r.itens&&r.itens.length){
+      r.itens.forEach(it=>{const q=it.total||0; totalEmbMes+=q; embMapMes[it.emb]=(embMapMes[it.emb]||0)+q;});
+    } else {
+      const q=r.total||0; totalEmbMes+=q; embMapMes[r.emb]=(embMapMes[r.emb]||0)+q;
+    }
+  });
+  const msEmbEl=document.getElementById("ms-emb-total");
+  if(msEmbEl) msEmbEl.textContent=totalEmbMes.toLocaleString("pt-BR");
+
+  /* detalhamento (respeita o filtro de período de/até logo abaixo do gráfico) */
+  renderMonthBreakdown();
+
   /* renderiza barras dia a dia — segmentadas por turno */
   const chartEl=document.getElementById("month-day-chart");
   const maxH=180;
@@ -4787,7 +5039,7 @@ function renderMonthChart(base){
     const stack=document.createElement("div");
     stack.className="day-stack";
 
-    function addSeg(h,bg,cls){
+    function addSeg(h,bg,cls,minutos){
       const seg=document.createElement("div");
       seg.className="day-seg "+(cls||"");
       seg.style.height="0px";seg.dataset.h=h;
@@ -4799,12 +5051,19 @@ function renderMonthChart(base){
         lamp.className="siren-lamp";
         seg.appendChild(lamp);
       }
+      /* Valor de horas dentro do segmento — visível sem hover (p/ impressão), só quando cabe */
+      if(minutos>0 && h>=13){
+        const v=document.createElement("span");
+        v.className="seg-val";
+        v.textContent=fmtMin(minutos);
+        seg.appendChild(v);
+      }
       stack.appendChild(seg);
       return seg;
     }
-    addSeg(h1,"var(--t1)","t1");
-    addSeg(h2,"var(--t2)","t2");
-    addSeg(h3,"var(--t3)","t3");
+    addSeg(h1,"var(--t1)","t1",dd.porTurno["1"].min);
+    addSeg(h2,"var(--t2)","t2",dd.porTurno["2"].min);
+    addSeg(h3,"var(--t3)","t3",dd.porTurno["3"].min);
     if(hPar>0) addSeg(hPar,"var(--c-par)","par");
 
     col.appendChild(stack);
@@ -4924,6 +5183,26 @@ function openDayDrilldown(dataStr, dia, mes, ano, regsDia){
     tb.closest(".panel").insertBefore(resumoEl, tb.closest(".panel").querySelector(".panel-head").nextSibling);
   }
   resumoEl.innerHTML="";
+
+  /* ===== Consolidado do dia: o que foi lavado naquele dia (todos os turnos) =====
+     Aparece no topo do detalhamento, ao clicar na barra do dia. */
+  const embDiaMap={};
+  lavDia.forEach(r=>{
+    if(r.itens&&r.itens.length){
+      r.itens.forEach(it=>{embDiaMap[it.emb]=(embDiaMap[it.emb]||0)+(it.total||0);});
+    } else {
+      embDiaMap[r.emb]=(embDiaMap[r.emb]||0)+(r.total||0);
+    }
+  });
+  const embDiaList=Object.keys(embDiaMap).map(k=>({k,v:embDiaMap[k]})).filter(o=>o.v>0).sort((a,b)=>b.v-a.v);
+  if(embDiaList.length>0){
+    const escD=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+    resumoEl.innerHTML=
+      '<div class="dia-emb-box"><div class="dia-emb-title">Embalagens lavadas neste dia · quantidade</div>'+
+      '<div class="dia-emb-grid">'+
+      embDiaList.map(o=>'<div class="dia-emb-item"><span class="dia-emb-nome">'+escD(o.k)+'</span><span class="dia-emb-qtd">'+o.v.toLocaleString("pt-BR")+'</span></div>').join('')+
+      '</div></div>';
+  }
 
   const turnosAtivos=["1","2","3"].filter(t=>regsDia.some(r=>r.turno===t));
 
@@ -5057,7 +5336,7 @@ function openDayDrilldown(dataStr, dia, mes, ano, regsDia){
       html+='</div>';
     });
     html+='</div>';
-    resumoEl.innerHTML=html;
+    resumoEl.innerHTML+=html;
   }
 
   /* === Tabela detalhada === */
@@ -5142,6 +5421,16 @@ openMotivoDrilldown=function(motivo,filteredParadas){
     const idx=sel.selectedIndex;
     if(idx>0){sel.selectedIndex=idx-1;
       if(document.getElementById("view-dash").classList.contains("on"))renderDash();}
+  });
+  /* filtro de período (de/até por dia e hora) do detalhamento — afeta só o detalhamento */
+  ["meb-de-data","meb-de-hora","meb-ate-data","meb-ate-hora"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener("change",()=>{renderMonthBreakdown();});
+  });
+  const mebLimpar=document.getElementById("meb-limpar");
+  if(mebLimpar) mebLimpar.addEventListener("click",()=>{
+    ["meb-de-data","meb-de-hora","meb-ate-data","meb-ate-hora"].forEach(id=>{const el=document.getElementById(id); if(el) el.value="";});
+    renderMonthBreakdown();
   });
 })();
 
