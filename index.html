@@ -887,6 +887,41 @@
   .bar-row.clickable{cursor:pointer;border-radius:6px;padding:2px 6px;margin-left:-6px;margin-right:-6px;transition:background .15s}
   .bar-row.clickable:hover{background:rgba(240,83,63,.08)}
   .bar-row.clickable .bar-lbl{text-decoration:underline;text-decoration-color:rgba(240,83,63,.3);text-underline-offset:3px}
+  /* ===== Apontamentos do dia (drill-down do dia) ===== */
+  .day-apont-wrap{padding:4px 16px 14px}
+  .day-apont-head{font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;
+    text-transform:uppercase;letter-spacing:1px;color:var(--txt-faint);margin:0 0 10px;
+    display:flex;align-items:center;gap:8px}
+  .day-apont-head .dah-count{background:var(--panel);border:1px solid var(--line-soft);
+    border-radius:20px;padding:1px 9px;font-size:10px;font-weight:700;color:var(--txt-dim)}
+  .day-apont-list{display:flex;flex-direction:column;gap:8px}
+  .dai{background:var(--panel-2);border:1px solid var(--line-soft);border-radius:8px;
+    padding:10px 12px 11px;position:relative;overflow:hidden}
+  .dai::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--line)}
+  .dai.lav::before{background:var(--blue)}
+  .dai.par::before{background:var(--c-par)}
+  .dai-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:'Poppins',sans-serif}
+  .dai-tag{font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;border-radius:4px;padding:2px 7px}
+  .dai-tag.lav{background:rgba(56,102,247,.16);color:var(--blue-soft);border:1px solid rgba(56,102,247,.35)}
+  .dai-tag.par{background:rgba(240,83,63,.15);color:var(--c-par);border:1px solid rgba(240,83,63,.35)}
+  .dai-turno{font-size:9px;font-weight:700;color:var(--txt-dim)}
+  .dai-time{font-size:11px;color:var(--txt);font-weight:600;font-variant-numeric:tabular-nums}
+  .dai-time .arr{color:var(--txt-faint);margin:0 4px}
+  .dai-dur{margin-left:auto;font-size:11.5px;font-weight:700;font-variant-numeric:tabular-nums}
+  .dai.lav .dai-dur{color:var(--blue-soft)}
+  .dai.par .dai-dur{color:var(--c-par)}
+  .dai-body{margin-top:8px;font-family:'Poppins',sans-serif;font-size:11px;color:var(--txt-dim);line-height:1.55}
+  .dai-emb{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:1px 0}
+  .dai-emb .e-nome{font-weight:600;color:var(--txt)}
+  .dai-emb .e-qtd{color:var(--blue-soft);font-weight:700}
+  .dai-emb .e-danif{background:rgba(255,30,40,.12);color:#ff3b3b;font-weight:800;border-radius:4px;
+    padding:1px 6px;font-size:9.5px;border:1px solid rgba(255,30,40,.45);white-space:nowrap}
+  .dai-motivo{font-weight:600;color:var(--txt)}
+  .dai-badge-ce{display:inline-block;background:rgba(63,185,80,.14);color:var(--green);
+    border:1px solid rgba(63,185,80,.4);border-radius:4px;padding:1px 6px;font-size:8.5px;font-weight:700;white-space:nowrap}
+  .dai-obs{margin-top:7px;font-family:'Poppins',sans-serif;font-size:10.5px;color:var(--txt-faint);
+    border-top:1px solid rgba(255,255,255,.06);padding-top:6px;word-break:break-word}
+  .dai-obs b{color:var(--txt-dim);font-weight:700}
   @media(max-width:600px){
     .detail-wrap{padding:10px 10px 36px}
     .detail-topbar{padding-bottom:10px;margin-bottom:12px;gap:8px}
@@ -5285,6 +5320,57 @@ function renderMonthChart(base){
   });
 }
 
+/* ===== Lista de apontamentos individuais de um dia =====
+   Mostra cada registro (lavagem/parada) do dia escolhido, com turno,
+   horário, duração, embalagens/quantidade ou motivo, e observação. */
+function renderDayApontamentos(regsDia){
+  if(!regsDia||!regsDia.length) return "";
+  /* ordena por turno e, dentro do turno, por hora inicial */
+  const ordem=[...regsDia].sort((a,b)=>{
+    if((a.turno||"")!==(b.turno||"")) return (a.turno||"").localeCompare(b.turno||"");
+    return (a.hi||"").localeCompare(b.hi||"");
+  });
+  let html='<div class="day-apont-wrap">'+
+    '<div class="day-apont-head">Apontamentos do dia'+
+      '<span class="dah-count">'+ordem.length+' registro'+(ordem.length!==1?'s':'')+'</span></div>'+
+    '<div class="day-apont-list">';
+  ordem.forEach(r=>{
+    const isLav=r.tipo==="lav";
+    const cls=isLav?"lav":"par";
+    const tag=isLav?"Lavagem":"Parada";
+    const dur=fmtMin(mins(r.hi,r.hf));
+    html+='<div class="dai '+cls+'">'+
+      '<div class="dai-head">'+
+        '<span class="dai-tag '+cls+'">'+tag+'</span>'+
+        '<span class="dai-turno">'+(TLABEL[r.turno]||((r.turno||"?")+"º"))+'</span>'+
+        '<span class="dai-time">'+(r.hi||"--:--")+'<span class="arr">&rarr;</span>'+(r.hf||"--:--")+'</span>'+
+        '<span class="dai-dur">'+dur+'</span>'+
+      '</div>'+
+      '<div class="dai-body">';
+    if(isLav){
+      const itens=(r.itens&&r.itens.length)?r.itens:[{emb:r.emb,total:r.total,danif:0}];
+      itens.forEach(it=>{
+        html+='<div class="dai-emb"><span class="e-nome">'+(it.emb||"—")+'</span>'+
+          ((it.total>0)?'<span class="e-qtd">'+it.total.toLocaleString("pt-BR")+' emb.</span>':'')+
+          (((it.danif||0)>0)?'<span class="e-danif">⚠ '+it.danif.toLocaleString("pt-BR")+' danif./segr.</span>':'')+
+          '</div>';
+      });
+      if(r.cicloExtra){
+        html+='<div style="margin-top:6px"><span class="dai-badge-ce">+ Ciclo extra'+(((r.cicloExtraCount||1)>1)?' ×'+r.cicloExtraCount:'')+'</span></div>';
+      }
+    } else {
+      html+='<span class="dai-motivo">'+(r.motivo||"—")+'</span>';
+    }
+    html+='</div>'; /* fim .dai-body */
+    if(r.obs&&String(r.obs).trim()){
+      html+='<div class="dai-obs"><b>Obs:</b> '+r.obs+'</div>';
+    }
+    html+='</div>'; /* fim .dai */
+  });
+  html+='</div></div>';
+  return html;
+}
+
 /* ===== Drill-down de um DIA específico ===== */
 function openDayDrilldown(dataStr, dia, mes, ano, regsDia){
   const overlay=document.getElementById("detail-overlay");
@@ -5457,9 +5543,21 @@ function openDayDrilldown(dataStr, dia, mes, ano, regsDia){
     resumoEl.innerHTML+=html;
   }
 
+  /* ===== Apontamentos individuais do dia (logo abaixo do resumo por turno) ===== */
+  let apontEl=document.getElementById("detail-day-apont");
+  if(!apontEl){
+    apontEl=document.createElement("div");
+    apontEl.id="detail-day-apont";
+  }
+  /* garante que o container fique imediatamente após o resumo por turno */
+  if(resumoEl.nextSibling!==apontEl){
+    resumoEl.parentNode.insertBefore(apontEl, resumoEl.nextSibling);
+  }
+  apontEl.innerHTML=renderDayApontamentos(regsDia);
+
   /* Tabela de registros detalhados REMOVIDA da visão do dia (a pedido). Mantém-se apenas
-     o resumo acima (embalagens do dia + por turno). A tabela continua disponível no
-     drill-down por motivo de parada, que reexibe esta seção. */
+     o resumo acima (embalagens do dia + por turno) e a lista de apontamentos do dia.
+     A tabela continua disponível no drill-down por motivo de parada, que reexibe esta seção. */
   const _ts=document.getElementById("detail-table-scroll"); if(_ts) _ts.style.display="none";
   if(emptyBox){ emptyBox.style.display="none"; }
   const _pt=document.getElementById("detail-panel-title"); if(_pt) _pt.textContent="Resumo do Dia";
@@ -5474,9 +5572,11 @@ openMotivoDrilldown=function(motivo,filteredParadas){
   /* Restaurar cabeçalho da tabela para o formato padrão do motivo */
   const thead=document.querySelector("#detail-overlay .detail-table thead tr");
   if(thead) thead.innerHTML='<th>Data</th><th>Turno</th><th>Início</th><th>Fim</th><th>Duração</th><th>Observação</th>';
-  /* Limpar resumo por turno (só usado no drill-down de dia) */
+  /* Limpar resumo por turno e a lista de apontamentos (só usados no drill-down de dia) */
   const resumoEl=document.getElementById("detail-turno-resumo");
   if(resumoEl) resumoEl.innerHTML="";
+  const apontEl=document.getElementById("detail-day-apont");
+  if(apontEl) apontEl.innerHTML="";
   /* Reexibir a tabela e restaurar o título (ocultados na visão do dia) */
   const _ts=document.getElementById("detail-table-scroll"); if(_ts) _ts.style.display="";
   const _eb=document.getElementById("detail-empty"); if(_eb) _eb.style.display="";
