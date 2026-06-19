@@ -15,6 +15,8 @@
 <!-- jsPDF + autotable — exportação do relatório por embalagem em PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<!-- html2canvas — gerar PNG do relatório de embalagens diárias para apresentação -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <!-- Firebase — sincroniza os apontamentos entre todos os computadores -->
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore-compat.js"></script>
@@ -791,32 +793,6 @@
   .month-summary-item .ms-v.emb{color:var(--green)}
   .month-summary-item .ms-k{font-family:'Poppins',sans-serif;font-size:8.5px;
     text-transform:uppercase;letter-spacing:.8px;color:var(--txt-faint);margin-top:3px}
-  /* Detalhamento "o que foi lavado" abaixo do gráfico mensal */
-  .month-emb-breakdown{padding:0 16px 16px}
-  .meb-filter{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;margin:0 0 12px;
-    padding:10px 12px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px}
-  .meb-filter-lbl{font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;
-    letter-spacing:.6px;color:var(--txt-dim)}
-  .meb-f-grp{display:inline-flex;align-items:center;gap:6px;font-family:'Poppins',sans-serif;
-    font-size:11px;font-weight:600;color:var(--txt-dim)}
-  .meb-filter input{width:auto;flex:0 0 auto;padding:6px 8px;font-size:11px}
-  .meb-filter input[type=time]{max-width:98px}
-  .meb-clear{cursor:pointer;background:var(--panel);border:1px solid var(--line);color:var(--txt-dim);
-    border-radius:6px;padding:6px 12px;font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;transition:.13s}
-  .meb-clear:hover{border-color:var(--red);color:var(--red)}
-  .meb-tot{margin-left:9px;color:var(--green);font-weight:700}
-  .meb-escopo{font-family:'Poppins',sans-serif;font-size:10px;color:var(--txt-faint);margin:-3px 0 10px}
-  .meb-title{font-family:'Poppins',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;
-    letter-spacing:.8px;color:var(--txt-dim);margin:0 0 9px;display:flex;align-items:center;gap:7px}
-  .meb-title::before{content:"📦";font-size:12px}
-  .meb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:7px}
-  .meb-item{display:flex;align-items:center;justify-content:space-between;gap:10px;
-    background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;padding:8px 11px}
-  .meb-nome{font-family:'Poppins',sans-serif;font-size:11px;color:var(--txt);line-height:1.25}
-  .meb-qtd{font-family:'Poppins',sans-serif;font-size:13px;font-weight:700;color:var(--green);
-    flex-shrink:0;white-space:nowrap}
-  .meb-empty{font-family:'Poppins',sans-serif;font-size:11px;color:var(--txt-faint);
-    text-align:center;padding:10px 0}
   /* Consolidado "embalagens lavadas no dia" no drill-down do dia */
   .dia-emb-box{padding:14px 16px;border-bottom:1px solid var(--line-soft)}
   .dia-emb-title{font-family:'Poppins',sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;
@@ -840,6 +816,31 @@
     .month-summary-row{padding:0 11px 10px}
     .month-summary-item .ms-v{font-size:15px}
     .day-bars-wrap{min-height:150px}
+  }
+
+  /* ===== Painel Embalagens Lavadas Diariamente ===== */
+  .ed-mes-lbl{margin-left:auto;font-family:'Poppins',sans-serif;font-size:11px;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.5px}
+  .ed-chart-wrap{overflow-x:auto;padding:14px 16px 6px}
+  .ed-chart svg{display:block}
+  .ed-table-wrap{padding:6px 16px 12px}
+  table.ed-table{border-collapse:collapse;font-family:'Poppins',sans-serif;font-size:10px;white-space:nowrap}
+  table.ed-table th,table.ed-table td{border:1px solid var(--line-soft);padding:4px 7px;text-align:right;color:var(--txt-dim)}
+  table.ed-table th{background:var(--panel-2);font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--txt-faint);position:sticky;top:0;z-index:2}
+  table.ed-table td.ed-nome,table.ed-table th.ed-nome-h{text-align:left;font-weight:600;color:var(--txt);min-width:182px;max-width:240px;white-space:normal}
+  .ed-sticky{position:sticky;left:0;background:var(--panel);z-index:1}
+  table.ed-table th.ed-nome-h{z-index:3;background:var(--panel-2)}
+  .ed-sw{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:7px;vertical-align:middle}
+  table.ed-table td.ed-meta,table.ed-table th.ed-meta-h{color:var(--purple-txt);font-weight:700;background:rgba(154,108,240,.06)}
+  table.ed-table td.ed-tot,table.ed-table th.ed-tot-h{color:var(--green);font-weight:700;background:var(--panel-2)}
+  table.ed-table tr.ed-total-row td{background:var(--panel-2);font-weight:800;color:var(--txt);border-top:2px solid var(--line)}
+  table.ed-table tr.ed-total-row td.ed-tot{color:var(--green)}
+  .ed-foot{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-soft);border-top:1px solid var(--line);margin-top:4px}
+  .ed-foot-cell{background:var(--panel-2);padding:9px 14px;display:flex;flex-direction:column;gap:2px}
+  .ed-foot-k{font-family:'Poppins',sans-serif;font-size:8.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--blue-soft)}
+  .ed-foot-v{font-family:'Poppins',sans-serif;font-size:11px;color:var(--txt-dim)}
+  @media(max-width:600px){
+    table.ed-table td.ed-nome,table.ed-table th.ed-nome-h{min-width:140px}
+    .ed-foot{grid-template-columns:1fr}
   }
 
   /* ===== Overlay de Detalhe (Drill-down) ===== */
@@ -2011,14 +2012,16 @@
           <div class="month-summary-item"><div class="ms-v emb" id="ms-emb-total">0</div><div class="ms-k">Total de Embalagens no Mês</div></div>
         </div>
         <div class="month-day-chart" id="month-day-chart"></div>
-        <div class="month-emb-breakdown" id="month-emb-breakdown">
-          <div class="meb-filter">
-            <span class="meb-filter-lbl">Detalhar por período (opcional):</span>
-            <span class="meb-f-grp">De <input type="date" id="meb-de-data"><input type="time" id="meb-de-hora"></span>
-            <span class="meb-f-grp">Até <input type="date" id="meb-ate-data"><input type="time" id="meb-ate-hora"></span>
-            <button type="button" class="meb-clear" id="meb-limpar">Limpar</button>
-          </div>
-          <div id="meb-content"></div>
+      </div>
+
+      <!-- Painel: Embalagens Lavadas Diariamente (relatório do cliente) -->
+      <div class="panel" style="grid-column:1/-1">
+        <div class="panel-head"><span class="tag" style="background:var(--green)">📊</span><h2>Embalagens Lavadas Diariamente</h2><span class="ed-mes-lbl" id="ed-mes-lbl"></span><button type="button" class="btn-ghost" id="ed-png-btn" style="flex:0 0 auto;margin-left:12px">🖼 Gerar PNG</button></div>
+        <div class="ed-chart-wrap"><div class="ed-chart" id="ed-chart"></div></div>
+        <div class="ed-table-wrap table-scroll" id="ed-table"></div>
+        <div class="ed-foot">
+          <div class="ed-foot-cell"><span class="ed-foot-k">Fonte de dados</span><span class="ed-foot-v">Controle diário de lavagem de embalagens</span></div>
+          <div class="ed-foot-cell"><span class="ed-foot-k">Fórmula</span><span class="ed-foot-v">Σ Itens lavados × Tempo planejado</span></div>
         </div>
       </div>
 
@@ -4773,6 +4776,9 @@ function renderDash(){
   /* ===== Painel 05: Visão Mensal ===== */
   renderMonthChart(base);
 
+  /* ===== Painel: Embalagens Lavadas Diariamente (usa _monthRegsDoMes do painel 05) ===== */
+  renderEmbDiarias();
+
   /* ===== Painel 06: Consistência Entrada vs Lavagem ===== */
   renderConsistencia(base);
 
@@ -4863,54 +4869,193 @@ function dataInicioTurno(r){
   return r.data;
 }
 
-/* ===== Detalhamento "o que foi lavado" — com filtro opcional de período (de/até por dia e hora).
-   Sem período: mostra o mês selecionado (_monthRegsDoMes). Com período: filtra todos os
-   registros pelo intervalo data+hora. O total do topo continua sendo do mês. ===== */
-function renderMonthBreakdown(){
-  const cont=document.getElementById("meb-content");
-  if(!cont) return;
-  const g=id=>document.getElementById(id);
-  const deD=(g("meb-de-data")||{}).value||"";
-  const deH=(g("meb-de-hora")||{}).value||"00:00";
-  const ateD=(g("meb-ate-data")||{}).value||"";
-  const ateH=(g("meb-ate-hora")||{}).value||"23:59";
-  const turnoSel=(g("d-fmes-turno")||{}).value||"";
-  const usaPeriodo=!!(deD||ateD);
-  let fonte;
-  if(usaPeriodo){
-    const dtv=(data,hora)=>parseInt(String(data).replace(/-/g,""))*10000+(parseInt(String(hora||"").replace(":",""))||0);
-    fonte=(typeof registros!=="undefined"?registros:[]).filter(r=>{
-      if(r.tipo!=="lav") return false;
-      if(turnoSel&&r.turno!==turnoSel) return false;
-      if(deD&&dtv(r.data,r.hi)<dtv(deD,deH)) return false;
-      if(ateD&&dtv(r.data,r.hf)>dtv(ateD,ateH)) return false;
-      return true;
-    });
-  } else {
-    fonte=((typeof _monthRegsDoMes!=="undefined"&&_monthRegsDoMes)||[]).filter(r=>r.tipo==="lav");
-  }
-  let tot=0; const map={};
-  fonte.forEach(r=>{
-    if(r.itens&&r.itens.length){ r.itens.forEach(it=>{const q=it.total||0; tot+=q; map[it.emb]=(map[it.emb]||0)+q;}); }
-    else { const q=r.total||0; tot+=q; map[r.emb]=(map[r.emb]||0)+q; }
+
+/* ===== Painel: Embalagens Lavadas Diariamente =====
+   Réplica do relatório do cliente: barras empilhadas por tipo de embalagem por dia,
+   linha de total, coluna/barra de Meta e tabela embalagens × dias. Usa os registros
+   do mês selecionado (_monthRegsDoMes) e as metas de METAS_EMBALAGENS. */
+const ED_CORES=['#3866f7','#00b8a3','#9a6cf0','#f0953f','#e0402b','#2c9a3e','#d94db0','#5b82ff','#0a9486','#c87718','#7c4fd0','#d8392a','#1f9e89','#e8a13a','#6a8caf','#b0508f','#4c9be8','#8a9a3a','#e06aa0','#3fa7a0'];
+function edEsc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+function renderEmbDiarias(){
+  const sel=document.getElementById("d-fmes");
+  const chartEl=document.getElementById("ed-chart");
+  const tableEl=document.getElementById("ed-table");
+  if(!sel||!chartEl||!tableEl) return;
+  if(!sel.value){ chartEl.innerHTML=""; tableEl.innerHTML=""; return; }
+  const [ano,mes]=sel.value.split("-").map(Number);
+  const dias=new Date(ano,mes,0).getDate();
+  const MESES=["","Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  const mesLbl=document.getElementById("ed-mes-lbl");
+  if(mesLbl) mesLbl.textContent=MESES[mes]+" / "+ano;
+
+  /* agregação: matrix[emb][dia] = quantidade lavada */
+  const lavMes=((typeof _monthRegsDoMes!=="undefined"&&_monthRegsDoMes)||[]).filter(r=>r.tipo==="lav");
+  const matrix={}; const comDado=new Set();
+  function add(emb,dia,q){ if(!matrix[emb]) matrix[emb]=new Array(dias+1).fill(0); matrix[emb][dia]+=q; if(q>0) comDado.add(emb); }
+  lavMes.forEach(r=>{
+    const dia=parseInt(dataInicioTurno(r).split("-")[2],10);
+    if(!(dia>=1&&dia<=dias)) return;
+    if(r.itens&&r.itens.length){ r.itens.forEach(it=>add(it.emb,dia,it.total||0)); }
+    else { add(r.emb,dia,r.total||0); }
   });
-  const lista=Object.keys(map).map(k=>({k,v:map[k]})).filter(o=>o.v>0).sort((a,b)=>b.v-a.v);
-  const esc=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-  const fmtD=d=>{ if(!d) return ""; const p=d.split("-"); return p[2]+"/"+p[1]+"/"+p[0]; };
-  if(lista.length===0){
-    cont.innerHTML='<div class="meb-empty">Nenhuma embalagem lavada '+(usaPeriodo?'no período selecionado':'neste mês')+'.</div>';
-    return;
-  }
-  const escopo=usaPeriodo
-    ? ('De '+(deD?fmtD(deD)+' '+deH:'início')+' até '+(ateD?fmtD(ateD)+' '+ateH:'fim'))
-    : '';
-  cont.innerHTML=
-    '<div class="meb-title">O que foi lavado '+(usaPeriodo?'no período':'no mês')+' · quantidade<span class="meb-tot">'+tot.toLocaleString("pt-BR")+' emb.</span></div>'+
-    (escopo?'<div class="meb-escopo">'+esc(escopo)+'</div>':'')+
-    '<div class="meb-grid">'+
-    lista.map(o=>'<div class="meb-item"><span class="meb-nome">'+esc(o.k)+'</span><span class="meb-qtd">'+o.v.toLocaleString("pt-BR")+'</span></div>').join('')+
-    '</div>';
+
+  /* linhas: todas as metas primeiro, depois embalagens com dado sem meta */
+  const metaKeys=Object.keys(METAS_EMBALAGENS);
+  const extras=[...comDado].filter(e=>!METAS_EMBALAGENS.hasOwnProperty(e)).sort();
+  const embs=[...metaKeys,...extras];
+  embs.forEach(e=>{ if(!matrix[e]) matrix[e]=new Array(dias+1).fill(0); });
+  const corDe={}; embs.forEach((e,i)=>corDe[e]=ED_CORES[i%ED_CORES.length]);
+
+  /* totais */
+  const metaDe=e=>METAS_EMBALAGENS[e]||0;
+  const totalDia=new Array(dias+1).fill(0);
+  const rowTotal={};
+  embs.forEach(e=>{ rowTotal[e]=0; for(let d=1;d<=dias;d++){ totalDia[d]+=matrix[e][d]; rowTotal[e]+=matrix[e][d]; } });
+  const metaTotal=embs.reduce((a,e)=>a+metaDe(e),0);
+  const grandTotal=embs.reduce((a,e)=>a+rowTotal[e],0);
+
+  chartEl.innerHTML=edBuildSVG(embs,corDe,matrix,metaDe,totalDia,metaTotal,dias);
+  tableEl.innerHTML=edBuildTable(embs,corDe,matrix,metaDe,totalDia,metaTotal,rowTotal,grandTotal,dias);
 }
+
+function edBuildSVG(embs,corDe,matrix,metaDe,totalDia,metaTotal,dias){
+  const nCat=1+dias, slotW=30, mL=46, mT=26, mB=26, mR=14;
+  const plotW=nCat*slotW, plotH=240, W=mL+plotW+mR, H=mT+plotH+mB;
+  const rawMax=Math.max(metaTotal, ...totalDia, 1);
+  let step=300; while(rawMax/step>7) step+=300;
+  let niceMax=Math.ceil(rawMax/step)*step; if(niceMax<=rawMax) niceMax+=step;
+  const y=v=>mT+plotH-(v/niceMax)*plotH;
+  const catX=i=>mL+i*slotW+slotW/2;
+  const totalCat=i=> i===0?metaTotal:totalDia[i];
+  const valCat=(e,i)=> i===0?metaDe(e):matrix[e][i];
+  let s='<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" font-family="Poppins,sans-serif">';
+  /* gridlines + rótulos Y */
+  for(let g=0; g<=niceMax+0.5; g+=step){
+    const yy=y(g).toFixed(1);
+    s+='<line x1="'+mL+'" y1="'+yy+'" x2="'+(mL+plotW)+'" y2="'+yy+'" style="stroke:var(--line-soft)" stroke-width="1"/>';
+    s+='<text x="'+(mL-6)+'" y="'+(parseFloat(yy)+3).toFixed(1)+'" text-anchor="end" font-size="8" style="fill:var(--txt-faint)">'+g.toLocaleString("pt-BR")+'</text>';
+  }
+  /* barras empilhadas */
+  for(let i=0;i<nCat;i++){
+    const xc=catX(i), barW=slotW*0.62, bx=(xc-barW/2);
+    let cum=0;
+    embs.forEach(e=>{
+      const v=valCat(e,i);
+      if(v>0){ const top=y(cum+v), bot=y(cum), hh=Math.max(0,bot-top);
+        s+='<rect x="'+bx.toFixed(1)+'" y="'+top.toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+hh.toFixed(1)+'" fill="'+corDe[e]+'"><title>'+edEsc(e)+': '+v.toLocaleString("pt-BR")+'</title></rect>';
+        cum+=v;
+      }
+    });
+  }
+  /* separador depois da Meta */
+  const sepX=mL+slotW;
+  s+='<line x1="'+sepX+'" y1="'+mT+'" x2="'+sepX+'" y2="'+(mT+plotH)+'" style="stroke:var(--line)" stroke-width="1" stroke-dasharray="2 3"/>';
+  /* linha de total (só entre categorias adjacentes com total>0) */
+  for(let i=0;i<nCat-1;i++){
+    const t1=totalCat(i), t2=totalCat(i+1);
+    if(t1>0&&t2>0) s+='<line x1="'+catX(i).toFixed(1)+'" y1="'+y(t1).toFixed(1)+'" x2="'+catX(i+1).toFixed(1)+'" y2="'+y(t2).toFixed(1)+'" style="stroke:var(--red)" stroke-width="2" stroke-dasharray="5 4"/>';
+  }
+  /* marcadores + rótulos de total */
+  for(let i=0;i<nCat;i++){
+    const t=totalCat(i);
+    if(t>0){ const xx=catX(i).toFixed(1), yy=y(t);
+      s+='<circle cx="'+xx+'" cy="'+yy.toFixed(1)+'" r="2.6" style="fill:var(--red)"/>';
+      s+='<text x="'+xx+'" y="'+(yy-6).toFixed(1)+'" text-anchor="middle" font-size="7.5" font-weight="700" style="fill:var(--txt)">'+t.toLocaleString("pt-BR")+'</text>';
+    }
+  }
+  /* rótulos X */
+  for(let i=0;i<nCat;i++){
+    const xx=catX(i).toFixed(1), lbl=i===0?'Meta':String(i);
+    s+='<text x="'+xx+'" y="'+(mT+plotH+13)+'" text-anchor="middle" font-size="8" font-weight="'+(i===0?'700':'600')+'" style="fill:'+(i===0?'var(--txt-dim)':'var(--txt-faint)')+'">'+lbl+'</text>';
+  }
+  s+='</svg>';
+  return s;
+}
+
+function edBuildTable(embs,corDe,matrix,metaDe,totalDia,metaTotal,rowTotal,grandTotal,dias){
+  let h='<table class="ed-table"><thead><tr><th class="ed-sticky ed-nome-h">Embalagem</th><th class="ed-meta-h">Meta</th>';
+  for(let d=1;d<=dias;d++) h+='<th>'+d+'</th>';
+  h+='<th class="ed-tot-h">Total</th></tr></thead><tbody>';
+  embs.forEach(e=>{
+    h+='<tr><td class="ed-sticky ed-nome"><span class="ed-sw" style="background:'+corDe[e]+'"></span>'+edEsc(e)+'</td>';
+    h+='<td class="ed-meta">'+(metaDe(e)?metaDe(e).toLocaleString("pt-BR"):'')+'</td>';
+    for(let d=1;d<=dias;d++){ const v=matrix[e][d]; h+='<td>'+(v>0?v.toLocaleString("pt-BR"):'')+'</td>'; }
+    h+='<td class="ed-tot">'+(rowTotal[e]>0?rowTotal[e].toLocaleString("pt-BR"):'')+'</td></tr>';
+  });
+  h+='<tr class="ed-total-row"><td class="ed-sticky ed-nome">TOTAL</td><td class="ed-meta">'+metaTotal.toLocaleString("pt-BR")+'</td>';
+  for(let d=1;d<=dias;d++) h+='<td>'+(totalDia[d]>0?totalDia[d].toLocaleString("pt-BR"):'')+'</td>';
+  h+='<td class="ed-tot">'+grandTotal.toLocaleString("pt-BR")+'</td></tr></tbody></table>';
+  return h;
+}
+
+/* ===== Gerar PNG do relatório (gráfico + tabela) p/ colar em apresentação =====
+   O gráfico (SVG) vira imagem com as cores do tema CLARO embutidas; a tabela é
+   capturada com html2canvas. Tudo é montado num bloco temporário fora da tela,
+   com fundo branco, e exportado como .png. Não altera o tema da página. */
+function edExportPNG(){
+  var chartEl=document.getElementById("ed-chart");
+  var tableEl=document.getElementById("ed-table");
+  if(!chartEl||!tableEl||!chartEl.querySelector("svg")){
+    alert("Selecione um mês com dados antes de gerar o PNG."); return;
+  }
+  if(typeof html2canvas==="undefined"){
+    alert("A biblioteca de imagem (html2canvas) não carregou. Verifique a conexão e recarregue a página (Ctrl+Shift+R)."); return;
+  }
+  var btn=document.getElementById("ed-png-btn");
+  var txtOrig=btn?btn.textContent:"";
+  if(btn){ btn.disabled=true; btn.textContent="⏳ Gerando..."; }
+  var mesLbl=(((document.getElementById("ed-mes-lbl")||{}).textContent)||"").trim();
+  var done=function(){ if(btn){ btn.disabled=false; btn.textContent=txtOrig; } };
+
+  /* 1) SVG do gráfico -> imagem. Como imagem isolada o SVG precisa do namespace
+     xmlns (inline no HTML não precisa, por isso o gráfico aparece na tela mas
+     falhava ao virar imagem). Também trocamos as variáveis de cor pelo tema claro. */
+  var svg=chartEl.innerHTML;
+  if(svg.indexOf("xmlns")===-1){ svg=svg.replace("<svg",'<svg xmlns="http://www.w3.org/2000/svg"'); }
+  svg=svg
+    .replace(/var\(--line-soft\)/g,"#e4e9f0")
+    .replace(/var\(--txt-faint\)/g,"#7a8694")
+    .replace(/var\(--txt-dim\)/g,"#505b69")
+    .replace(/var\(--txt\)/g,"#16202e")
+    .replace(/var\(--red\)/g,"#d8392a")
+    .replace(/var\(--line\)/g,"#d3dae3");
+  var img=new Image();
+  img.onerror=function(){ done(); setTimeout(function(){ alert("Falha ao preparar o gráfico para a imagem."); },30); };
+  img.onload=function(){
+    /* 2) bloco temporário fora da tela, tema claro, fundo branco */
+    var tmp=document.createElement("div");
+    tmp.setAttribute("data-theme","light");
+    tmp.style.cssText="position:fixed;left:-99999px;top:0;background:#ffffff;padding:22px 26px;width:max-content;font-family:'Poppins',sans-serif";
+    tmp.innerHTML=
+      '<div style="font-size:18px;font-weight:800;color:#16202e">Embalagens Lavadas Diariamente</div>'+
+      '<div style="font-size:12px;font-weight:600;color:#505b69;margin:2px 0 16px;text-transform:uppercase;letter-spacing:.5px">'+edEsc(mesLbl)+'</div>'+
+      '<div class="ed-png-chart" style="margin-bottom:16px"></div>'+
+      '<div class="ed-png-table"></div>'+
+      '<div style="margin-top:14px;font-size:10px;color:#7a8694">Fonte: Controle diário de lavagem de embalagens&nbsp;&nbsp;·&nbsp;&nbsp;Fórmula: Σ Itens lavados × Tempo planejado</div>';
+    tmp.querySelector(".ed-png-chart").appendChild(img);
+    tmp.querySelector(".ed-png-table").innerHTML=tableEl.innerHTML;
+    document.body.appendChild(tmp);
+    /* tabela clonada: desativa colunas/cabeçalho "grudados" (sticky) p/ renderizar inteira */
+    tmp.querySelectorAll("table.ed-table th, .ed-sticky").forEach(function(el){ el.style.position="static"; });
+    var W=tmp.offsetWidth, H=tmp.offsetHeight;
+    var limpa=function(){ if(tmp.parentNode) tmp.parentNode.removeChild(tmp); };
+    html2canvas(tmp,{backgroundColor:"#ffffff",scale:2,logging:false,width:W,height:H,windowWidth:W,windowHeight:H}).then(function(canvas){
+      canvas.toBlob(function(blob){
+        if(!blob){ limpa(); done(); setTimeout(function(){ alert("Falha ao gerar a imagem (canvas vazio)."); },30); return; }
+        var url=URL.createObjectURL(blob);
+        var a=document.createElement("a");
+        var slug=(mesLbl||"mes").toLowerCase().replace(/[^0-9a-zà-ÿ]+/g,"-").replace(/^-+|-+$/g,"")||"mes";
+        a.href=url; a.download="embalagens-lavadas-"+slug+".png";
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); },1500);
+        limpa(); done();
+      },"image/png");
+    }).catch(function(e){ limpa(); done(); setTimeout(function(){ alert("Não foi possível gerar o PNG: "+((e&&e.message)||e)); },30); });
+  };
+  img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
+}
+(function(){ var b=document.getElementById("ed-png-btn"); if(b) b.addEventListener("click",edExportPNG); })();
 
 function renderMonthChart(base){
   const sel=document.getElementById("d-fmes");
@@ -4976,22 +5121,15 @@ function renderMonthChart(base){
   dadosDia.forEach(dd=>{["1","2","3"].forEach(t=>{totalPorTurno[t]+=dd.porTurno[t].min;});});
   ["1","2","3"].forEach(t=>{const el=document.getElementById("dl-hrs-"+t); if(el) el.textContent=fmtMin(totalPorTurno[t]);});
 
-  /* ===== Total de embalagens + detalhamento "o que foi lavado" no mês =====
-     Mesma lógica multi-embalagem usada nos demais gráficos. Respeita o
-     filtro de turno (regsDoMes já está filtrado). */
-  let totalEmbMes=0; const embMapMes={};
+  /* ===== Total de embalagens no mês (cartão do resumo) =====
+     Mesma lógica multi-embalagem usada nos demais gráficos. */
+  let totalEmbMes=0;
   regsDoMes.filter(r=>r.tipo==="lav").forEach(r=>{
-    if(r.itens&&r.itens.length){
-      r.itens.forEach(it=>{const q=it.total||0; totalEmbMes+=q; embMapMes[it.emb]=(embMapMes[it.emb]||0)+q;});
-    } else {
-      const q=r.total||0; totalEmbMes+=q; embMapMes[r.emb]=(embMapMes[r.emb]||0)+q;
-    }
+    if(r.itens&&r.itens.length){ r.itens.forEach(it=>{ totalEmbMes+=(it.total||0); }); }
+    else { totalEmbMes+=(r.total||0); }
   });
   const msEmbEl=document.getElementById("ms-emb-total");
   if(msEmbEl) msEmbEl.textContent=totalEmbMes.toLocaleString("pt-BR");
-
-  /* detalhamento (respeita o filtro de período de/até logo abaixo do gráfico) */
-  renderMonthBreakdown();
 
   /* renderiza barras dia a dia — segmentadas por turno */
   const chartEl=document.getElementById("month-day-chart");
@@ -5376,16 +5514,6 @@ openMotivoDrilldown=function(motivo,filteredParadas){
     const idx=sel.selectedIndex;
     if(idx>0){sel.selectedIndex=idx-1;
       if(document.getElementById("view-dash").classList.contains("on"))renderDash();}
-  });
-  /* filtro de período (de/até por dia e hora) do detalhamento — afeta só o detalhamento */
-  ["meb-de-data","meb-de-hora","meb-ate-data","meb-ate-hora"].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.addEventListener("change",()=>{renderMonthBreakdown();});
-  });
-  const mebLimpar=document.getElementById("meb-limpar");
-  if(mebLimpar) mebLimpar.addEventListener("click",()=>{
-    ["meb-de-data","meb-de-hora","meb-ate-data","meb-ate-hora"].forEach(id=>{const el=document.getElementById(id); if(el) el.value="";});
-    renderMonthBreakdown();
   });
 })();
 
