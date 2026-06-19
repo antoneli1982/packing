@@ -2134,8 +2134,8 @@
       </div>
       <div class="detail-stats-row" id="detail-stats-row"></div>
       <div class="panel">
-        <div class="panel-head"><span class="tag" style="background:var(--c-par)">LOG</span><h2>Registros Detalhados</h2></div>
-        <div class="table-scroll">
+        <div class="panel-head"><span class="tag" style="background:var(--c-par)">LOG</span><h2 id="detail-panel-title">Registros Detalhados</h2></div>
+        <div class="table-scroll" id="detail-table-scroll">
           <table class="detail-table">
             <thead><tr>
               <th>Data</th><th>Turno</th><th>Início</th><th>Fim</th><th>Duração</th><th>Observação</th>
@@ -5339,41 +5339,12 @@ function openDayDrilldown(dataStr, dia, mes, ano, regsDia){
     resumoEl.innerHTML+=html;
   }
 
-  /* === Tabela detalhada === */
-  thead.innerHTML='<th>Turno</th><th>Tipo</th><th>Início</th><th>Fim</th><th>Duração</th><th>Detalhe / Causa</th>';
-
-  if(!regsDia.length){
-    emptyBox.innerHTML='<div class="empty"><div class="big">▦</div><div class="txt">NENHUM REGISTRO NESTE DIA</div></div>';
-  } else {
-    regsDia.sort((a,b)=>{
-      if(a.turno!==b.turno) return a.turno.localeCompare(b.turno);
-      return a.hi.replace(":","").localeCompare(b.hi.replace(":",""));
-    }).forEach(r=>{
-      const tr=document.createElement("tr");
-      let detalheStr;
-      if(r.tipo==="lav"){
-        const danifBadge=it=>(it.danif||0)>0?' <span style="color:#ff3b3b;font-weight:800">⚠'+it.danif.toLocaleString("pt-BR")+' segr.</span>':'';
-        if(r.itens&&r.itens.length>1){
-          detalheStr=r.itens.map(it=>it.emb+' <b style="color:var(--blue-soft)">('+it.total.toLocaleString("pt-BR")+')</b>'+danifBadge(it)).join(' + ')+
-            ' — <b>'+r.total.toLocaleString("pt-BR")+' emb.</b>';
-        } else {
-          const it0=r.itens?r.itens[0]:{emb:r.emb,total:r.total,danif:0};
-          detalheStr=it0.emb+' — '+r.total.toLocaleString("pt-BR")+' emb.'+danifBadge(it0);
-        }
-        if(r.cicloExtra) detalheStr+=' <span class="badge-ce">+CICLO</span>';
-      } else {
-        detalheStr=r.motivo+(r.obs?' — '+r.obs:'');
-      }
-      tr.innerHTML=
-        '<td><span class="pill" data-t="'+r.turno+'">'+r.turno+'º</span></td>'+
-        '<td><span class="pill" data-tp="'+r.tipo+'">'+TPSHORT[r.tipo]+'</span></td>'+
-        '<td class="mono">'+r.hi+'</td>'+
-        '<td class="mono">'+r.hf+'</td>'+
-        '<td class="mono" style="color:'+(r.tipo==="par"?"var(--c-par)":"var(--blue-soft)")+'">'+fmtMin(mins(r.hi,r.hf))+'</td>'+
-        '<td>'+detalheStr+'</td>';
-      tb.appendChild(tr);
-    });
-  }
+  /* Tabela de registros detalhados REMOVIDA da visão do dia (a pedido). Mantém-se apenas
+     o resumo acima (embalagens do dia + por turno). A tabela continua disponível no
+     drill-down por motivo de parada, que reexibe esta seção. */
+  const _ts=document.getElementById("detail-table-scroll"); if(_ts) _ts.style.display="none";
+  if(emptyBox){ emptyBox.style.display="none"; }
+  const _pt=document.getElementById("detail-panel-title"); if(_pt) _pt.textContent="Resumo do Dia";
 
   overlay.classList.add("on");
   overlay.scrollTop=0;
@@ -5388,6 +5359,10 @@ openMotivoDrilldown=function(motivo,filteredParadas){
   /* Limpar resumo por turno (só usado no drill-down de dia) */
   const resumoEl=document.getElementById("detail-turno-resumo");
   if(resumoEl) resumoEl.innerHTML="";
+  /* Reexibir a tabela e restaurar o título (ocultados na visão do dia) */
+  const _ts=document.getElementById("detail-table-scroll"); if(_ts) _ts.style.display="";
+  const _eb=document.getElementById("detail-empty"); if(_eb) _eb.style.display="";
+  const _pt=document.getElementById("detail-panel-title"); if(_pt) _pt.textContent="Registros Detalhados";
   _origOpenMotivoDrilldown(motivo,filteredParadas);
 };
 
