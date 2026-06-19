@@ -5184,26 +5184,6 @@ function openDayDrilldown(dataStr, dia, mes, ano, regsDia){
   }
   resumoEl.innerHTML="";
 
-  /* ===== Consolidado do dia: o que foi lavado naquele dia (todos os turnos) =====
-     Aparece no topo do detalhamento, ao clicar na barra do dia. */
-  const embDiaMap={};
-  lavDia.forEach(r=>{
-    if(r.itens&&r.itens.length){
-      r.itens.forEach(it=>{embDiaMap[it.emb]=(embDiaMap[it.emb]||0)+(it.total||0);});
-    } else {
-      embDiaMap[r.emb]=(embDiaMap[r.emb]||0)+(r.total||0);
-    }
-  });
-  const embDiaList=Object.keys(embDiaMap).map(k=>({k,v:embDiaMap[k]})).filter(o=>o.v>0).sort((a,b)=>b.v-a.v);
-  if(embDiaList.length>0){
-    const escD=s=>String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
-    resumoEl.innerHTML=
-      '<div class="dia-emb-box"><div class="dia-emb-title">Embalagens lavadas neste dia · quantidade</div>'+
-      '<div class="dia-emb-grid">'+
-      embDiaList.map(o=>'<div class="dia-emb-item"><span class="dia-emb-nome">'+escD(o.k)+'</span><span class="dia-emb-qtd">'+o.v.toLocaleString("pt-BR")+'</span></div>').join('')+
-      '</div></div>';
-  }
-
   const turnosAtivos=["1","2","3"].filter(t=>regsDia.some(r=>r.turno===t));
 
   if(turnosAtivos.length>0){
