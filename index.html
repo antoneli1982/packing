@@ -2453,7 +2453,7 @@
           <div class="sim-stat" style="--bb:var(--blue)"><div class="v" id="sim-t-tempo">00:00:00</div><div class="k">Tempo total (h:min:s)</div></div>
         </div>
         <div class="sim-actions">
-          <span class="sim-disp-chip" title="Disponibilidade = MTBF ÷ (MTBF + MTTR)">Disponibilidade <b id="sim-disp">95,2%</b></span>
+          <span class="sim-disp-chip" title="Disponibilidade operacional = (22 h − todas as paradas) ÷ 22 h">Disp. operacional <b id="sim-disp">95,2%</b></span>
           <button class="btn-ghost danger" id="sim-pdf">⬇ Gerar relatório PDF</button>
         </div>
         <div class="sim-imp">
@@ -2479,6 +2479,23 @@
         </div>
       </details>
 
+      <details class="sim-acc" open>
+        <summary><span class="tag" style="background:var(--red)">PARADAS</span>Análise de máquina parada — causas e disponibilidade</summary>
+        <div class="sim-cfg-note">
+          Informe os <b>minutos parados por dia</b> de cada causa, dentro da janela programada de <b>22 h</b> (1.320 min).
+          A linha de <b>quebra</b> é calculada do MTBF/MTTR do topo. Some apenas paradas <i>durante</i> a operação —
+          não relance aqui o intervalo de refeição/turno que já reduziu 24 h para 22 h.
+          <span style="color:var(--orange);font-weight:600">CONFERIR:</span> os valores abaixo são premissas — ajuste para a sua realidade.
+        </div>
+        <div class="sim-tbl">
+          <table class="sim-table">
+            <thead><tr><th>Causa de parada</th><th style="text-align:center">Min/dia (22 h)</th><th style="text-align:center">% do tempo</th></tr></thead>
+            <tbody id="sim-paradas-body"></tbody>
+          </table>
+        </div>
+        <div class="sim-cfg-note" id="sim-paradas-sum" style="color:var(--txt-dim)"></div>
+      </details>
+
       <details class="sim-acc">
         <summary><span class="tag" style="background:var(--blue)">i</span>Como o cálculo funciona</summary>
         <div class="sim-explain">
@@ -2486,25 +2503,17 @@
           <code>ciclos = ⌈cestos ÷ gaiolas por ciclo⌉</code> e
           <code>tempo = ciclos × tempo médio por ciclo</code>. Os totais somam tudo.
           <br><br>
+          <b>Máquina parada (todas as causas):</b> a tabela de paradas soma os minutos perdidos por dia
+          (quebra do MTBF/MTTR + demais causas). <code>Disponibilidade operacional = (1.320 − total parado) ÷ 1.320</code> e
+          <code>tempo com máquina parada = tempo teórico ÷ Disponibilidade</code>. MTBF é o tempo médio entre falhas
+          e MTTR o tempo médio de reparo (horas, no topo).
+          <br><br>
+          O <b>relatório automático</b> lê uma planilha Excel (modelo da embalagem + quantidade), gera o mesmo cálculo,
+          o bloco completo de máquina parada e divide a demanda pela <b>capacidade produtiva diária</b> —
+          22 h menos todas as paradas — indicando quantos dias a demanda exige.
+          <br><br>
           O tempo médio por ciclo é a média de tempo decorrido das lavagens daquela embalagem (tela 08).
           Embalagem sem histórico usa a base de 20,8 min/ciclo até existirem apontamentos.
-          Premissa: um ciclo comporta até as gaiolas definidas no topo e dura o mesmo tempo independentemente
-          de estar cheio; cada tipo é contado em seus próprios ciclos.
-        </div>
-      </details>
-
-      <details class="sim-acc">
-        <summary><span class="tag" style="background:var(--red)">RISCO</span>Risco de quebra e relatório automático</summary>
-        <div class="sim-explain">
-          A <b>análise de risco</b> usa <code>Disponibilidade = MTBF ÷ (MTBF + MTTR)</code> e mostra uma
-          segunda via dos tempos: <code>tempo com risco = tempo teórico ÷ Disponibilidade</code>.
-          MTBF é o tempo médio entre falhas e MTTR o tempo médio de reparo (ambos em horas, editáveis no topo).
-          <br><br>
-          O <b>relatório automático</b> lê uma planilha Excel (modelo da embalagem + quantidade),
-          gera o mesmo cálculo e o bloco de risco, e divide o tempo total pela
-          <b>capacidade diária de 22 h</b> (1.320 min), indicando quantos dias a demanda exige.
-          <br><br>
-          <span style="color:var(--orange);font-weight:600">CONFERIR:</span> os valores de MTBF/MTTR são premissas — ajuste-os para a realidade da sua máquina antes de usar o relatório como referência.
         </div>
       </details>
     </div>
@@ -4275,13 +4284,15 @@ function simRenderCfg(tmap){
 })();
 
 /* ===================================================================
-   SIMULAÇÃO — Análise de risco (MTTR/MTBF), relatório PDF (manual) e
-   relatório automático por demanda em Excel (divisão pela capacidade
-   diária de 22 h). Tudo abaixo é adicional e NÃO altera o cálculo da
-   tela. Premissas (editáveis pelo usuário):
-     • Disponibilidade A = MTBF / (MTBF + MTTR)
-     • Tempo com risco de quebra = tempo teórico ÷ A
-     • Capacidade diária = 22 h de operação = 1.320 min
+   SIMULAÇÃO — Análise de MÁQUINA PARADA (todas as causas), relatório
+   PDF (manual) e relatório automático por demanda em Excel (divisão
+   pela capacidade produtiva diária). Tudo abaixo é adicional e NÃO
+   altera o cálculo da tela. Premissas (editáveis pelo usuário):
+     • Quebra: indisponibilidade = MTTR / (MTBF + MTTR)
+     • Total parado/dia = quebra + demais causas (min/dia), em 22 h
+     • Disponibilidade operacional A = (1.320 − total parado) ÷ 1.320
+     • Tempo com máquina parada = tempo teórico ÷ A
+     • Capacidade produtiva/dia = 22 h − todas as paradas
    =================================================================== */
 const SIM_LS_MTBF = "sas-sim-mtbf";
 const SIM_LS_MTTR = "sas-sim-mttr";
@@ -4293,9 +4304,51 @@ let simMTTR = 2;                             /* horas para reparo */
   try{ const b=parseFloat(localStorage.getItem(SIM_LS_MTTR)); if(b>=0) simMTTR=b; }catch(e){}
 })();
 
-function simDisponibilidade(){
+/* ---- Análise de MÁQUINA PARADA: todas as causas de parada ----
+   A quebra vem do MTBF/MTTR (linha calculada). As demais causas são
+   informadas em MINUTOS POR DIA dentro da janela programada de 22 h.
+   São perdas DENTRO da operação programada — não relance aqui o
+   intervalo de refeição/turno que já reduz 24 h para 22 h.            */
+const SIM_LS_PARADAS = "sas-sim-paradas";
+const SIM_PARADAS_DEF = [
+  { key:"setup",     label:"Setup / troca / ajuste (troca de embalagem)", min:60 },
+  { key:"limpeza",   label:"Limpeza / higienização da lavadora",          min:50 },
+  { key:"manut",     label:"Manutenção preventiva / programada",          min:40 },
+  { key:"insumo",    label:"Falta de insumo (água, químico, energia, ar)", min:25 },
+  { key:"operador",  label:"Falta de operador / espera de mão de obra",   min:35 },
+  { key:"micro",     label:"Pequenas paradas / microparadas / ajuste de processo", min:50 },
+  { key:"outras",    label:"Outras paradas (qualidade, retrabalho, aguardando demanda)", min:25 }
+];
+let simParadas = SIM_PARADAS_DEF.map(p=>({ ...p }));
+(function simLoadParadas(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(SIM_LS_PARADAS) || "null");
+    if(raw && typeof raw === "object"){
+      simParadas = SIM_PARADAS_DEF.map(p=>({ ...p, min: (raw[p.key]!=null && isFinite(raw[p.key])) ? Math.max(0,+raw[p.key]) : p.min }));
+    }
+  }catch(e){}
+})();
+function simParadasSave(){
+  const o = {}; simParadas.forEach(p=>{ o[p.key]=p.min; });
+  try{ localStorage.setItem(SIM_LS_PARADAS, JSON.stringify(o)); }catch(e){}
+}
+/* Minutos/dia de parada por quebra, derivados do MTBF/MTTR (sobre 22 h) */
+function simQuebraMinDia(){
   const den = simMTBF + simMTTR;
-  return den>0 ? simMTBF/den : 1;
+  const frac = den>0 ? simMTTR/den : 0;     /* indisponibilidade por quebra */
+  return frac * SIM_CAP_DIA_MIN;
+}
+/* Total de minutos parados por dia (quebra + demais causas) */
+function simParadaTotalMin(){
+  return simQuebraMinDia() + simParadas.reduce((a,p)=>a + (isFinite(p.min)?Math.max(0,p.min):0), 0);
+}
+/* Minutos produtivos por dia (piso de 5% da janela para evitar divisão por ~0) */
+function simMinProdDia(){
+  return Math.max(SIM_CAP_DIA_MIN * 0.05, SIM_CAP_DIA_MIN - simParadaTotalMin());
+}
+/* Disponibilidade operacional = produtivo/dia ÷ janela programada */
+function simDisponibilidade(){
+  return simMinProdDia() / SIM_CAP_DIA_MIN;
 }
 
 /* Calcula a simulação inteira (estado atual ou um informado) em uma estrutura única */
@@ -4357,21 +4410,59 @@ function simGerarPDF(comp, opts){
     margin:{ left:40, right:40 }
   });
 
-  /* ---- Bloco VERMELHO: análise de risco MTTR/MTBF ---- */
+  /* ---- helper: garante espaço na página antes de um novo bloco ---- */
+  const pageH = doc.internal.pageSize.getHeight();
+  function ensureSpace(yy, needed){
+    if(yy + needed > pageH - 40){ doc.addPage(); return 40; }
+    return yy;
+  }
+
+  /* ---- Bloco VERMELHO: ANÁLISE DE MÁQUINA PARADA (todas as causas) ---- */
   let ry = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 22;
+  ry = ensureSpace(ry, 95);
   doc.setFillColor(240,83,63); doc.rect(40, ry, pageW-80, 20, "F");
   doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(255,255,255);
-  doc.text("ANÁLISE DE RISCO — DISPONIBILIDADE (MTTR / MTBF)", 48, ry+14);
-  ry += 32;
-  doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(150,45,33);
+  doc.text("ANÁLISE DE MÁQUINA PARADA — DISPONIBILIDADE OPERACIONAL", 48, ry+14);
+  ry += 30;
+
+  /* Tabela de TODAS as causas de parada (min/dia e % da janela de 22 h) */
+  const quebraMin = simQuebraMinDia();
+  const totalMin  = simParadaTotalMin();
+  const netMin    = simMinProdDia();
+  const pctTxt = m => (SIM_CAP_DIA_MIN>0 ? (m/SIM_CAP_DIA_MIN*100) : 0).toFixed(1).replace(".",",") + "%";
+  const headP = [["Causa de parada","Min/dia (22 h)","% do tempo"]];
+  const bodyP = [];
+  bodyP.push([ "Quebra / falha mecânica (MTBF " + fmtH(simMTBF) + " h · MTTR " + fmtH(simMTTR) + " h)",
+               String(Math.round(quebraMin)), pctTxt(quebraMin) ]);
+  simParadas.forEach(p=>{ bodyP.push([ p.label, String(Math.round(p.min)), pctTxt(p.min) ]); });
+  bodyP.push([
+    { content:"TOTAL PARADO", styles:{ fontStyle:"bold", halign:"left" } },
+    { content:String(Math.round(totalMin)), styles:{ fontStyle:"bold" } },
+    { content:pctTxt(totalMin), styles:{ fontStyle:"bold" } }
+  ]);
+  doc.autoTable({
+    head:headP, body:bodyP, startY:ry, theme:"grid",
+    styles:{ font:"helvetica", fontSize:8.5, cellPadding:4.5, halign:"center", lineColor:[238,200,200], lineWidth:0.5 },
+    headStyles:{ fillColor:[200,57,42], textColor:255, fontStyle:"bold", halign:"center", valign:"middle" },
+    columnStyles:{ 0:{ halign:"left" } },
+    alternateRowStyles:{ fillColor:[252,242,242] },
+    margin:{ left:40, right:40 }
+  });
+
+  /* Resumo da disponibilidade operacional (todas as paradas consideradas) */
+  let sy = (doc.lastAutoTable ? doc.lastAutoTable.finalY : ry) + 14;
+  sy = ensureSpace(sy, 55);
+  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(150,45,33);
   doc.text(
-    "MTBF: " + fmtH(simMTBF) + " h   •   MTTR: " + fmtH(simMTTR) + " h   •   "
-    + "Disponibilidade: " + (A*100).toFixed(1).replace(".",",") + "%   •   "
-    + "Fator sobre o tempo: ×" + (1/A).toFixed(3).replace(".",","),
-    40, ry
+    "Disponibilidade operacional: " + (A*100).toFixed(1).replace(".",",") + "%"
+    + "   •   Fator sobre o tempo: ×" + (1/A).toFixed(3).replace(".",",")
+    + "   •   Tempo produtivo por dia: " + simFmtHMS(netMin) + " de 22:00:00",
+    40, sy
   );
-  ry += 6;
-  const headR = [["Embalagem","Tempo teórico","Tempo com risco de quebra"]];
+  sy += 8;
+
+  /* Segunda via dos tempos, já com TODAS as paradas */
+  const headR = [["Embalagem","Tempo teórico","Tempo com máquina parada"]];
   const bodyR = validas.map(l=>[ l.emb, simFmtHMS(l.tempo), simFmtHMS(l.tempo / A) ]);
   bodyR.push([
     { content:"TOTAL", styles:{ fontStyle:"bold", halign:"left" } },
@@ -4379,7 +4470,7 @@ function simGerarPDF(comp, opts){
     { content:simFmtHMS(comp.tTempo / A), styles:{ fontStyle:"bold" } }
   ]);
   doc.autoTable({
-    head:headR, body:bodyR, startY:ry+6, theme:"grid",
+    head:headR, body:bodyR, startY:sy+6, theme:"grid",
     styles:{ font:"helvetica", fontSize:8.5, cellPadding:5, halign:"center", lineColor:[238,200,200], lineWidth:0.5 },
     headStyles:{ fillColor:[200,57,42], textColor:255, fontStyle:"bold", halign:"center", valign:"middle" },
     columnStyles:{ 0:{ halign:"left", fontStyle:"bold" }, 2:{ textColor:[200,57,42], fontStyle:"bold" } },
@@ -4390,15 +4481,16 @@ function simGerarPDF(comp, opts){
   /* ---- Distribuição pela capacidade diária de 22h (apenas relatório automático) ---- */
   if(opts.diario){
     let dy = (doc.lastAutoTable ? doc.lastAutoTable.finalY : ry) + 22;
-    const diasTeo   = comp.tTempo>0 ? Math.ceil(comp.tTempo / SIM_CAP_DIA_MIN) : 0;
-    const diasRisco = comp.tTempo>0 ? Math.ceil((comp.tTempo / A) / SIM_CAP_DIA_MIN) : 0;
+    dy = ensureSpace(dy, 60);
+    const diasTeo  = comp.tTempo>0 ? Math.ceil(comp.tTempo / SIM_CAP_DIA_MIN) : 0;
+    const diasReal = comp.tTempo>0 ? Math.ceil(comp.tTempo / netMin) : 0;
     doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(20,30,45);
     doc.text("DISTRIBUIÇÃO PELA CAPACIDADE DIÁRIA (22 h/dia = 1.320 min)", 40, dy);
     dy += 6;
-    const headD = [["Cenário","Tempo total","Dias necessários (22 h/dia)","Tempo médio/dia"]];
+    const headD = [["Cenário","Tempo total","Produtivo/dia","Dias necessários"]];
     const bodyD = [
-      ["Teórico", simFmtHMS(comp.tTempo), String(diasTeo), diasTeo ? simFmtHMS(comp.tTempo/diasTeo) : "—"],
-      ["Com risco de quebra", simFmtHMS(comp.tTempo/A), String(diasRisco), diasRisco ? simFmtHMS((comp.tTempo/A)/diasRisco) : "—"]
+      ["Teórico (sem paradas)", simFmtHMS(comp.tTempo), "22:00:00", String(diasTeo)],
+      ["Com máquina parada (todas as causas)", simFmtHMS(comp.tTempo/A), simFmtHMS(netMin), String(diasReal)]
     ];
     doc.autoTable({
       head:headD, body:bodyD, startY:dy+6, theme:"grid",
@@ -4501,7 +4593,7 @@ function simHandleExcel(file){
   reader.readAsArrayBuffer(file);
 }
 
-/* ---- Eventos do bloco de risco / relatórios da simulação ---- */
+/* ---- Eventos do bloco de máquina parada / relatórios da simulação ---- */
 (function simRiscoSetup(){
   const mtbf = document.getElementById("sim-mtbf");
   const mttr = document.getElementById("sim-mttr");
@@ -4509,15 +4601,63 @@ function simHandleExcel(file){
   const pdfBtn = document.getElementById("sim-pdf");
   const xlsBtn = document.getElementById("sim-xls-btn");
   const xlsInp = document.getElementById("sim-xls-file");
-  function refreshDisp(){
-    if(dispEl) dispEl.textContent = (simDisponibilidade()*100).toFixed(1).replace(".",",") + "%";
+  const parBody = document.getElementById("sim-paradas-body");
+  const parSum  = document.getElementById("sim-paradas-sum");
+  const pctTxt = m => (SIM_CAP_DIA_MIN>0 ? (m/SIM_CAP_DIA_MIN*100) : 0).toFixed(1).replace(".",",") + "%";
+
+  function refreshResumo(){
+    const A = simDisponibilidade();
+    if(dispEl) dispEl.textContent = (A*100).toFixed(1).replace(".",",") + "%";
+    const qm = simQuebraMinDia();
+    const qMinEl = document.getElementById("sim-par-quebra-min");
+    const qPctEl = document.getElementById("sim-par-quebra-pct");
+    if(qMinEl) qMinEl.textContent = String(Math.round(qm));
+    if(qPctEl) qPctEl.textContent = pctTxt(qm);
+    simParadas.forEach(p=>{
+      const pe = document.getElementById("sim-par-pct-"+p.key);
+      if(pe) pe.textContent = pctTxt(p.min);
+    });
+    if(parSum){
+      parSum.innerHTML = "Total parado: <b>" + Math.round(simParadaTotalMin()) + " min/dia</b> (" + pctTxt(simParadaTotalMin())
+        + ")  ·  Produtivo: <b>" + simFmtHMS(simMinProdDia()) + "</b>/dia  ·  Disponibilidade operacional: <b>"
+        + (A*100).toFixed(1).replace(".",",") + "%</b>  ·  fator ×" + (1/A).toFixed(3).replace(".",",");
+    }
+  }
+
+  function renderParadas(){
+    if(!parBody) return;
+    let html = '<tr>'
+      + '<td class="sim-name">Quebra / falha mecânica <span class="sim-sub">(MTBF/MTTR)</span></td>'
+      + '<td style="text-align:center;color:var(--txt-dim)"><span id="sim-par-quebra-min">0</span> <span class="sim-sub">calc.</span></td>'
+      + '<td style="text-align:center;color:var(--txt-dim)" id="sim-par-quebra-pct">0%</td>'
+      + '</tr>';
+    simParadas.forEach(p=>{
+      html += '<tr>'
+        + '<td class="sim-name">' + p.label + '</td>'
+        + '<td style="text-align:center"><input class="sim-cfg-inp" data-par="' + p.key + '" type="number" min="0" step="5" inputmode="numeric" value="' + p.min + '"></td>'
+        + '<td style="text-align:center;color:var(--txt-dim)" id="sim-par-pct-' + p.key + '">' + pctTxt(p.min) + '</td>'
+        + '</tr>';
+    });
+    parBody.innerHTML = html;
+    refreshResumo();
+  }
+
+  if(parBody){
+    parBody.addEventListener("input", e=>{
+      const inp = e.target.closest(".sim-cfg-inp"); if(!inp) return;
+      const p = simParadas.find(x=>x.key===inp.dataset.par); if(!p) return;
+      const v = parseFloat(inp.value);
+      p.min = (isFinite(v) && v>=0) ? v : 0;
+      simParadasSave();
+      refreshResumo();
+    });
   }
   if(mtbf){
     mtbf.value = simMTBF;
     mtbf.addEventListener("input", ()=>{
       const v = parseFloat(mtbf.value);
       if(v>0){ simMTBF=v; try{ localStorage.setItem(SIM_LS_MTBF,String(v)); }catch(e){} }
-      refreshDisp();
+      refreshResumo();
     });
   }
   if(mttr){
@@ -4525,10 +4665,10 @@ function simHandleExcel(file){
     mttr.addEventListener("input", ()=>{
       const v = parseFloat(mttr.value);
       if(v>=0){ simMTTR=v; try{ localStorage.setItem(SIM_LS_MTTR,String(v)); }catch(e){} }
-      refreshDisp();
+      refreshResumo();
     });
   }
-  refreshDisp();
+  renderParadas();
   if(pdfBtn) pdfBtn.addEventListener("click", simGerarPDFManual);
   if(xlsBtn && xlsInp){
     xlsBtn.addEventListener("click", ()=> xlsInp.click());
