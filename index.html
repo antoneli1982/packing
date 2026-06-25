@@ -2372,6 +2372,9 @@
         background-repeat:no-repeat;background-position:right 9px center}
       #view-sim .sim-row input[type=number]{text-align:center;font-weight:700}
       #view-sim .sim-row select:focus,#view-sim .sim-row input:focus{border-color:var(--blue-soft)}
+      #view-sim .sim-emb{display:flex;flex-direction:column;gap:3px;min-width:0}
+      #view-sim .sim-emb-name{font-size:10.5px;color:var(--txt-dim);line-height:1.25;font-weight:600;
+        word-break:break-word;padding:0 2px}
       #view-sim .sim-q{display:flex;flex-direction:column}
       #view-sim .sim-qlbl{font-size:9px;color:var(--txt-faint);text-align:center;text-transform:uppercase;
         letter-spacing:.5px;margin-bottom:3px;font-weight:600}
@@ -4257,7 +4260,10 @@ function renderSim(){
       : '<div class="sim-foto sim-foto-ph" title="sem foto cadastrada">▦</div>';
     return '<div class="sim-row">'+
       foto+
-      '<select class="sim-sel" data-i="'+i+'">'+opts+'</select>'+
+      '<div class="sim-emb">'+
+        '<select class="sim-sel" data-i="'+i+'" title="'+ln.emb+'">'+opts+'</select>'+
+        '<span class="sim-emb-name">'+ln.emb+'</span>'+
+      '</div>'+
       '<div class="sim-q"><span class="sim-qlbl">Quantidade</span>'+
         '<input type="number" min="0" step="1" inputmode="numeric" class="sim-qtd" data-i="'+i+'" value="'+ln.qtd+'" placeholder="0"></div>'+
       '<button class="sim-rm" data-i="'+i+'" title="Remover">×</button>'+
