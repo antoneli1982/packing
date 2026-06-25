@@ -2753,6 +2753,7 @@ async function load(){
     /* Carrega registros de rack do Firebase — listener em tempo real */
     rackLoadFromFirebase().catch(()=>{});
     _metasSincFirebase().catch(()=>{});
+    _capSincFirebase().catch(()=>{});
     /* SEMPRE busca do Firebase antes do listener para garantir dados atualizados */
     try{
       const snap=await fb.collection(COLECAO).orderBy("id","desc").get();
@@ -4119,6 +4120,53 @@ let simCapConfirm = new Set();
   try{ const a=JSON.parse(localStorage.getItem(SIM_LS_CAPOK)||"[]"); if(Array.isArray(a)) simCapConfirm=new Set(a); }catch(e){}
   try{ const g=parseInt(localStorage.getItem(SIM_LS_GPC),10); if(g>0) simGpc=g; }catch(e){}
 })();
+
+/* ===== Sincronização da "Emb. por cesto" entre navegadores (Firebase) =====
+   Mesmo padrão das Metas: 1 documento em config/capacidades.
+   Tudo protegido por backend/fb + try/catch — offline usa só o localStorage. */
+async function _capSalvarFirebase(){
+  if(backend!=='firebase' || !fb) return;
+  try{
+    await fb.collection('config').doc('capacidades').set({
+      cap: Object.assign({}, simCapOv),
+      ok:  [...simCapConfirm],
+      gpc: simGpc
+    });
+  }catch(e){ console.warn('capSalvarFirebase:', e.message); }
+}
+/* Grava com debounce — o campo dispara a cada tecla; junta a rajada em uma escrita só */
+let _capSaveTimer=null;
+function _capSalvarFirebaseDebounced(){
+  if(backend!=='firebase' || !fb) return;
+  clearTimeout(_capSaveTimer);
+  _capSaveTimer=setTimeout(_capSalvarFirebase, 700);
+}
+/* Busca do Firebase e aplica (chamado no load() quando online) */
+async function _capSincFirebase(){
+  if(backend!=='firebase' || !fb) return;
+  try{
+    const snap=await fb.collection('config').doc('capacidades').get();
+    if(!snap.exists) return;
+    const d=snap.data(); if(!d) return;
+    if(d.cap && typeof d.cap==='object'){
+      simCapOv=d.cap;
+      try{ localStorage.setItem(SIM_LS_CAP, JSON.stringify(simCapOv)); }catch(e2){}
+    }
+    if(Array.isArray(d.ok)){
+      simCapConfirm=new Set(d.ok);
+      try{ localStorage.setItem(SIM_LS_CAPOK, JSON.stringify([...simCapConfirm])); }catch(e2){}
+    }
+    if(typeof d.gpc==='number' && d.gpc>0){
+      simGpc=d.gpc;
+      try{ localStorage.setItem(SIM_LS_GPC, String(simGpc)); }catch(e2){}
+      const g=document.getElementById('sim-gpc'); if(g) g.value=simGpc;
+    }
+    /* Redesenha a tabela de capacidades e recalcula a simulação com os valores recebidos */
+    if(typeof simRenderCfg==='function') simRenderCfg();
+    if(typeof simRecalc==='function') simRecalc();
+  }catch(e){ console.warn('capSincFirebase:', e.message); }
+}
+
 /* CONFERIR aparece quando: falta o valor de emb./cesto OU é leitura duvidosa ainda não confirmada */
 function simCfgPrecisaConferir(emb){
   const cap = simCap(emb);
@@ -4277,6 +4325,7 @@ function simRenderCfg(tmap){
     if(temValor) simCapConfirm.add(emb); else simCapConfirm.delete(emb);
     try{ localStorage.setItem(SIM_LS_CAP, JSON.stringify(simCapOv)); }catch(e2){}
     try{ localStorage.setItem(SIM_LS_CAPOK, JSON.stringify([...simCapConfirm])); }catch(e2){}
+    _capSalvarFirebaseDebounced();
     /* atualiza o "CONFERIR" da própria linha sem re-renderizar (mantém o foco no campo) */
     const tr = inp.closest("tr"); const nameCell = tr && tr.querySelector(".sim-name");
     if(nameCell){
@@ -4302,6 +4351,7 @@ function simRenderCfg(tmap){
   if(g) g.addEventListener("input", ()=>{
     simGpc=Math.max(1,parseInt(g.value,10)||1);
     try{ localStorage.setItem(SIM_LS_GPC,String(simGpc)); }catch(e2){}
+    _capSalvarFirebaseDebounced();
     simRecalc();
   });
 })();
