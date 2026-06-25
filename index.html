@@ -4123,7 +4123,7 @@ function simCap(emb){
 }
 function simTempoMap(){
   const map={};
-  try{ calcRelatorioEmb(null,null).forEach(r=>{ if(r.avgT>0) map[r.emb]={min:r.avgT,ocor:r.ocor}; }); }
+  try{ calcRelatorioEmb(null,null).forEach(r=>{ if(r.avgT>0) map[r.emb]={min:r.avgT,ocor:r.ocor,avgC:r.avgC}; }); }
   catch(e){}
   return map;
 }
@@ -4356,14 +4356,15 @@ function simComputeAll(stateArr){
   const tmap = simTempoMap();
   const linhas = (stateArr || simState || []).map(ln=>{
     const r = simCalcLinha(ln, tmap);
-    return Object.assign({ emb: ln.emb }, r);
+    const t = tmap[ln.emb];
+    return Object.assign({ emb: ln.emb, mediaT: r.min, mediaC: (t ? t.avgC : null), temHist: !!t }, r);
   });
   let tc=0, tk=0, tt=0;
   linhas.forEach(r=>{ tc+=r.cestos; tk+=r.ciclos; tt+=r.tempo; });
   return { linhas, tCestos:tc, tCiclos:tk, tTempo:tt };
 }
 
-/* Monta o PDF a partir do dataset calculado. opts: {titulo, origem, nome, diario} */
+/* Monta o PDF a partir do dataset calculado. opts: {titulo, origem, nome} */
 function simGerarPDF(comp, opts){
   if(!window.jspdf || !window.jspdf.jsPDF){
     alert("Biblioteca de PDF não carregada. Verifique a conexão com a internet e tente novamente.");
@@ -4385,18 +4386,21 @@ function simGerarPDF(comp, opts){
   if(opts.origem){ doc.text(String(opts.origem), 40, y); y += 14; }
   doc.text("Gaiolas por ciclo: " + simGpc + "   •   Base do ciclo: " + fmtH(CICLO_MIN) + " min", 40, y); y += 14;
 
-  /* ---- Tabela teórica ---- */
-  const head = [["Embalagem","Qtd","Emb/\ncesto","Cestos","Ciclos","Tempo\n(h:min:s)"]];
+  /* ---- Tabela principal (valores apresentados) ---- */
+  const fmtC2 = v => (v==null ? "—" : Number(v).toFixed(2).replace(".",","));
+  const head = [["Embalagem","Qtd","Emb/\ncesto","Tempo médio\nlavagem","Média\nciclos","Cestos","Ciclos","Tempo total\n(h:min:s)"]];
   const body = validas.map(l=>[
     l.emb,
     (l.qtd||0).toLocaleString("pt-BR"),
     (typeof l.cap==="number" ? String(l.cap) : "—"),
+    simFmtHMS(l.mediaT),
+    fmtC2(l.mediaC),
     String(l.cestos),
     String(l.ciclos),
     simFmtHMS(l.tempo)
   ]);
   body.push([
-    { content:"TOTAL", styles:{ fontStyle:"bold", halign:"left" } }, "", "",
+    { content:"TOTAL", styles:{ fontStyle:"bold", halign:"left" } }, "", "", "", "",
     { content:String(comp.tCestos), styles:{ fontStyle:"bold" } },
     { content:String(comp.tCiclos), styles:{ fontStyle:"bold" } },
     { content:simFmtHMS(comp.tTempo), styles:{ fontStyle:"bold" } }
@@ -4417,19 +4421,76 @@ function simGerarPDF(comp, opts){
     return yy;
   }
 
-  /* ---- Bloco VERMELHO: ANÁLISE DE MÁQUINA PARADA (todas as causas) ---- */
-  let ry = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 22;
-  ry = ensureSpace(ry, 95);
-  doc.setFillColor(240,83,63); doc.rect(40, ry, pageW-80, 20, "F");
-  doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(255,255,255);
-  doc.text("ANÁLISE DE MÁQUINA PARADA — DISPONIBILIDADE OPERACIONAL", 48, ry+14);
-  ry += 30;
-
-  /* Tabela de TODAS as causas de parada (min/dia e % da janela de 22 h) */
+  /* ---- Valores compartilhados de máquina parada ---- */
   const quebraMin = simQuebraMinDia();
   const totalMin  = simParadaTotalMin();
   const netMin    = simMinProdDia();
   const pctTxt = m => (SIM_CAP_DIA_MIN>0 ? (m/SIM_CAP_DIA_MIN*100) : 0).toFixed(1).replace(".",",") + "%";
+  const diasTeo  = comp.tTempo>0 ? Math.ceil(comp.tTempo / SIM_CAP_DIA_MIN) : 0;
+  const diasReal = comp.tTempo>0 ? Math.ceil(comp.tTempo / netMin) : 0;
+
+  /* ---- Impacto das paradas: tempo real por embalagem ---- */
+  let ry = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 22;
+  ry = ensureSpace(ry, 80);
+  doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(20,30,45);
+  doc.text("IMPACTO DAS PARADAS — TEMPO REAL E DIAS DE TRABALHO", 40, ry);
+  doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(120,40,30);
+  doc.text(
+    "Disponibilidade operacional: " + (A*100).toFixed(1).replace(".",",") + "%   •   fator ×"
+    + (1/A).toFixed(3).replace(".",",") + "   •   produtivo " + simFmtHMS(netMin) + "/dia de 22:00:00",
+    40, ry+13
+  );
+  ry += 19;
+  const headR = [["Embalagem","Tempo teórico","Tempo com máquina parada"]];
+  const bodyR = validas.map(l=>[ l.emb, simFmtHMS(l.tempo), simFmtHMS(l.tempo / A) ]);
+  bodyR.push([
+    { content:"TOTAL", styles:{ fontStyle:"bold", halign:"left" } },
+    { content:simFmtHMS(comp.tTempo), styles:{ fontStyle:"bold" } },
+    { content:simFmtHMS(comp.tTempo / A), styles:{ fontStyle:"bold" } }
+  ]);
+  doc.autoTable({
+    head:headR, body:bodyR, startY:ry+6, theme:"grid",
+    styles:{ font:"helvetica", fontSize:8.5, cellPadding:5, halign:"center", lineColor:[238,200,200], lineWidth:0.5 },
+    headStyles:{ fillColor:[200,57,42], textColor:255, fontStyle:"bold", halign:"center", valign:"middle" },
+    columnStyles:{ 0:{ halign:"left", fontStyle:"bold" }, 2:{ textColor:[200,57,42], fontStyle:"bold" } },
+    alternateRowStyles:{ fillColor:[252,242,242] },
+    margin:{ left:40, right:40 }
+  });
+
+  /* ---- Dias de trabalho necessários (jornada de 22 h/dia) ---- */
+  let dy = (doc.lastAutoTable ? doc.lastAutoTable.finalY : ry) + 16;
+  dy = ensureSpace(dy, 60);
+  doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(20,30,45);
+  doc.text("DIAS DE TRABALHO NECESSÁRIOS (jornada de 22 h/dia)", 40, dy);
+  dy += 6;
+  const headD = [["Cenário","Tempo total","Produtivo/dia","Dias de trabalho"]];
+  const bodyD = [
+    ["Teórico (sem paradas)", simFmtHMS(comp.tTempo), "22:00:00", String(diasTeo)],
+    [
+      { content:"Com máquina parada (todas as causas)", styles:{ fontStyle:"bold" } },
+      { content:simFmtHMS(comp.tTempo/A), styles:{ fontStyle:"bold" } },
+      { content:simFmtHMS(netMin), styles:{ fontStyle:"bold" } },
+      { content:String(diasReal), styles:{ fontStyle:"bold", textColor:[154,108,240] } }
+    ]
+  ];
+  doc.autoTable({
+    head:headD, body:bodyD, startY:dy+6, theme:"grid",
+    styles:{ font:"helvetica", fontSize:8.5, cellPadding:5, halign:"center", lineColor:[210,216,224], lineWidth:0.5 },
+    headStyles:{ fillColor:[154,108,240], textColor:255, fontStyle:"bold", halign:"center", valign:"middle" },
+    columnStyles:{ 0:{ halign:"left", fontStyle:"bold" } },
+    margin:{ left:40, right:40 }
+  });
+
+  /* ---- (FINAL) POSSIBILIDADE DE PARADA CONFORME O HISTÓRICO ---- */
+  let py = (doc.lastAutoTable ? doc.lastAutoTable.finalY : dy) + 22;
+  py = ensureSpace(py, 95);
+  doc.setFillColor(240,83,63); doc.rect(40, py, pageW-80, 20, "F");
+  doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(255,255,255);
+  doc.text("POSSIBILIDADE DE PARADA CONFORME O HISTÓRICO", 48, py+14);
+  py += 28;
+  doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(120,40,30);
+  doc.text("Minutos parados por dia dentro da janela de 22 h. A quebra vem do MTBF/MTTR. Estes valores definem a disponibilidade operacional usada acima.", 40, py);
+  py += 6;
   const headP = [["Causa de parada","Min/dia (22 h)","% do tempo"]];
   const bodyP = [];
   bodyP.push([ "Quebra / falha mecânica (MTBF " + fmtH(simMTBF) + " h · MTTR " + fmtH(simMTTR) + " h)",
@@ -4441,65 +4502,13 @@ function simGerarPDF(comp, opts){
     { content:pctTxt(totalMin), styles:{ fontStyle:"bold" } }
   ]);
   doc.autoTable({
-    head:headP, body:bodyP, startY:ry, theme:"grid",
+    head:headP, body:bodyP, startY:py+4, theme:"grid",
     styles:{ font:"helvetica", fontSize:8.5, cellPadding:4.5, halign:"center", lineColor:[238,200,200], lineWidth:0.5 },
     headStyles:{ fillColor:[200,57,42], textColor:255, fontStyle:"bold", halign:"center", valign:"middle" },
     columnStyles:{ 0:{ halign:"left" } },
     alternateRowStyles:{ fillColor:[252,242,242] },
     margin:{ left:40, right:40 }
   });
-
-  /* Resumo da disponibilidade operacional (todas as paradas consideradas) */
-  let sy = (doc.lastAutoTable ? doc.lastAutoTable.finalY : ry) + 14;
-  sy = ensureSpace(sy, 55);
-  doc.setFont("helvetica","bold"); doc.setFontSize(9); doc.setTextColor(150,45,33);
-  doc.text(
-    "Disponibilidade operacional: " + (A*100).toFixed(1).replace(".",",") + "%"
-    + "   •   Fator sobre o tempo: ×" + (1/A).toFixed(3).replace(".",",")
-    + "   •   Tempo produtivo por dia: " + simFmtHMS(netMin) + " de 22:00:00",
-    40, sy
-  );
-  sy += 8;
-
-  /* Segunda via dos tempos, já com TODAS as paradas */
-  const headR = [["Embalagem","Tempo teórico","Tempo com máquina parada"]];
-  const bodyR = validas.map(l=>[ l.emb, simFmtHMS(l.tempo), simFmtHMS(l.tempo / A) ]);
-  bodyR.push([
-    { content:"TOTAL", styles:{ fontStyle:"bold", halign:"left" } },
-    { content:simFmtHMS(comp.tTempo), styles:{ fontStyle:"bold" } },
-    { content:simFmtHMS(comp.tTempo / A), styles:{ fontStyle:"bold" } }
-  ]);
-  doc.autoTable({
-    head:headR, body:bodyR, startY:sy+6, theme:"grid",
-    styles:{ font:"helvetica", fontSize:8.5, cellPadding:5, halign:"center", lineColor:[238,200,200], lineWidth:0.5 },
-    headStyles:{ fillColor:[200,57,42], textColor:255, fontStyle:"bold", halign:"center", valign:"middle" },
-    columnStyles:{ 0:{ halign:"left", fontStyle:"bold" }, 2:{ textColor:[200,57,42], fontStyle:"bold" } },
-    alternateRowStyles:{ fillColor:[252,242,242] },
-    margin:{ left:40, right:40 }
-  });
-
-  /* ---- Distribuição pela capacidade diária de 22h (apenas relatório automático) ---- */
-  if(opts.diario){
-    let dy = (doc.lastAutoTable ? doc.lastAutoTable.finalY : ry) + 22;
-    dy = ensureSpace(dy, 60);
-    const diasTeo  = comp.tTempo>0 ? Math.ceil(comp.tTempo / SIM_CAP_DIA_MIN) : 0;
-    const diasReal = comp.tTempo>0 ? Math.ceil(comp.tTempo / netMin) : 0;
-    doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(20,30,45);
-    doc.text("DISTRIBUIÇÃO PELA CAPACIDADE DIÁRIA (22 h/dia = 1.320 min)", 40, dy);
-    dy += 6;
-    const headD = [["Cenário","Tempo total","Produtivo/dia","Dias necessários"]];
-    const bodyD = [
-      ["Teórico (sem paradas)", simFmtHMS(comp.tTempo), "22:00:00", String(diasTeo)],
-      ["Com máquina parada (todas as causas)", simFmtHMS(comp.tTempo/A), simFmtHMS(netMin), String(diasReal)]
-    ];
-    doc.autoTable({
-      head:headD, body:bodyD, startY:dy+6, theme:"grid",
-      styles:{ font:"helvetica", fontSize:8.5, cellPadding:5, halign:"center", lineColor:[210,216,224], lineWidth:0.5 },
-      headStyles:{ fillColor:[154,108,240], textColor:255, fontStyle:"bold", halign:"center", valign:"middle" },
-      columnStyles:{ 0:{ halign:"left", fontStyle:"bold" } },
-      margin:{ left:40, right:40 }
-    });
-  }
 
   const fy = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 88) + 18;
   doc.setFont("helvetica","normal"); doc.setFontSize(7.5); doc.setTextColor(140,150,160);
@@ -4516,8 +4525,7 @@ function simGerarPDFManual(){
   simGerarPDF(comp, {
     titulo:"SAS · Simulação de Lavagem — Carga Máquina (manual)",
     origem:"Entrada manual",
-    nome:"SAS-Simulacao-Manual.pdf",
-    diario:false
+    nome:"SAS-Simulacao-Manual.pdf"
   });
 }
 
@@ -4582,8 +4590,7 @@ function simHandleExcel(file){
       simGerarPDF(comp, {
         titulo:"SAS · Simulação de Lavagem — Demanda (Excel)",
         origem:"Demanda importada: " + (file.name||"planilha") + "   •   " + stateExcel.length + " embalagem(ns)",
-        nome:"SAS-Simulacao-Demanda.pdf",
-        diario:true
+        nome:"SAS-Simulacao-Demanda.pdf"
       });
     }catch(err){
       alert("Falha ao ler a planilha: " + (err && err.message ? err.message : err));
