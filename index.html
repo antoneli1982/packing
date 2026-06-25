@@ -2419,6 +2419,12 @@
       #view-sim details.sim-acc>summary{padding:12px 16px;cursor:pointer;font-size:13px;font-weight:600;list-style:none;
         display:flex;align-items:center;gap:9px;user-select:none}
       #view-sim details.sim-acc>summary::-webkit-details-marker{display:none}
+      #view-sim .sim-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:13px 16px;border-top:1px solid var(--line-soft)}
+      #view-sim .sim-disp-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(240,83,63,.12);
+        border:1px solid rgba(240,83,63,.4);color:var(--red);border-radius:20px;padding:5px 11px;font-size:11px;font-weight:600}
+      #view-sim .sim-disp-chip b{font-variant-numeric:tabular-nums}
+      #view-sim .sim-imp{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 16px 14px}
+      #view-sim .sim-imp-hint{font-size:10.5px;color:var(--txt-faint);line-height:1.5;flex:1 1 220px;min-width:180px}
       @media(max-width:560px){#view-sim .sim-totals{grid-template-columns:1fr}#view-sim .sim-row{grid-template-columns:40px 1fr 78px auto}#view-sim .sim-foto{width:40px;height:40px}}
     </style>
 
@@ -2428,6 +2434,8 @@
           <span class="tag" style="background:var(--green)">SIM</span><h2>Simulação de Lavagem</h2>
           <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <div class="sim-ctl"><label for="sim-gpc">Gaiolas/ciclo</label><input type="number" id="sim-gpc" min="1" step="1" value="25" inputmode="numeric"></div>
+            <div class="sim-ctl"><label for="sim-mtbf">MTBF (h)</label><input type="number" id="sim-mtbf" min="0.1" step="0.5" value="40" inputmode="decimal" title="Tempo médio entre falhas (horas)"></div>
+            <div class="sim-ctl"><label for="sim-mttr">MTTR (h)</label><input type="number" id="sim-mttr" min="0" step="0.5" value="2" inputmode="decimal" title="Tempo médio de reparo (horas)"></div>
             <button class="btn-ghost" id="sim-clear">↺ Limpar</button>
           </div>
         </div>
@@ -2443,6 +2451,15 @@
           <div class="sim-stat" style="--bb:var(--purple)"><div class="v" id="sim-t-cestos">0</div><div class="k">Cestos / Gaiolas</div></div>
           <div class="sim-stat" style="--bb:var(--green)"><div class="v" id="sim-t-ciclos">0</div><div class="k">Ciclos de lavagem</div></div>
           <div class="sim-stat" style="--bb:var(--blue)"><div class="v" id="sim-t-tempo">00:00:00</div><div class="k">Tempo total (h:min:s)</div></div>
+        </div>
+        <div class="sim-actions">
+          <span class="sim-disp-chip" title="Disponibilidade = MTBF ÷ (MTBF + MTTR)">Disponibilidade <b id="sim-disp">95,2%</b></span>
+          <button class="btn-ghost danger" id="sim-pdf">⬇ Gerar relatório PDF</button>
+        </div>
+        <div class="sim-imp">
+          <button class="btn-ghost xls" id="sim-xls-btn">⬆ Importar demanda (Excel)</button>
+          <input type="file" id="sim-xls-file" accept=".xlsx,.xls" style="display:none">
+          <span class="sim-imp-hint">A planilha precisa de uma coluna com a embalagem (modelo) e outra com a quantidade. O relatório automático divide a demanda pela capacidade de 22 h/dia.</span>
         </div>
       </div>
 
@@ -2473,6 +2490,21 @@
           Embalagem sem histórico usa a base de 20,8 min/ciclo até existirem apontamentos.
           Premissa: um ciclo comporta até as gaiolas definidas no topo e dura o mesmo tempo independentemente
           de estar cheio; cada tipo é contado em seus próprios ciclos.
+        </div>
+      </details>
+
+      <details class="sim-acc">
+        <summary><span class="tag" style="background:var(--red)">RISCO</span>Risco de quebra e relatório automático</summary>
+        <div class="sim-explain">
+          A <b>análise de risco</b> usa <code>Disponibilidade = MTBF ÷ (MTBF + MTTR)</code> e mostra uma
+          segunda via dos tempos: <code>tempo com risco = tempo teórico ÷ Disponibilidade</code>.
+          MTBF é o tempo médio entre falhas e MTTR o tempo médio de reparo (ambos em horas, editáveis no topo).
+          <br><br>
+          O <b>relatório automático</b> lê uma planilha Excel (modelo da embalagem + quantidade),
+          gera o mesmo cálculo e o bloco de risco, e divide o tempo total pela
+          <b>capacidade diária de 22 h</b> (1.320 min), indicando quantos dias a demanda exige.
+          <br><br>
+          <span style="color:var(--orange);font-weight:600">CONFERIR:</span> os valores de MTBF/MTTR são premissas — ajuste-os para a realidade da sua máquina antes de usar o relatório como referência.
         </div>
       </details>
     </div>
@@ -4240,6 +4272,268 @@ function simRenderCfg(tmap){
     try{ localStorage.setItem(SIM_LS_GPC,String(simGpc)); }catch(e2){}
     simRecalc();
   });
+})();
+
+/* ===================================================================
+   SIMULAÇÃO — Análise de risco (MTTR/MTBF), relatório PDF (manual) e
+   relatório automático por demanda em Excel (divisão pela capacidade
+   diária de 22 h). Tudo abaixo é adicional e NÃO altera o cálculo da
+   tela. Premissas (editáveis pelo usuário):
+     • Disponibilidade A = MTBF / (MTBF + MTTR)
+     • Tempo com risco de quebra = tempo teórico ÷ A
+     • Capacidade diária = 22 h de operação = 1.320 min
+   =================================================================== */
+const SIM_LS_MTBF = "sas-sim-mtbf";
+const SIM_LS_MTTR = "sas-sim-mttr";
+const SIM_CAP_DIA_MIN = 22 * 60;            /* 22h de operação por dia */
+let simMTBF = 40;                            /* horas entre falhas */
+let simMTTR = 2;                             /* horas para reparo */
+(function simLoadRisco(){
+  try{ const a=parseFloat(localStorage.getItem(SIM_LS_MTBF)); if(a>0) simMTBF=a; }catch(e){}
+  try{ const b=parseFloat(localStorage.getItem(SIM_LS_MTTR)); if(b>=0) simMTTR=b; }catch(e){}
+})();
+
+function simDisponibilidade(){
+  const den = simMTBF + simMTTR;
+  return den>0 ? simMTBF/den : 1;
+}
+
+/* Calcula a simulação inteira (estado atual ou um informado) em uma estrutura única */
+function simComputeAll(stateArr){
+  const tmap = simTempoMap();
+  const linhas = (stateArr || simState || []).map(ln=>{
+    const r = simCalcLinha(ln, tmap);
+    return Object.assign({ emb: ln.emb }, r);
+  });
+  let tc=0, tk=0, tt=0;
+  linhas.forEach(r=>{ tc+=r.cestos; tk+=r.ciclos; tt+=r.tempo; });
+  return { linhas, tCestos:tc, tCiclos:tk, tTempo:tt };
+}
+
+/* Monta o PDF a partir do dataset calculado. opts: {titulo, origem, nome, diario} */
+function simGerarPDF(comp, opts){
+  if(!window.jspdf || !window.jspdf.jsPDF){
+    alert("Biblioteca de PDF não carregada. Verifique a conexão com a internet e tente novamente.");
+    return;
+  }
+  opts = opts || {};
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation:"landscape", unit:"pt", format:"a4" });
+  const A = simDisponibilidade();
+  const fmtH = n => String(n).replace(".",",");
+  const validas = comp.linhas.filter(l => (l.qtd>0) || l.tempo>0);
+  const pageW = doc.internal.pageSize.getWidth();
+
+  /* ---- Cabeçalho ---- */
+  doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.setTextColor(20,30,45);
+  doc.text(opts.titulo || "SAS · Simulação de Lavagem — Carga Máquina", 40, 42);
+  doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(90,100,110);
+  let y = 60;
+  if(opts.origem){ doc.text(String(opts.origem), 40, y); y += 14; }
+  doc.text("Gaiolas por ciclo: " + simGpc + "   •   Base do ciclo: " + fmtH(CICLO_MIN) + " min", 40, y); y += 14;
+
+  /* ---- Tabela teórica ---- */
+  const head = [["Embalagem","Qtd","Emb/\ncesto","Cestos","Ciclos","Tempo\n(h:min:s)"]];
+  const body = validas.map(l=>[
+    l.emb,
+    (l.qtd||0).toLocaleString("pt-BR"),
+    (typeof l.cap==="number" ? String(l.cap) : "—"),
+    String(l.cestos),
+    String(l.ciclos),
+    simFmtHMS(l.tempo)
+  ]);
+  body.push([
+    { content:"TOTAL", styles:{ fontStyle:"bold", halign:"left" } }, "", "",
+    { content:String(comp.tCestos), styles:{ fontStyle:"bold" } },
+    { content:String(comp.tCiclos), styles:{ fontStyle:"bold" } },
+    { content:simFmtHMS(comp.tTempo), styles:{ fontStyle:"bold" } }
+  ]);
+  doc.autoTable({
+    head:head, body:body, startY:y+6, theme:"grid",
+    styles:{ font:"helvetica", fontSize:8.5, cellPadding:5, halign:"center", lineColor:[210,216,224], lineWidth:0.5 },
+    headStyles:{ fillColor:[56,102,247], textColor:255, fontStyle:"bold", halign:"center", valign:"middle" },
+    columnStyles:{ 0:{ halign:"left", fontStyle:"bold" } },
+    alternateRowStyles:{ fillColor:[244,247,252] },
+    margin:{ left:40, right:40 }
+  });
+
+  /* ---- Bloco VERMELHO: análise de risco MTTR/MTBF ---- */
+  let ry = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 22;
+  doc.setFillColor(240,83,63); doc.rect(40, ry, pageW-80, 20, "F");
+  doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(255,255,255);
+  doc.text("ANÁLISE DE RISCO — DISPONIBILIDADE (MTTR / MTBF)", 48, ry+14);
+  ry += 32;
+  doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(150,45,33);
+  doc.text(
+    "MTBF: " + fmtH(simMTBF) + " h   •   MTTR: " + fmtH(simMTTR) + " h   •   "
+    + "Disponibilidade: " + (A*100).toFixed(1).replace(".",",") + "%   •   "
+    + "Fator sobre o tempo: ×" + (1/A).toFixed(3).replace(".",","),
+    40, ry
+  );
+  ry += 6;
+  const headR = [["Embalagem","Tempo teórico","Tempo com risco de quebra"]];
+  const bodyR = validas.map(l=>[ l.emb, simFmtHMS(l.tempo), simFmtHMS(l.tempo / A) ]);
+  bodyR.push([
+    { content:"TOTAL", styles:{ fontStyle:"bold", halign:"left" } },
+    { content:simFmtHMS(comp.tTempo), styles:{ fontStyle:"bold" } },
+    { content:simFmtHMS(comp.tTempo / A), styles:{ fontStyle:"bold" } }
+  ]);
+  doc.autoTable({
+    head:headR, body:bodyR, startY:ry+6, theme:"grid",
+    styles:{ font:"helvetica", fontSize:8.5, cellPadding:5, halign:"center", lineColor:[238,200,200], lineWidth:0.5 },
+    headStyles:{ fillColor:[200,57,42], textColor:255, fontStyle:"bold", halign:"center", valign:"middle" },
+    columnStyles:{ 0:{ halign:"left", fontStyle:"bold" }, 2:{ textColor:[200,57,42], fontStyle:"bold" } },
+    alternateRowStyles:{ fillColor:[252,242,242] },
+    margin:{ left:40, right:40 }
+  });
+
+  /* ---- Distribuição pela capacidade diária de 22h (apenas relatório automático) ---- */
+  if(opts.diario){
+    let dy = (doc.lastAutoTable ? doc.lastAutoTable.finalY : ry) + 22;
+    const diasTeo   = comp.tTempo>0 ? Math.ceil(comp.tTempo / SIM_CAP_DIA_MIN) : 0;
+    const diasRisco = comp.tTempo>0 ? Math.ceil((comp.tTempo / A) / SIM_CAP_DIA_MIN) : 0;
+    doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(20,30,45);
+    doc.text("DISTRIBUIÇÃO PELA CAPACIDADE DIÁRIA (22 h/dia = 1.320 min)", 40, dy);
+    dy += 6;
+    const headD = [["Cenário","Tempo total","Dias necessários (22 h/dia)","Tempo médio/dia"]];
+    const bodyD = [
+      ["Teórico", simFmtHMS(comp.tTempo), String(diasTeo), diasTeo ? simFmtHMS(comp.tTempo/diasTeo) : "—"],
+      ["Com risco de quebra", simFmtHMS(comp.tTempo/A), String(diasRisco), diasRisco ? simFmtHMS((comp.tTempo/A)/diasRisco) : "—"]
+    ];
+    doc.autoTable({
+      head:headD, body:bodyD, startY:dy+6, theme:"grid",
+      styles:{ font:"helvetica", fontSize:8.5, cellPadding:5, halign:"center", lineColor:[210,216,224], lineWidth:0.5 },
+      headStyles:{ fillColor:[154,108,240], textColor:255, fontStyle:"bold", halign:"center", valign:"middle" },
+      columnStyles:{ 0:{ halign:"left", fontStyle:"bold" } },
+      margin:{ left:40, right:40 }
+    });
+  }
+
+  const fy = (doc.lastAutoTable ? doc.lastAutoTable.finalY : 88) + 18;
+  doc.setFont("helvetica","normal"); doc.setFontSize(7.5); doc.setTextColor(140,150,160);
+  doc.text("Gerado em " + new Date().toLocaleString("pt-BR") + " — SAS · Lavadora de Embalagem (SESÉ)", 40, fy);
+
+  doc.save(opts.nome || "SAS-Simulacao-Lavagem.pdf");
+}
+
+/* Relatório PDF da simulação MANUAL (dados digitados na tela) */
+function simGerarPDFManual(){
+  const comp = simComputeAll();
+  const algo = comp.linhas.some(l => l.qtd>0 || l.tempo>0);
+  if(!algo){ alert("Informe ao menos uma embalagem com quantidade para gerar o relatório."); return; }
+  simGerarPDF(comp, {
+    titulo:"SAS · Simulação de Lavagem — Carga Máquina (manual)",
+    origem:"Entrada manual",
+    nome:"SAS-Simulacao-Manual.pdf",
+    diario:false
+  });
+}
+
+/* ---- Relatório AUTOMÁTICO: lê demanda de uma planilha Excel ---- */
+/* Casa o nome lido com a lista de embalagens cadastradas (exato → sem distinção de caixa) */
+function simMatchEmb(name){
+  if(EMBALAGENS.includes(name)) return name;
+  const n = String(name||"").trim().toLowerCase();
+  const hit = EMBALAGENS.find(e => e.toLowerCase()===n);
+  return hit || String(name||"").trim();
+}
+/* Detecta colunas (modelo + quantidade) e extrai as linhas válidas */
+function simParseExcelRows(aoa){
+  if(!aoa || !aoa.length) return [];
+  const norm = s => String(s==null?"":s).trim().toLowerCase();
+  let headerIdx=-1, colEmb=-1, colQtd=-1;
+  for(let i=0;i<Math.min(aoa.length,15);i++){
+    const row = aoa[i] || [];
+    let ce=-1, cq=-1;
+    row.forEach((c,j)=>{
+      const v = norm(c);
+      if(ce<0 && (v.indexOf("embalag")>=0 || v.indexOf("modelo")>=0 || v.indexOf("descri")>=0 || v==="item")) ce=j;
+      if(cq<0 && (v.indexOf("quant")>=0 || v==="qtd" || v.indexOf("demanda")>=0 || v.indexOf("volume")>=0 || v.indexOf("peça")>=0 || v.indexOf("peca")>=0)) cq=j;
+    });
+    if(ce>=0 && cq>=0){ headerIdx=i; colEmb=ce; colQtd=cq; break; }
+  }
+  if(colEmb<0 || colQtd<0){ headerIdx=-1; colEmb=0; colQtd=1; }   /* fallback: col A=modelo, col B=qtd */
+  const out = [];
+  for(let i=headerIdx+1;i<aoa.length;i++){
+    const row = aoa[i] || [];
+    const emb = String(row[colEmb]==null?"":row[colEmb]).trim();
+    let q = row[colQtd];
+    if(typeof q === "string") q = q.replace(/\./g,"").replace(",",".");
+    q = parseFloat(q);
+    if(!emb || !isFinite(q) || q<=0) continue;
+    out.push({ emb:emb, qtd:Math.round(q) });
+  }
+  return out;
+}
+/* Soma quantidades por embalagem e devolve um estado no formato da simulação */
+function simAggregate(rows){
+  const map = {};
+  rows.forEach(r=>{ const e = simMatchEmb(r.emb); map[e] = (map[e]||0) + r.qtd; });
+  return Object.keys(map).map(e=>({ emb:e, qtd:map[e], extra:0 }));
+}
+function simHandleExcel(file){
+  if(!file) return;
+  if(typeof XLSX==="undefined"){ alert("Biblioteca de planilha (XLSX) não carregada. Verifique a conexão e tente novamente."); return; }
+  const reader = new FileReader();
+  reader.onload = e=>{
+    try{
+      const wb = XLSX.read(e.target.result, { type:"array" });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const aoa = XLSX.utils.sheet_to_json(ws, { header:1, raw:true, defval:"" });
+      const rows = simParseExcelRows(aoa);
+      if(!rows.length){
+        alert("Não encontrei colunas de embalagem (modelo) e quantidade na planilha.\nUse uma coluna com o nome da embalagem e outra com a quantidade.");
+        return;
+      }
+      const stateExcel = simAggregate(rows);
+      const comp = simComputeAll(stateExcel);
+      simGerarPDF(comp, {
+        titulo:"SAS · Simulação de Lavagem — Demanda (Excel)",
+        origem:"Demanda importada: " + (file.name||"planilha") + "   •   " + stateExcel.length + " embalagem(ns)",
+        nome:"SAS-Simulacao-Demanda.pdf",
+        diario:true
+      });
+    }catch(err){
+      alert("Falha ao ler a planilha: " + (err && err.message ? err.message : err));
+    }
+  };
+  reader.onerror = ()=> alert("Não foi possível ler o arquivo.");
+  reader.readAsArrayBuffer(file);
+}
+
+/* ---- Eventos do bloco de risco / relatórios da simulação ---- */
+(function simRiscoSetup(){
+  const mtbf = document.getElementById("sim-mtbf");
+  const mttr = document.getElementById("sim-mttr");
+  const dispEl = document.getElementById("sim-disp");
+  const pdfBtn = document.getElementById("sim-pdf");
+  const xlsBtn = document.getElementById("sim-xls-btn");
+  const xlsInp = document.getElementById("sim-xls-file");
+  function refreshDisp(){
+    if(dispEl) dispEl.textContent = (simDisponibilidade()*100).toFixed(1).replace(".",",") + "%";
+  }
+  if(mtbf){
+    mtbf.value = simMTBF;
+    mtbf.addEventListener("input", ()=>{
+      const v = parseFloat(mtbf.value);
+      if(v>0){ simMTBF=v; try{ localStorage.setItem(SIM_LS_MTBF,String(v)); }catch(e){} }
+      refreshDisp();
+    });
+  }
+  if(mttr){
+    mttr.value = simMTTR;
+    mttr.addEventListener("input", ()=>{
+      const v = parseFloat(mttr.value);
+      if(v>=0){ simMTTR=v; try{ localStorage.setItem(SIM_LS_MTTR,String(v)); }catch(e){} }
+      refreshDisp();
+    });
+  }
+  refreshDisp();
+  if(pdfBtn) pdfBtn.addEventListener("click", simGerarPDFManual);
+  if(xlsBtn && xlsInp){
+    xlsBtn.addEventListener("click", ()=> xlsInp.click());
+    xlsInp.addEventListener("change", ()=>{ simHandleExcel(xlsInp.files[0]); xlsInp.value=""; });
+  }
 })();
 
 /* ===== TEMA CLARO / ESCURO ===== */
