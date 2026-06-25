@@ -2469,7 +2469,7 @@
           <b>Emb. por cesto</b> vieram do seu anexo e são editáveis (salvas neste navegador).
           <b>Tempo médio/ciclo</b> é lido da tela 08 — o número entre parênteses é a quantidade de
           ocorrências usadas na média. <span style="color:var(--orange);font-weight:600">CONFERIR</span> =
-          leitura com dúvida ou que não estava no anexo.
+          falta informar a emb./cesto ou leitura com dúvida; o aviso some assim que você informa o valor.
         </div>
         <div class="sim-tbl">
           <table class="sim-table">
@@ -4108,14 +4108,24 @@ const SIM_FLAG = new Set([
   "Divisoria de bomba","Divisoria de cárter"
 ]);
 const SIM_LS_CAP = "sas-sim-cap";
+const SIM_LS_CAPOK = "sas-sim-cap-ok";   /* embalagens cuja emb./cesto já foi informada/confirmada */
 const SIM_LS_GPC = "sas-sim-gpc";
 let simState = null;     /* [{emb, qtd}] */
 let simGpc = 25;
 let simCapOv = {};
+let simCapConfirm = new Set();
 (function simLoadCfg(){
   try{ simCapOv = JSON.parse(localStorage.getItem(SIM_LS_CAP)||"{}")||{}; }catch(e){ simCapOv={}; }
+  try{ const a=JSON.parse(localStorage.getItem(SIM_LS_CAPOK)||"[]"); if(Array.isArray(a)) simCapConfirm=new Set(a); }catch(e){}
   try{ const g=parseInt(localStorage.getItem(SIM_LS_GPC),10); if(g>0) simGpc=g; }catch(e){}
 })();
+/* CONFERIR aparece quando: falta o valor de emb./cesto OU é leitura duvidosa ainda não confirmada */
+function simCfgPrecisaConferir(emb){
+  const cap = simCap(emb);
+  const temValor = (typeof cap === "number" && cap > 0);
+  if(!temValor) return true;
+  return SIM_FLAG.has(emb) && !simCapConfirm.has(emb);
+}
 
 function simCap(emb){
   if(simCapOv[emb]!==undefined) return simCapOv[emb];
@@ -4219,7 +4229,7 @@ function simRenderCfg(tmap){
   body.innerHTML = EMBALAGENS.map(e=>{
     const cap=simCap(e);
     const capVal=(typeof cap==="number")?cap:"";
-    const flag=SIM_FLAG.has(e)||cap===null;
+    const flag=simCfgPrecisaConferir(e);
     const t=tmap[e];
     const tCell = t ? (simFmtHMS(t.min)+' <span class="sim-sub">('+t.ocor+')</span>')
                     : '<span class="sim-sub">sem histórico</span>';
@@ -4259,9 +4269,22 @@ function simRenderCfg(tmap){
   cfg.addEventListener("input", e=>{
     const inp=e.target.closest(".sim-cfg-inp"); if(!inp) return;
     const emb=inp.dataset.emb, raw=inp.value.trim();
-    simCapOv[emb] = raw==="" ? null : Math.max(0,parseInt(raw,10)||0);
-    inp.classList.toggle("empty", raw==="");
+    const val = raw==="" ? null : Math.max(0,parseInt(raw,10)||0);
+    const temValor = (typeof val==="number" && val>0);
+    simCapOv[emb] = val;
+    inp.classList.toggle("empty", !temValor);
+    /* informar um valor válido confirma a embalagem (some o CONFERIR); limpar volta a pedir conferência */
+    if(temValor) simCapConfirm.add(emb); else simCapConfirm.delete(emb);
     try{ localStorage.setItem(SIM_LS_CAP, JSON.stringify(simCapOv)); }catch(e2){}
+    try{ localStorage.setItem(SIM_LS_CAPOK, JSON.stringify([...simCapConfirm])); }catch(e2){}
+    /* atualiza o "CONFERIR" da própria linha sem re-renderizar (mantém o foco no campo) */
+    const tr = inp.closest("tr"); const nameCell = tr && tr.querySelector(".sim-name");
+    if(nameCell){
+      const badge = nameCell.querySelector(".sim-badge");
+      const precisa = simCfgPrecisaConferir(emb);
+      if(precisa && !badge) nameCell.insertAdjacentHTML("beforeend", '<span class="sim-badge">CONFERIR</span>');
+      else if(!precisa && badge) badge.remove();
+    }
     simRecalc();
   });
   const addB=document.getElementById("sim-add");
@@ -4431,16 +4454,23 @@ function simGerarPDF(comp, opts){
 
   /* ---- Impacto das paradas: tempo real por embalagem ---- */
   let ry = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 22;
-  ry = ensureSpace(ry, 80);
+  ry = ensureSpace(ry, 100);
   doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(20,30,45);
   doc.text("IMPACTO DAS PARADAS — TEMPO REAL E DIAS DE TRABALHO", 40, ry);
   doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(120,40,30);
   doc.text(
     "Disponibilidade operacional: " + (A*100).toFixed(1).replace(".",",") + "%   •   fator ×"
-    + (1/A).toFixed(3).replace(".",",") + "   •   produtivo " + simFmtHMS(netMin) + "/dia de 22:00:00",
+    + (1/A).toFixed(3).replace(".",",") + " (tempo real " + ((1/A-1)*100).toFixed(1).replace(".",",")
+    + "% maior que o teórico)   •   produtivo " + simFmtHMS(netMin) + "/dia de 22:00:00",
     40, ry+13
   );
-  ry += 19;
+  doc.setFontSize(7.5); doc.setTextColor(140,150,160);
+  doc.text(
+    "O fator é 1 ÷ disponibilidade: multiplica o tempo teórico para incluir as paradas. Ex.: ×" + (1/A).toFixed(3).replace(".",",")
+    + " significa que cada 1 h de lavagem exige " + simFmtHMS(60/A) + " de operação programada.",
+    40, ry+25
+  );
+  ry += 28;
   const headR = [["Embalagem","Tempo teórico","Tempo com máquina parada"]];
   const bodyR = validas.map(l=>[ l.emb, simFmtHMS(l.tempo), simFmtHMS(l.tempo / A) ]);
   bodyR.push([
@@ -4625,9 +4655,11 @@ function simHandleExcel(file){
       if(pe) pe.textContent = pctTxt(p.min);
     });
     if(parSum){
+      const maior = ((1/A - 1)*100).toFixed(1).replace(".",",");
       parSum.innerHTML = "Total parado: <b>" + Math.round(simParadaTotalMin()) + " min/dia</b> (" + pctTxt(simParadaTotalMin())
         + ")  ·  Produtivo: <b>" + simFmtHMS(simMinProdDia()) + "</b>/dia  ·  Disponibilidade operacional: <b>"
-        + (A*100).toFixed(1).replace(".",",") + "%</b>  ·  fator ×" + (1/A).toFixed(3).replace(".",",");
+        + (A*100).toFixed(1).replace(".",",") + "%</b>  ·  fator ×" + (1/A).toFixed(3).replace(".",",")
+        + " <span class=\"sim-sub\">(o tempo real fica " + maior + "% maior que o teórico)</span>";
     }
   }
 
