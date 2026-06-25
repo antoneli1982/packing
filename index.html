@@ -2359,6 +2359,10 @@
       #view-sim .sim-extra-n{min-width:22px;text-align:center;font-weight:700;font-size:13px;font-variant-numeric:tabular-nums;color:var(--txt)}
       #view-sim .sim-extra-hint{font-size:10px;color:var(--txt-faint);margin-left:2px}
       #view-sim .sim-extra-tag{font-size:9.5px;color:var(--orange);font-weight:700}
+      #view-sim .sim-grp-wrap{display:inline-flex;align-items:center;gap:6px;margin-left:auto;padding-left:10px;border-left:1px dashed var(--line)}
+      #view-sim .sim-row select.sim-grp{width:auto;min-width:56px;padding:4px 22px 4px 9px;font-size:12px;font-weight:700}
+      #view-sim .sim-chip.grp{border-color:rgba(154,108,240,.45);color:var(--purple-txt)}
+      @media(max-width:560px){#view-sim .sim-grp-wrap{margin-left:0;padding-left:0;border-left:0}}
       #view-sim .sim-row.bad{border-color:rgba(240,83,63,.45)}
       #view-sim .sim-row select,#view-sim .sim-row input[type=number]{width:100%;background:var(--bg);
         border:1px solid var(--line);color:var(--txt);font-family:'Poppins',sans-serif;font-size:13px;
@@ -2454,6 +2458,7 @@
           <div class="sim-stat" style="--bb:var(--green)"><div class="v" id="sim-t-ciclos">0</div><div class="k">Ciclos de lavagem</div></div>
           <div class="sim-stat" style="--bb:var(--blue)"><div class="v" id="sim-t-tempo">00:00:00</div><div class="k">Tempo total (h:min:s)</div></div>
         </div>
+        <div id="sim-simult-note" style="display:none;padding:0 16px 4px;font-size:10.5px;color:var(--purple-txt);line-height:1.5"></div>
         <div class="sim-actions">
           <span class="sim-disp-chip" title="Disponibilidade operacional = (22 h − todas as paradas) ÷ 22 h">Disp. operacional <b id="sim-disp">95,2%</b></span>
           <button class="btn-ghost danger" id="sim-pdf">⬇ Gerar relatório PDF</button>
@@ -2505,6 +2510,8 @@
           <code>ciclos = ⌈cestos ÷ gaiolas por carga⌉</code> e
           <code>tempo = ciclos × tempo médio por ciclo</code>. Os totais somam tudo.
           Cada “ciclo” aqui equivale a uma <b>carga de 5 gaiolas</b> (capacidade de carga/descarga do operador), não à rodada cheia da máquina (25).
+          <br><br>
+          <b>Simultaneidade (🔗):</b> em cada linha você pode marcar um <i>grupo</i> (A, B, …). Embalagens com o <b>mesmo grupo</b> rodam <b>ao mesmo tempo</b>, então o tempo desse grupo não soma — vale o <b>maior</b> tempo entre elas. Cestos e ciclos continuam somando (é o trabalho físico realizado). Deixe em “—” para a linha rodar de forma independente.
           <br><br>
           <b>Máquina parada (todas as causas):</b> a tabela de paradas soma os minutos perdidos por dia
           (quebra do MTBF/MTTR + demais causas). <code>Disponibilidade operacional = (1.320 − total parado) ÷ 1.320</code> e
@@ -4230,6 +4237,13 @@ function simCalcLinha(ln, tmap){
   const ciclosCalc = Math.ceil(cestos/Math.max(1,simGpc));
   return {qtd,cap,capOk,min,temHist:!!t,ocor:t?t.ocor:0,cestos,ciclosCalc,extra,ciclos:ciclosCalc+extra,tempo:ciclosCalc*min+tExtra};
 }
+const SIM_GRUPOS = ["A","B","C","D","E","F"];
+function simGrpOptions(sel){
+  sel = (sel||"").trim();
+  let o = '<option value=""'+(sel===""?" selected":"")+'>—</option>';
+  SIM_GRUPOS.forEach(g=>{ o += '<option value="'+g+'"'+(sel===g?" selected":"")+'>'+g+'</option>'; });
+  return o;
+}
 function renderSim(){
   if(!simState) simState = [{emb:(EMBALAGENS[0]||""), qtd:""}];
   simState.forEach(ln=>{ if(!EMBALAGENS.includes(ln.emb)) ln.emb = EMBALAGENS[0]||""; });
@@ -4252,7 +4266,10 @@ function renderSim(){
         '<button class="sim-extra-btn sim-extra-minus" data-i="'+i+'" title="Remover ciclo">−</button>'+
         '<span class="sim-extra-n" data-extra-n="'+i+'">'+(parseInt(ln.extra,10)||0)+'</span>'+
         '<button class="sim-extra-btn sim-extra-plus" data-i="'+i+'" title="+1 ciclo (00:20:48)">+</button>'+
-        '<span class="sim-extra-hint">cada +1 = 00:20:48</span></div>'+
+        '<span class="sim-extra-hint">cada +1 = 00:20:48</span>'+
+        '<span class="sim-grp-wrap"><span class="sim-extra-lbl">🔗 Simult.</span>'+
+        '<select class="sim-grp" data-i="'+i+'" title="Embalagens que rodam ao mesmo tempo: marque o mesmo grupo (A, B, …). O tempo do grupo é o MAIOR entre elas (não soma).">'+
+        simGrpOptions(ln.grp)+'</select></span>'+
     '</div>';
   }).join("");
   simRecalc(tmap);
@@ -4261,18 +4278,32 @@ function renderSim(){
 function simRecalc(tmap){
   if(!simState) return;
   tmap = tmap || simTempoMap();
-  let tc=0,tk=0,tt=0;
-  simState.forEach((ln,i)=>{
-    const r=simCalcLinha(ln,tmap);
-    tc+=r.cestos; tk+=r.ciclos; tt+=r.tempo;
+  /* Passo 1: cálculo por linha + agregação com simultaneidade */
+  const res = simState.map(ln => ({ r: simCalcLinha(ln, tmap), grp:(ln.grp||"").trim() }));
+  const agg = simAgrega(res.map(x => Object.assign({ grp:x.grp }, x.r)));
+  const grpBadge = (grp, r) => {
+    if(!grp) return "";
+    const n = agg.grpCount[grp]||0;
+    let sufixo = "";
+    if(n>=2){
+      const isMax = (r.tempo>0) && Math.abs(r.tempo - (agg.grpMax[grp]||0)) < 1e-9;
+      sufixo = isMax ? " · tempo do grupo" : " · em paralelo";
+    }
+    return '<span class="sim-chip grp" title="Embalagens do mesmo grupo rodam ao mesmo tempo; o tempo do grupo é o maior entre elas.">⛓ Grupo '+grp+sufixo+'</span>';
+  };
+  /* Passo 2: chips por linha */
+  res.forEach((x,i)=>{
+    const r = x.r, grp = x.grp;
     const nEl=document.querySelector('#sim-rows [data-extra-n="'+i+'"]'); if(nEl) nEl.textContent=r.extra;
     const el=document.querySelector('#sim-rows [data-res="'+i+'"]'); if(!el) return;
     const row=el.closest(".sim-row");
     const ciclosTag = r.extra>0 ? ' <span class="sim-extra-tag">+'+r.extra+' extra</span>' : '';
+    const gChip = grpBadge(grp, r);
     if(!r.capOk && r.qtd>0){
       if(row)row.classList.add("bad");
       el.innerHTML='<span class="sim-chip warn">⚠ Defina &quot;Emb. por cesto&quot; na aba Dados</span>'
-        + (r.extra>0 ? '<span class="sim-chip">Ciclos extra <b>'+r.extra+'</b></span><span class="sim-chip blue">Tempo <b>'+simFmtHMS(r.tempo)+'</b></span>' : '');
+        + (r.extra>0 ? '<span class="sim-chip">Ciclos extra <b>'+r.extra+'</b></span><span class="sim-chip blue">Tempo <b>'+simFmtHMS(r.tempo)+'</b></span>' : '')
+        + gChip;
       return;
     }
     if(row)row.classList.remove("bad");
@@ -4280,7 +4311,8 @@ function simRecalc(tmap){
       el.innerHTML = (r.capOk ? '<span class="sim-chip">Por cesto <b>'+r.cap+'</b></span>' : '')
         + (r.extra>0
             ? '<span class="sim-chip">Ciclos <b>'+r.ciclos+'</b>'+ciclosTag+'</span><span class="sim-chip blue">Tempo <b>'+simFmtHMS(r.tempo)+'</b></span>'
-            : '<span class="sim-chip">Informe a quantidade</span>');
+            : '<span class="sim-chip">Informe a quantidade</span>')
+        + gChip;
       return;
     }
     const histChip = r.temHist
@@ -4291,10 +4323,20 @@ function simRecalc(tmap){
       '<span class="sim-chip">Cestos <b>'+r.cestos+'</b></span>'+
       '<span class="sim-chip">Ciclos <b>'+r.ciclos+'</b>'+ciclosTag+'</span>'+
       '<span class="sim-chip blue">Tempo <b>'+simFmtHMS(r.tempo)+'</b></span>'+
-      histChip;
+      histChip + gChip;
   });
   const set=(id,v)=>{const e=document.getElementById(id); if(e)e.textContent=v;};
-  set("sim-t-cestos",tc); set("sim-t-ciclos",tk); set("sim-t-tempo",simFmtHMS(tt));
+  set("sim-t-cestos",agg.tCestos); set("sim-t-ciclos",agg.tCiclos); set("sim-t-tempo",simFmtHMS(agg.tTempo));
+  /* Nota de simultaneidade (apenas grupos com 2+ linhas) */
+  const noteEl = document.getElementById("sim-simult-note");
+  if(noteEl){
+    const ativos = Object.keys(agg.grpMax).filter(g => (agg.grpCount[g]||0) >= 2).sort();
+    if(ativos.length){
+      noteEl.style.display = "block";
+      noteEl.innerHTML = '⛓ <b>Simultaneidade:</b> ' + ativos.map(g => 'Grupo '+g+' = '+simFmtHMS(agg.grpMax[g])).join(' · ')
+        + '. O Tempo total usa o <b>maior</b> tempo de cada grupo (não soma); cestos e ciclos continuam somando.';
+    } else { noteEl.style.display = "none"; noteEl.innerHTML = ""; }
+  }
 }
 function simRenderCfg(tmap){
   tmap = tmap || simTempoMap();
@@ -4319,8 +4361,11 @@ function simRenderCfg(tmap){
   const cfg=document.getElementById("sim-cfg-body");
   if(!rows||!cfg) return;
   rows.addEventListener("change", e=>{
-    const s=e.target.closest(".sim-sel"); if(!s||!simState) return;
-    simState[+s.dataset.i].emb=s.value; renderSim();
+    if(!simState) return;
+    const s=e.target.closest(".sim-sel");
+    if(s){ simState[+s.dataset.i].emb=s.value; renderSim(); return; }
+    const g=e.target.closest(".sim-grp");
+    if(g){ simState[+g.dataset.i].grp=g.value; simRecalc(); return; }
   });
   rows.addEventListener("input", e=>{
     const q=e.target.closest(".sim-qtd"); if(!q||!simState) return;
@@ -4370,7 +4415,7 @@ function simRenderCfg(tmap){
   });
   const clrB=document.getElementById("sim-clear");
   if(clrB) clrB.addEventListener("click", ()=>{
-    if(simState) simState.forEach(l=>{l.qtd="";l.extra=0;}); renderSim();
+    if(simState) simState.forEach(l=>{l.qtd="";l.extra=0;l.grp="";}); renderSim();
   });
   const g=document.getElementById("sim-gpc");
   if(g) g.addEventListener("input", ()=>{
@@ -4449,17 +4494,34 @@ function simDisponibilidade(){
   return simMinProdDia() / SIM_CAP_DIA_MIN;
 }
 
+/* Agrega os totais considerando SIMULTANEIDADE: linhas com o mesmo grupo
+   (grp) rodam em paralelo, então o tempo do grupo é o MAIOR entre elas
+   (não soma). Cestos e ciclos continuam somando (trabalho físico realizado). */
+function simAgrega(items){
+  let tCestos=0, tCiclos=0, tIndep=0;
+  const grpMax = {}, grpCount = {};
+  items.forEach(r=>{
+    tCestos += r.cestos||0;
+    tCiclos += r.ciclos||0;
+    const g = (r.grp||"").trim();
+    if(g){ grpMax[g] = Math.max(grpMax[g]||0, r.tempo||0); grpCount[g] = (grpCount[g]||0)+1; }
+    else  tIndep += r.tempo||0;
+  });
+  let tTempo = tIndep;
+  for(const g in grpMax) tTempo += grpMax[g];
+  return { tCestos, tCiclos, tTempo, grpMax, grpCount };
+}
+
 /* Calcula a simulação inteira (estado atual ou um informado) em uma estrutura única */
 function simComputeAll(stateArr){
   const tmap = simTempoMap();
   const linhas = (stateArr || simState || []).map(ln=>{
     const r = simCalcLinha(ln, tmap);
     const t = tmap[ln.emb];
-    return Object.assign({ emb: ln.emb, mediaT: r.min, mediaC: (t ? t.avgC : null), temHist: !!t }, r);
+    return Object.assign({ emb: ln.emb, grp:(ln.grp||"").trim(), mediaT: r.min, mediaC: (t ? t.avgC : null), temHist: !!t }, r);
   });
-  let tc=0, tk=0, tt=0;
-  linhas.forEach(r=>{ tc+=r.cestos; tk+=r.ciclos; tt+=r.tempo; });
-  return { linhas, tCestos:tc, tCiclos:tk, tTempo:tt };
+  const agg = simAgrega(linhas);
+  return { linhas, tCestos:agg.tCestos, tCiclos:agg.tCiclos, tTempo:agg.tTempo, grpMax:agg.grpMax, grpCount:agg.grpCount };
 }
 
 /* Logo SESÉ embutido em base64 — usado no cabeçalho do relatório de simulação */
@@ -4497,7 +4559,7 @@ function simGerarPDF(comp, opts){
   const fmtC2 = v => (v==null ? "—" : Number(v).toFixed(2).replace(".",","));
   const head = [["Embalagem","Qtd","Emb/\ncesto","Tempo médio\nlavagem","Média\nciclos","Cestos","Ciclos","Tempo total\n(h:min:s)"]];
   const body = validas.map(l=>[
-    l.emb,
+    l.emb + (l.grp ? "  (gr. "+l.grp+")" : ""),
     (l.qtd||0).toLocaleString("pt-BR"),
     (typeof l.cap==="number" ? String(l.cap) : "—"),
     simFmtHMS(l.mediaT),
@@ -4521,6 +4583,15 @@ function simGerarPDF(comp, opts){
     margin:{ left:40, right:40 }
   });
 
+  /* ---- Nota de simultaneidade (se houver grupos com 2+ linhas) ---- */
+  const _temSimult = comp.linhas.some(l => l.grp && (comp.grpCount[l.grp]||0) >= 2);
+  if(_temSimult){
+    const ny = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 12;
+    doc.setFont("helvetica","italic"); doc.setFontSize(7.5); doc.setTextColor(120,90,160);
+    doc.text("Linhas com (gr. X) iguais rodam em paralelo: o Tempo total usa o MAIOR tempo de cada grupo (nao e a soma da coluna). Cestos e ciclos continuam somando.", 40, ny, { maxWidth: pageW - 80 });
+    doc.setFont("helvetica","normal");
+  }
+
   /* ---- helper: garante espaço na página antes de um novo bloco ---- */
   const pageH = doc.internal.pageSize.getHeight();
   function ensureSpace(yy, needed){
@@ -4537,7 +4608,7 @@ function simGerarPDF(comp, opts){
   const diasReal = comp.tTempo>0 ? Math.ceil(comp.tTempo / netMin) : 0;
 
   /* ---- Impacto das paradas: tempo real por embalagem ---- */
-  let ry = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 22;
+  let ry = (doc.lastAutoTable ? doc.lastAutoTable.finalY : y) + 22 + (_temSimult ? 16 : 0);
   ry = ensureSpace(ry, 100);
   doc.setFont("helvetica","bold"); doc.setFontSize(10); doc.setTextColor(20,30,45);
   doc.text("IMPACTO DAS PARADAS — TEMPO REAL E DIAS DE TRABALHO", 40, ry);
@@ -4556,7 +4627,7 @@ function simGerarPDF(comp, opts){
   );
   ry += 28;
   const headR = [["Embalagem","Tempo teórico","Tempo com máquina parada"]];
-  const bodyR = validas.map(l=>[ l.emb, simFmtHMS(l.tempo), simFmtHMS(l.tempo / A) ]);
+  const bodyR = validas.map(l=>[ l.emb + (l.grp ? "  (gr. "+l.grp+")" : ""), simFmtHMS(l.tempo), simFmtHMS(l.tempo / A) ]);
   bodyR.push([
     { content:"TOTAL", styles:{ fontStyle:"bold", halign:"left" } },
     { content:simFmtHMS(comp.tTempo), styles:{ fontStyle:"bold" } },
