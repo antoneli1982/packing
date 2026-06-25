@@ -2406,6 +2406,8 @@
       #view-sim .sim-ctl input{width:62px;height:30px;padding:5px;text-align:center;font-weight:700;
         background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:8px;
         font-family:'Poppins',sans-serif;font-size:13px}
+      #view-sim .sim-ctl select{height:30px;padding:4px 8px;font-weight:700;background:var(--bg);
+        border:1px solid var(--line);color:var(--txt);border-radius:8px;font-family:'Poppins',sans-serif;font-size:12.5px;cursor:pointer}
       #view-sim .sim-cfg-note{padding:0 16px 12px;font-size:11px;color:var(--txt-dim);line-height:1.55}
       #view-sim .sim-tbl{overflow-x:auto;border-top:1px solid var(--line-soft)}
       #view-sim table.sim-table{width:100%;border-collapse:collapse;font-size:12px;min-width:480px}
@@ -2445,6 +2447,7 @@
             <div class="sim-ctl"><label for="sim-gpc">Gaiolas/carga</label><input type="number" id="sim-gpc" min="1" step="1" value="5" inputmode="numeric" title="Carga/descarga do operador = 5 gaiolas por vez. A máquina comporta até 25 gaiolas, mas o tempo médio é medido por carga de 5."></div>
             <div class="sim-ctl"><label for="sim-mtbf">MTBF (h)</label><input type="number" id="sim-mtbf" min="0.1" step="0.5" value="40" inputmode="decimal" title="Tempo médio entre falhas (horas)"></div>
             <div class="sim-ctl"><label for="sim-mttr">MTTR (h)</label><input type="number" id="sim-mttr" min="0" step="0.5" value="2" inputmode="decimal" title="Tempo médio de reparo (horas)"></div>
+            <div class="sim-ctl"><label for="sim-meses">Período médias</label><select id="sim-meses" title="Quantos meses de histórico entram nas médias por embalagem. 'Global' usa todos os registros; janelas menores refletem melhor o processo atual."></select></div>
             <button class="btn-ghost" id="sim-clear">↺ Limpar</button>
           </div>
         </div>
@@ -2452,6 +2455,7 @@
           Informe a quantidade de cada embalagem. O tempo médio por ciclo vem automaticamente do
           <b style="color:var(--txt-dim)">Relatório Analítico por Embalagem (Dashboard · 08)</b>.
           <br><b style="color:var(--orange)">Base de cálculo:</b> a máquina comporta até <b>25 gaiolas</b>, mas a carga/descarga do operador é de <b>5 gaiolas por vez</b> — por isso o ciclo de tempo é medido a cada <b>5 gaiolas</b> (campo <i>Gaiolas/carga</i> acima).
+          <br><span id="sim-media-global"></span>
         </div>
         <div style="padding:14px 16px">
           <div class="sim-rows" id="sim-rows"></div>
@@ -4133,14 +4137,17 @@ const SIM_FLAG = new Set([
 const SIM_LS_CAP = "sas-sim-cap";
 const SIM_LS_CAPOK = "sas-sim-cap-ok";   /* embalagens cuja emb./cesto já foi informada/confirmada */
 const SIM_LS_GPC = "sas-sim-gpc-carga";
+const SIM_LS_MESES = "sas-sim-meses-media";   /* janela de meses p/ as médias; "global" = todos */
 let simState = null;     /* [{emb, qtd}] */
 let simGpc = 5;
+let simMesesMedia = "global";   /* "global" ou "1".."24" */
 let simCapOv = {};
 let simCapConfirm = new Set();
 (function simLoadCfg(){
   try{ simCapOv = JSON.parse(localStorage.getItem(SIM_LS_CAP)||"{}")||{}; }catch(e){ simCapOv={}; }
   try{ const a=JSON.parse(localStorage.getItem(SIM_LS_CAPOK)||"[]"); if(Array.isArray(a)) simCapConfirm=new Set(a); }catch(e){}
   try{ const g=parseInt(localStorage.getItem(SIM_LS_GPC),10); if(g>0) simGpc=g; }catch(e){}
+  try{ const mm=localStorage.getItem(SIM_LS_MESES); if(mm==="global"||(parseInt(mm,10)>=1 && parseInt(mm,10)<=24)) simMesesMedia=mm; }catch(e){}
 })();
 
 /* ===== Sincronização da "Emb. por cesto" entre navegadores (Firebase) =====
@@ -4152,7 +4159,8 @@ async function _capSalvarFirebase(){
     await fb.collection('config').doc('capacidades').set({
       cap: Object.assign({}, simCapOv),
       ok:  [...simCapConfirm],
-      gpcCarga: simGpc
+      gpcCarga: simGpc,
+      mesesMedia: String(simMesesMedia)
     });
     console.info('capacidade por cesto: salva no Firebase.');
   }catch(e){
@@ -4196,6 +4204,11 @@ async function _capSincFirebase(){
       try{ localStorage.setItem(SIM_LS_GPC, String(simGpc)); }catch(e2){}
       const g=document.getElementById('sim-gpc'); if(g) g.value=simGpc;
     }
+    if(d.mesesMedia==="global" || (parseInt(d.mesesMedia,10)>=1 && parseInt(d.mesesMedia,10)<=24)){
+      simMesesMedia=String(d.mesesMedia);
+      try{ localStorage.setItem(SIM_LS_MESES, simMesesMedia); }catch(e2){}
+      const mm=document.getElementById('sim-meses'); if(mm) mm.value=simMesesMedia;
+    }
     /* Redesenha a tabela de capacidades e recalcula a simulação com os valores recebidos */
     if(typeof simRenderCfg==='function') simRenderCfg();
     if(typeof simRecalc==='function') simRecalc();
@@ -4215,11 +4228,37 @@ function simCap(emb){
   if(simCapOv[emb]!==undefined) return simCapOv[emb];
   return (SIM_CAP_BASE[emb]!==undefined) ? SIM_CAP_BASE[emb] : null;
 }
+/* Data inicial (AAAA-MM-DD) p/ a janela de meses das médias; null = global (tudo) */
+function simMediaFde(){
+  const n = parseInt(simMesesMedia,10);
+  if(!(n>=1 && n<=24)) return null;            /* "global" */
+  const d = new Date(); d.setHours(0,0,0,0);
+  d.setMonth(d.getMonth() - n);
+  const p = x => String(x).padStart(2,"0");
+  return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());
+}
+function simPeriodoTxt(){
+  const n = parseInt(simMesesMedia,10);
+  return (n>=1 && n<=24) ? ("últimos "+n+(n===1?" mês":" meses")) : "todos os registros (global)";
+}
 function simTempoMap(){
   const map={};
-  try{ calcRelatorioEmb(null,null).forEach(r=>{ if(r.avgT>0) map[r.emb]={min:r.avgT,ocor:r.ocor,avgC:r.avgC}; }); }
+  try{ calcRelatorioEmb(simMediaFde(), null).forEach(r=>{ if(r.avgT>0) map[r.emb]={min:r.avgT,ocor:r.ocor,avgC:r.avgC}; }); }
   catch(e){}
   return map;
+}
+/* Média global = média (não ponderada) das médias por embalagem com histórico no período */
+function simRenderMediaGlobal(tmap){
+  const el=document.getElementById("sim-media-global"); if(!el) return;
+  tmap = tmap || simTempoMap();
+  const vals = Object.keys(tmap).map(k=>tmap[k].min).filter(v=>v>0);
+  if(!vals.length){
+    el.innerHTML = '<b style="color:var(--blue-soft)">Média global:</b> sem dados no período ('+simPeriodoTxt()+').';
+    return;
+  }
+  const media = vals.reduce((a,b)=>a+b,0)/vals.length;
+  el.innerHTML = '<b style="color:var(--blue-soft)">Média global:</b> '+simFmtHMS(media)+'/ciclo · '
+    + 'média de '+vals.length+' embalagem(ns) com histórico · período: '+simPeriodoTxt()+'.';
 }
 function simFmtHMS(min){
   let s = Math.round((isFinite(min)?min:0)*60); if(s<0) s=0;
@@ -4284,6 +4323,7 @@ function renderSim(){
   }).join("");
   simRecalc(tmap);
   simRenderCfg(tmap);
+  simRenderMediaGlobal(tmap);
 }
 function simRecalc(tmap){
   if(!simState) return;
@@ -4434,6 +4474,20 @@ function simRenderCfg(tmap){
     _capSalvarFirebaseDebounced();
     simRecalc();
   });
+  const mesesEl=document.getElementById("sim-meses");
+  if(mesesEl){
+    let o='<option value="global">Global (todos)</option>';
+    for(let m=1;m<=24;m++) o+='<option value="'+m+'">'+m+(m===1?' mês':' meses')+'</option>';
+    mesesEl.innerHTML=o;
+    mesesEl.value=String(simMesesMedia);
+    mesesEl.addEventListener("change", ()=>{
+      const v=mesesEl.value;
+      simMesesMedia = (v==="global"||(parseInt(v,10)>=1&&parseInt(v,10)<=24)) ? v : "global";
+      try{ localStorage.setItem(SIM_LS_MESES, String(simMesesMedia)); }catch(e2){}
+      _capSalvarFirebaseDebounced();
+      renderSim();
+    });
+  }
 })();
 
 /* ===================================================================
@@ -4563,7 +4617,7 @@ function simGerarPDF(comp, opts){
   doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(90,100,110);
   let y = 60;
   if(opts.origem){ doc.text(String(opts.origem), 40, y); y += 14; }
-  doc.text("Gaiolas por carga: " + simGpc + "   •   Base do ciclo: " + fmtH(CICLO_MIN) + " min", 40, y); y += 14;
+  doc.text("Gaiolas por carga: " + simGpc + "   •   Base do ciclo: " + fmtH(CICLO_MIN) + " min   •   Médias: " + simPeriodoTxt(), 40, y); y += 14;
 
   /* ---- Tabela principal (valores apresentados) ---- */
   const fmtC2 = v => (v==null ? "—" : Number(v).toFixed(2).replace(".",","));
