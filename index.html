@@ -4132,9 +4132,22 @@ async function _capSalvarFirebase(){
       ok:  [...simCapConfirm],
       gpc: simGpc
     });
-  }catch(e){ console.warn('capSalvarFirebase:', e.message); }
+    console.info('capacidade por cesto: salva no Firebase.');
+  }catch(e){
+    console.warn('capSalvarFirebase:', e.code||e.message);
+    if(!_capErroAvisado){
+      _capErroAvisado=true;
+      alert(
+        'A capacidade por cesto NÃO foi sincronizada com os outros navegadores.\n\n'+
+        'Erro do Firebase: '+(e.code||e.message)+'\n\n'+
+        'Se diz "permission-denied", as regras do Firestore liberam só a coleção '+
+        '"apontamentos" e não a "config". É preciso ajustar as regras no Console do Firebase.'
+      );
+    }
+  }
 }
 /* Grava com debounce — o campo dispara a cada tecla; junta a rajada em uma escrita só */
+let _capErroAvisado=false;
 let _capSaveTimer=null;
 function _capSalvarFirebaseDebounced(){
   if(backend!=='firebase' || !fb) return;
@@ -4146,7 +4159,7 @@ async function _capSincFirebase(){
   if(backend!=='firebase' || !fb) return;
   try{
     const snap=await fb.collection('config').doc('capacidades').get();
-    if(!snap.exists) return;
+    if(!snap.exists){ console.info('capacidade: ainda não há documento config/capacidades no Firebase.'); return; }
     const d=snap.data(); if(!d) return;
     if(d.cap && typeof d.cap==='object'){
       simCapOv=d.cap;
@@ -4164,7 +4177,8 @@ async function _capSincFirebase(){
     /* Redesenha a tabela de capacidades e recalcula a simulação com os valores recebidos */
     if(typeof simRenderCfg==='function') simRenderCfg();
     if(typeof simRecalc==='function') simRecalc();
-  }catch(e){ console.warn('capSincFirebase:', e.message); }
+    console.info('capacidade: recebida do Firebase e aplicada ('+Object.keys(simCapOv||{}).length+' embalagem(ns)).');
+  }catch(e){ console.warn('capSincFirebase:', e.code||e.message); }
 }
 
 /* CONFERIR aparece quando: falta o valor de emb./cesto OU é leitura duvidosa ainda não confirmada */
