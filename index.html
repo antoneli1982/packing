@@ -2347,9 +2347,10 @@
     <style>
       #view-sim .sim-grid{max-width:920px;margin:0 auto}
       #view-sim .sim-rows{display:flex;flex-direction:column;gap:10px}
-      #view-sim .sim-row{display:grid;grid-template-columns:46px 1fr 96px auto;gap:9px;align-items:center;
+      #view-sim .sim-row{display:flex;flex-direction:column;gap:0;
         background:var(--panel-2);border:1px solid var(--line-soft);border-radius:12px;padding:10px 11px}
-      #view-sim .sim-foto{width:46px;height:46px;border-radius:8px;object-fit:cover;background:var(--bg);border:1px solid var(--line);display:block}
+      #view-sim .sim-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+      #view-sim .sim-foto{flex:0 0 46px;width:46px;height:46px;border-radius:8px;object-fit:cover;background:var(--bg);border:1px solid var(--line);display:block}
       #view-sim .sim-foto-ph{display:flex;align-items:center;justify-content:center;color:var(--txt-faint);font-size:20px}
       #view-sim .sim-extra{grid-column:1/-1;display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding-top:9px;border-top:1px dashed var(--line)}
       #view-sim .sim-extra-lbl{font-size:11px;color:var(--txt-dim);font-weight:600}
@@ -2372,13 +2373,13 @@
         background-repeat:no-repeat;background-position:right 9px center}
       #view-sim .sim-row input[type=number]{text-align:center;font-weight:700}
       #view-sim .sim-row select:focus,#view-sim .sim-row input:focus{border-color:var(--blue-soft)}
-      #view-sim .sim-emb{display:flex;flex-direction:column;gap:3px;min-width:0}
+      #view-sim .sim-emb{flex:1 1 200px;min-width:150px;display:flex;flex-direction:column;gap:3px}
       #view-sim .sim-emb-name{font-size:10.5px;color:var(--txt-dim);line-height:1.25;font-weight:600;
         word-break:break-word;padding:0 2px}
-      #view-sim .sim-q{display:flex;flex-direction:column}
+      #view-sim .sim-q{flex:0 0 96px;display:flex;flex-direction:column}
       #view-sim .sim-qlbl{font-size:9px;color:var(--txt-faint);text-align:center;text-transform:uppercase;
         letter-spacing:.5px;margin-bottom:3px;font-weight:600}
-      #view-sim .sim-rm{width:34px;height:34px;border:1px solid var(--line);background:var(--bg);
+      #view-sim .sim-rm{flex:0 0 34px;width:34px;height:34px;border:1px solid var(--line);background:var(--bg);
         color:var(--txt-faint);border-radius:9px;cursor:pointer;font-size:17px;line-height:1;transition:.15s}
       #view-sim .sim-rm:hover{border-color:var(--red);color:var(--red)}
       #view-sim .sim-res{grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;padding-top:9px;
@@ -2433,7 +2434,7 @@
       #view-sim .sim-disp-chip b{font-variant-numeric:tabular-nums}
       #view-sim .sim-imp{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 16px 14px}
       #view-sim .sim-imp-hint{font-size:10.5px;color:var(--txt-faint);line-height:1.5;flex:1 1 220px;min-width:180px}
-      @media(max-width:560px){#view-sim .sim-totals{grid-template-columns:1fr}#view-sim .sim-row{grid-template-columns:40px 1fr 78px auto}#view-sim .sim-foto{width:40px;height:40px}}
+      @media(max-width:560px){#view-sim .sim-totals{grid-template-columns:1fr}#view-sim .sim-foto{flex-basis:40px;width:40px;height:40px}#view-sim .sim-emb{flex-basis:140px;min-width:110px}#view-sim .sim-q{flex-basis:84px}}
     </style>
 
     <div class="sim-grid">
@@ -4259,6 +4260,7 @@ function renderSim(){
       ? '<img class="sim-foto" src="'+FOTOS_EMB[ln.emb]+'" alt="'+ln.emb+'" loading="lazy">'
       : '<div class="sim-foto sim-foto-ph" title="sem foto cadastrada">▦</div>';
     return '<div class="sim-row">'+
+      '<div class="sim-top">'+
       foto+
       '<div class="sim-emb">'+
         '<select class="sim-sel" data-i="'+i+'" title="'+ln.emb+'">'+opts+'</select>'+
@@ -4267,6 +4269,7 @@ function renderSim(){
       '<div class="sim-q"><span class="sim-qlbl">Quantidade</span>'+
         '<input type="number" min="0" step="1" inputmode="numeric" class="sim-qtd" data-i="'+i+'" value="'+ln.qtd+'" placeholder="0"></div>'+
       '<button class="sim-rm" data-i="'+i+'" title="Remover">×</button>'+
+      '</div>'+
       '<div class="sim-res" data-res="'+i+'"></div>'+
       '<div class="sim-extra"><span class="sim-extra-lbl">Ciclo extra</span>'+
         '<button class="sim-extra-btn sim-extra-minus" data-i="'+i+'" title="Remover ciclo">−</button>'+
@@ -4276,6 +4279,7 @@ function renderSim(){
         '<span class="sim-grp-wrap"><span class="sim-extra-lbl">🔗 Simult.</span>'+
         '<select class="sim-grp" data-i="'+i+'" title="Embalagens que rodam ao mesmo tempo: marque o mesmo grupo (A, B, …). O tempo do grupo é o MAIOR entre elas (não soma).">'+
         simGrpOptions(ln.grp)+'</select></span>'+
+      '</div>'+
     '</div>';
   }).join("");
   simRecalc(tmap);
