@@ -2514,7 +2514,7 @@
       <details class="sim-acc">
         <summary><span class="tag" style="background:var(--blue)">i</span>Como o cálculo funciona</summary>
         <div class="sim-explain">
-          Para cada embalagem: <code>tempo = quantidade × tempo médio por embalagem</code>.
+          Para cada embalagem: <code>tempo = quantidade × tempo médio por embalagem − 20,8 × média Nº de Ciclos (calc)</code> (descontado em todos os casos; nunca abaixo de 0).
           <code>cestos = ⌈qtd ÷ emb. por cesto⌉</code> é informativo (define o nº de cargas/ciclos). Os totais somam tudo.
           O <b>tempo médio por embalagem</b> = <code>soma das durações ÷ soma dos totais</code>, considerando só lavagens individuais.
           <br><br>
@@ -4315,9 +4315,13 @@ function simCalcLinha(ln, tmap){
   const cestos = Math.ceil(qtd/cap);
   const gpc = Math.max(1, simGpc);
   const ciclosCalc = Math.ceil(cestos / gpc);  /* nº de cargas (informativo) */
-  /* Tempo total = quantidade × tempo médio por unidade (+ ciclos extras) */
+  /* Tempo total = quantidade × tempo médio por unidade (+ ciclos extras),
+     DESCONTANDO 20,8 × média Nº de Ciclos (calc) da embalagem — em todos os casos.
+     mcCalc = média de ciclos por cesto (avgC); sem histórico = 0. Piso em 0. */
+  const mcCalc = t ? t.avgC : 0;
+  const tempoTot = Math.max(0, qtd*minEmb + tExtra - CICLO_MIN*mcCalc);
   return {qtd,cap,capOk,minEmb,temHist:!!t,ocor:t?t.ocor:0,cestos,ciclosCalc,extra,
-          ciclos:ciclosCalc+extra, tempo:qtd*minEmb+tExtra};
+          ciclos:ciclosCalc+extra, tempo:tempoTot, mediaCiclosCalc:mcCalc, descontoCiclos:CICLO_MIN*mcCalc};
 }
 const SIM_GRUPOS = ["A","B","C","D","E","F"];
 function simGrpOptions(sel){
@@ -4658,7 +4662,7 @@ function simGerarPDF(comp, opts){
   if(opts.origem){ doc.text(String(opts.origem), 40, y); y += 14; }
   doc.text("Gaiolas por carga: " + simGpc + "   •   Base do ciclo: " + fmtH(CICLO_MIN) + " min   •   Médias: " + simPeriodoTxt(), 40, y); y += 14;
   doc.setFontSize(8); doc.setTextColor(120,90,160);
-  doc.text("Última carga incompleta: -2,8% de tempo por gaiola abaixo de " + simGpc + " gaiolas (cargas cheias a 100%).", 40, y); y += 13;
+  doc.text("Tempo total por linha = quantidade × tempo médio/emb − 20,8 × média de Nº de Ciclos (calc), com piso em 0.", 40, y); y += 13;
   doc.setFontSize(9); doc.setTextColor(90,100,110);
 
   /* ---- Tabela principal (valores apresentados) ---- */
