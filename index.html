@@ -4275,20 +4275,16 @@ function simCalcLinha(ln, tmap){
   const extra = Math.max(0, parseInt(ln.extra,10)||0);   /* ciclos extras manuais */
   const tExtra = extra * CICLO_MIN;                       /* cada ciclo extra = 20,8 min */
   const t = tmap[ln.emb];
-  const min = t ? t.min : CICLO_MIN;            /* base 20,8 se sem histórico */
+  const min = t ? t.min : CICLO_MIN;  /* tempo médio por CESTO (base 20,8 min se sem histórico) */
   const capOk = (typeof cap==="number" && cap>0);
-  if(qtd<=0 || !capOk) return {qtd,cap,capOk,min,temHist:!!t,ocor:t?t.ocor:0,cestos:0,ciclosCalc:0,extra,ciclos:extra,tempo:tExtra,gaiolasUlt:0,descUlt:0};
+  if(qtd<=0 || !capOk) return {qtd,cap,capOk,min,temHist:!!t,ocor:t?t.ocor:0,cestos:0,ciclosCalc:0,extra,ciclos:extra,tempo:tExtra};
   const cestos = Math.ceil(qtd/cap);
   const gpc = Math.max(1, simGpc);
-  const full = Math.floor(cestos / gpc);                 /* cargas cheias (100%) */
-  const rem  = cestos % gpc;                             /* gaiolas na última carga (0 = cheia) */
-  /* última carga incompleta custa 2,8% menos de tempo por gaiola abaixo da carga cheia */
-  const fatorUlt = rem>0 ? Math.max(0, 1 - SIM_DESC_GAIOLA*(gpc - rem)) : 1;
-  const ciclosCalc = full + (rem>0 ? 1 : 0);             /* nº de cargas (inteiro, = ceil) */
-  const ciclosTempo = full + (rem>0 ? fatorUlt : 0);     /* multiplicador de tempo (fracionário) */
-  return {qtd,cap,capOk,min,temHist:!!t,ocor:t?t.ocor:0,cestos,ciclosCalc,extra,ciclos:ciclosCalc+extra,
-          tempo:ciclosTempo*min+tExtra,
-          gaiolasUlt: rem>0?rem:gpc, descUlt: rem>0?(1-fatorUlt):0};
+  const ciclosCalc = Math.ceil(cestos / gpc);  /* nº de cargas (informativo) */
+  /* Tempo total = cestos × tempo médio por cesto
+     (tempo/emb = min/cap; ex.: EKLT6428 cap=4 → 45÷4 = 11,25 min/emb) */
+  return {qtd,cap,capOk,min,temHist:!!t,ocor:t?t.ocor:0,cestos,ciclosCalc,extra,
+          ciclos:ciclosCalc+extra, tempo:cestos*min+tExtra};
 }
 const SIM_GRUPOS = ["A","B","C","D","E","F"];
 function simGrpOptions(sel){
@@ -4359,10 +4355,6 @@ function simRecalc(tmap){
     const row=el.closest(".sim-row");
     const ciclosTag = r.extra>0 ? ' <span class="sim-extra-tag">+'+r.extra+' extra</span>' : '';
     const gChip = grpBadge(grp, r);
-    const gpcN = Math.max(1, simGpc);
-    const partialChip = r.descUlt>0
-      ? '<span class="sim-chip" title="Última carga com '+r.gaiolasUlt+' de '+gpcN+' gaiolas: tempo reduzido '+(r.descUlt*100).toFixed(1).replace(".",",")+'% (2,8% por gaiola abaixo de '+gpcN+').">⤓ última '+r.gaiolasUlt+'/'+gpcN+' gaiolas · −'+(r.descUlt*100).toFixed(1).replace(".",",")+'%</span>'
-      : '';
     if(!r.capOk && r.qtd>0){
       if(row)row.classList.add("bad");
       el.innerHTML='<span class="sim-chip warn">⚠ Defina &quot;Emb. por cesto&quot; na aba Dados</span>'
@@ -4379,15 +4371,16 @@ function simRecalc(tmap){
         + gChip;
       return;
     }
+    const tempoEmb = r.cap>0 ? r.min/r.cap : 0;
     const histChip = r.temHist
-      ? '<span class="sim-chip" title="'+r.ocor+' ocorrência(s) na tela 08">média tela 08 · <b>'+simFmtHMS(r.min)+'</b>/ciclo</span>'
-      : '<span class="sim-chip warn" title="sem histórico — base de '+CICLO_MIN+' min">sem histórico · base <b>'+simFmtHMS(r.min)+'</b>/ciclo</span>';
+      ? '<span class="sim-chip" title="'+r.ocor+' ocorrência(s) na tela 08 · '+simFmtHMS(tempoEmb)+'/emb">média tela 08 · <b>'+simFmtHMS(r.min)+'</b>/cesto</span>'
+      : '<span class="sim-chip warn" title="sem histórico — base de '+CICLO_MIN+' min/cesto">sem histórico · base <b>'+simFmtHMS(r.min)+'</b>/cesto</span>';
     el.innerHTML =
       '<span class="sim-chip">Por cesto <b>'+r.cap+'</b></span>'+
       '<span class="sim-chip">Cestos <b>'+r.cestos+'</b></span>'+
       '<span class="sim-chip">Ciclos <b>'+r.ciclos+'</b>'+ciclosTag+'</span>'+
       '<span class="sim-chip blue">Tempo <b>'+simFmtHMS(r.tempo)+'</b></span>'+
-      partialChip + histChip + gChip;
+      histChip + gChip;
   });
   const set=(id,v)=>{const e=document.getElementById(id); if(e)e.textContent=v;};
   set("sim-t-cestos",agg.tCestos); set("sim-t-ciclos",agg.tCiclos); set("sim-t-tempo",simFmtHMS(agg.tTempo));
