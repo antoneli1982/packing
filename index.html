@@ -3443,7 +3443,7 @@ function minsRef(hi,hf){
   if(startMin<refEnd && endMin>refStart) return Math.min(endMin,refEnd)-Math.max(startMin,refStart);
   return 0;
 }
-function fmtMin(m){if(!isFinite(m))m=0;return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");}
+function fmtMin(m){if(!isFinite(m))m=0;m=Math.round(m);return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");}
 /* Retorna string "HH:MM" para exportação Excel — o Excel reconhece como tempo calculável */
 function fmtMinXLS(m){return String(Math.floor(m/60)).padStart(2,"0")+":"+String(m%60).padStart(2,"0");}
 
@@ -4028,7 +4028,7 @@ function calcRelatorioEmb(fde, fate){
   const map = {};
   EMBALAGENS.forEach(e=>{ map[e] = {durs:[], ciclos:[], total:0}; });
   lavR.forEach(r=>{
-    const d = minsRaw(r.hi, r.hf);          /* tempo de lavagem (min) */
+    const d = mins(r.hi, r.hf);               /* tempo de lavagem (min) — descontada refeição, igual à coluna Duração da tabela */
     if(!(d > 0)) return;
     const nc = d / CICLO_MIN;               /* nº de ciclos calculado */
     let embs;
@@ -5373,7 +5373,7 @@ function openMotivoDrilldown(motivo, filteredParadas){
 
   /* stats */
   const totalMin=regs.reduce((a,r)=>a+mins(r.hi,r.hf),0);
-  const avgMin=regs.length?Math.round(totalMin/regs.length):0;
+  const avgMin=regs.length?totalMin/regs.length:0;
   document.getElementById("detail-stats-row").innerHTML=
     '<div class="stat"><div class="v">'+regs.length+'</div><div class="k">Ocorrências</div></div>'+
     '<div class="stat"><div class="v">'+fmtMin(totalMin)+'</div><div class="k">Tempo Total Parado</div></div>'+
@@ -5443,7 +5443,7 @@ function renderDash(){
     partes.length?("Filtro ativo · "+partes.join(" · ")):"Visão global · todos os apontamentos";
 
   document.getElementById("d-emb").textContent=lav.reduce((a,r)=>a+r.total,0).toLocaleString("pt-BR");
-  document.getElementById("d-qtd").textContent=lav.length.toLocaleString("pt-BR");
+  document.getElementById("d-qtd").textContent=lav.filter(r=>!r.cont).length.toLocaleString("pt-BR");
   document.getElementById("d-trab").textContent=fmtMin(lav.reduce((a,r)=>a+mins(r.hi,r.hf),0));
   document.getElementById("d-par").textContent=fmtMin(par.reduce((a,r)=>a+mins(r.hi,r.hf),0));
   document.getElementById("d-ref").textContent=fmtMin([...lav,...par].reduce((a,r)=>a+minsRef(r.hi,r.hf),0));
