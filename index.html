@@ -4028,7 +4028,7 @@ function calcRelatorioEmb(fde, fate){
   const map = {};
   EMBALAGENS.forEach(e=>{ map[e] = {durs:[], ciclos:[], total:0}; });
   lavR.forEach(r=>{
-    const d = mins(r.hi, r.hf);               /* tempo de lavagem (min) — descontada refeição, igual à coluna Duração da tabela */
+    const d = minsRaw(r.hi, r.hf);            /* tempo bruto de máquina (min) — SEM desconto de refeição; usado pelo simulador como base por ciclo/cesto */
     if(!(d > 0)) return;
     const nc = d / CICLO_MIN;               /* nº de ciclos calculado */
     let embs;
