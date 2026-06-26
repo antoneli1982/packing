@@ -2128,7 +2128,7 @@
           <b style="color:var(--txt-dim)">Tempo de lavagem</b> = tempo decorrido (Hora Final − Hora Inicial) de cada ciclo de lavagem.
           <b style="color:var(--txt-dim)">Nº de ciclos</b> = tempo decorrido ÷ 20,8 min (mesma base de cálculo dos ciclos da máquina).
           Cada lavagem em que a embalagem aparece conta como uma ocorrência.
-          A coluna <b style="color:var(--txt-dim)">Média</b> de <b style="color:var(--blue-soft)">Tempo de Lavagem</b> é a média simples por embalagem; a coluna <b style="color:var(--txt-dim)">Média</b> de <b style="color:var(--green)">Nº de Ciclos</b> descarta o maior e o menor valor (a partir de 3 ocorrências). <b>Maior</b> e <b>Menor</b> mostram os extremos reais.
+          A coluna <b style="color:var(--txt-dim)">Média</b> de <b style="color:var(--blue-soft)">Tempo de Lavagem</b> é a média simples por embalagem, contando <b>apenas lavagens em que a embalagem foi lavada sozinha</b> — registros com mais de uma embalagem são desconsiderados nesse cálculo (aparece "—" quando não há nenhuma lavagem individual no período); a coluna <b style="color:var(--txt-dim)">Média</b> de <b style="color:var(--green)">Nº de Ciclos</b> descarta o maior e o menor valor (a partir de 3 ocorrências). <b>Maior</b> e <b>Menor</b> mostram os extremos reais (incluindo lavagens combinadas).
         </div>
         <div class="table-scroll" style="border-top:1px solid var(--line-soft)">
           <table>
@@ -2146,7 +2146,7 @@
                 <th colspan="3" style="border-bottom:1px solid var(--line-soft);color:var(--green)">Nº de Ciclos (calc.)</th>
               </tr>
               <tr>
-                <th>Maior</th><th>Menor</th><th title="Média simples do tempo de lavagem por embalagem">Média<br>por emb.</th>
+                <th>Maior</th><th>Menor</th><th title="Média simples do tempo de lavagem por embalagem, contando apenas lavagens individuais (registros com mais de uma embalagem são ignorados)">Média<br>por emb.</th>
                 <th>Maior</th><th>Menor</th><th>Média</th>
               </tr>
             </thead>
@@ -4028,7 +4028,7 @@ function calcRelatorioEmb(fde, fate){
     return true;
   });
   const map = {};
-  EMBALAGENS.forEach(e=>{ map[e] = {durs:[], ciclos:[], total:0}; });
+  EMBALAGENS.forEach(e=>{ map[e] = {durs:[], ciclos:[], total:0, dursPuro:[]}; });
   lavR.forEach(r=>{
     const d = minsRaw(r.hi, r.hf);  /* tempo bruto de máquina (min) — SEM desconto de refeição */
     if(!(d > 0)) return;
@@ -4037,11 +4037,18 @@ function calcRelatorioEmb(fde, fate){
     if(r.itens && r.itens.length) embs = r.itens.map(it=>it.emb);
     else if(r.emb)                embs = r.emb.split(",").map(s=>s.trim());
     else                          embs = [];
+    /* Embalagens DISTINTAS deste registro. Se houver mais de uma, a lavagem
+       foi "misturada": o tempo decorrido cobre várias embalagens e NÃO pode
+       ser atribuído a uma só. Esses registros são desconsiderados na média
+       de tempo por embalagem (mas continuam contando em Ocorrências/Total e
+       nos extremos Maior/Menor). */
+    const distintas = [...new Set(embs.filter(Boolean))];
+    const misturado = distintas.length > 1;
     const seen = new Set();
     embs.forEach(e=>{
       if(!e || seen.has(e)) return;
       seen.add(e);
-      if(!map[e]) map[e] = {durs:[], ciclos:[], total:0};
+      if(!map[e]) map[e] = {durs:[], ciclos:[], total:0, dursPuro:[]};
       /* quantidade desta embalagem neste registro */
       let embQty = 0;
       if(r.itens && r.itens.length){
@@ -4057,8 +4064,11 @@ function calcRelatorioEmb(fde, fate){
          avgT = tempo médio por cesto  →  tempo/emb = avgT ÷ cap  */
       const cap = simCap(e);
       const cestos = (cap && cap > 0 && embQty > 0) ? Math.ceil(embQty / cap) : 1;
-      map[e].durs.push(d / cestos);    /* min/cesto neste registro   */
+      const durCesto = d / cestos;
+      map[e].durs.push(durCesto);      /* min/cesto neste registro   */
       map[e].ciclos.push(nc / cestos); /* ciclos/cesto neste registro */
+      /* só lavagens com UMA única embalagem entram na média de tempo por embalagem */
+      if(!misturado) map[e].dursPuro.push(durCesto);
     });
   });
   const rows = [];
@@ -4079,7 +4089,8 @@ function calcRelatorioEmb(fde, fate){
       maxT: Math.max.apply(null, m.durs),
       minT: Math.min.apply(null, m.durs),
       avgT: trimMean(m.durs),
-      avgTsimple: mean(m.durs),   /* média SIMPLES do tempo por embalagem (não descarta extremos) */
+      avgTsimple: (m.dursPuro && m.dursPuro.length) ? mean(m.dursPuro) : null,   /* média SIMPLES do tempo, só lavagens individuais (ignora registros com várias embalagens) */
+      ocorPuro: (m.dursPuro ? m.dursPuro.length : 0),
       maxC: Math.max.apply(null, m.ciclos),
       minC: Math.min.apply(null, m.ciclos),
       avgC: trimMean(m.ciclos)
@@ -4118,7 +4129,7 @@ function renderRelatorioEmb(){
       '<td>'+r.total.toLocaleString("pt-BR")+'</td>'+
       '<td style="color:var(--blue-soft);font-weight:600">'+fmtMin(Math.round(r.maxT))+'</td>'+
       '<td>'+fmtMin(Math.round(r.minT))+'</td>'+
-      '<td>'+fmtMin(Math.round(r.avgTsimple))+'</td>'+
+      '<td>'+(r.avgTsimple==null ? '<span style="color:var(--txt-faint)" title="Sem lavagem individual desta embalagem no período — só registros com mais de uma embalagem">—</span>' : fmtMin(Math.round(r.avgTsimple)))+'</td>'+
       '<td style="color:var(--green);font-weight:600">'+fmtCE(r.maxC)+'</td>'+
       '<td>'+fmtCE(r.minC)+'</td>'+
       '<td>'+fmtCE(r.avgC)+'</td>'+
@@ -5009,7 +5020,7 @@ function exportRelatorioEmbXLS(){
   const aoa = [
     ["RELATÓRIO ANALÍTICO POR EMBALAGEM"],
     ["Período: " + periodo],
-    ["Tempo de lavagem = tempo decorrido (Hora Final − Hora Inicial).  Nº de ciclos = tempo decorrido ÷ 20,8 min.  Média Tempo = média simples por embalagem.  Média Nº Ciclos = descarta o maior e o menor valor (a partir de 3 ocorrências)."],
+    ["Tempo de lavagem = tempo decorrido (Hora Final − Hora Inicial).  Nº de ciclos = tempo decorrido ÷ 20,8 min.  Média Tempo = média simples por embalagem, apenas lavagens individuais (registros com mais de uma embalagem são desconsiderados; '—' = sem lavagem individual no período).  Média Nº Ciclos = descarta o maior e o menor valor (a partir de 3 ocorrências)."],
     [],
     ["Embalagem","Ocorrências","Total Lavadas",
      "Maior Tempo","Menor Tempo","Média Tempo",
@@ -5019,7 +5030,7 @@ function exportRelatorioEmbXLS(){
   rows.forEach(r=>{
     aoa.push([
       r.emb, r.ocor, r.total,
-      fmtMinXLS(Math.round(r.maxT)), fmtMinXLS(Math.round(r.minT)), fmtMinXLS(Math.round(r.avgTsimple)),
+      fmtMinXLS(Math.round(r.maxT)), fmtMinXLS(Math.round(r.minT)), (r.avgTsimple==null ? "—" : fmtMinXLS(Math.round(r.avgTsimple))),
       Math.round(r.maxC*100)/100, Math.round(r.minC*100)/100, Math.round(r.avgC*100)/100
     ]);
   });
@@ -5065,7 +5076,7 @@ function exportRelatorioEmbPDF(){
   doc.text("SAS · Relatório Analítico por Embalagem", 40, 42);
   doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(90,100,110);
   doc.text("Período: " + periodo, 40, 60);
-  doc.text("Tempo de lavagem = decorrido (Hora Final − Hora Inicial)   •   Nº de ciclos = decorrido ÷ 20,8 min   •   Média Tempo = média simples/emb.   •   Média Ciclos sem o maior e o menor (≥3 ocorr.)", 40, 74);
+  doc.text("Tempo de lavagem = decorrido (Hora Final − Hora Inicial)   •   Nº de ciclos = decorrido ÷ 20,8 min   •   Média Tempo = média simples/emb., só lavagens individuais (mistura desconsiderada)   •   Média Ciclos sem o maior e o menor (≥3 ocorr.)", 40, 74);
 
   const head = [[
     "Embalagem","Ocorr.","Total\nLavadas",
@@ -5074,7 +5085,7 @@ function exportRelatorioEmbPDF(){
   ]];
   const body = rows.map(r=>[
     r.emb, String(r.ocor), r.total.toLocaleString("pt-BR"),
-    fmtMin(Math.round(r.maxT)), fmtMin(Math.round(r.minT)), fmtMin(Math.round(r.avgTsimple)),
+    fmtMin(Math.round(r.maxT)), fmtMin(Math.round(r.minT)), (r.avgTsimple==null ? "—" : fmtMin(Math.round(r.avgTsimple))),
     fmtCE(r.maxC), fmtCE(r.minC), fmtCE(r.avgC)
   ]);
   doc.autoTable({
