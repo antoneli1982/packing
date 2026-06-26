@@ -2514,11 +2514,10 @@
       <details class="sim-acc">
         <summary><span class="tag" style="background:var(--blue)">i</span>Como o cálculo funciona</summary>
         <div class="sim-explain">
-          Para cada embalagem: <code>cestos = ⌈qtd ÷ emb. por cesto⌉</code>,
-          <code>ciclos = ⌈cestos ÷ gaiolas por carga⌉</code> e
-          <code>tempo = ciclos × tempo médio por ciclo</code>. Os totais somam tudo.
-          Cada “ciclo” aqui equivale a uma <b>carga de 5 gaiolas</b> (capacidade de carga/descarga do operador), não à rodada cheia da máquina (25).
-          <br><b>Carga incompleta:</b> a média de tempo vale para uma carga cheia (5 gaiolas). Quando a <b>última carga</b> tem menos de 5 gaiolas, o tempo dela cai <b>2,8% por gaiola</b> que falta (ex.: 4 gaiolas = −2,8%, 3 = −5,6%, 1 = −11,2%). As cargas cheias seguem a 100%.
+          Para cada embalagem: <code>cestos = ⌈qtd ÷ emb. por cesto⌉</code> e
+          <code>tempo = cestos × tempo médio por cesto</code>. Os totais somam tudo.
+          O <b>tempo por embalagem</b> equivale a <code>tempo médio/cesto ÷ emb./cesto</code>
+          (ex.: EKLT6428 com média 45 min/cesto e cap 4 → 45 ÷ 4 = 11,25 min/emb).
           <br><br>
           <b>Simultaneidade (🔗):</b> em cada linha você pode marcar um <i>grupo</i> (A, B, …). Embalagens com o <b>mesmo grupo</b> rodam <b>ao mesmo tempo</b>, então o tempo desse grupo não soma — vale o <b>maior</b> tempo entre elas. Cestos e ciclos continuam somando (é o trabalho físico realizado). Deixe em “—” para a linha rodar de forma independente.
           <br><br>
@@ -2531,9 +2530,12 @@
           o bloco completo de máquina parada e divide a demanda pela <b>capacidade produtiva diária</b> —
           22 h menos todas as paradas — indicando quantos dias a demanda exige.
           <br><br>
-          O tempo médio por ciclo é a média de tempo decorrido das lavagens daquela embalagem (tela 08),
-          correspondente a uma <b>carga de 5 gaiolas</b>, descartando o maior e o menor valor (a partir de 3 apontamentos).
-          Embalagem sem histórico usa a base de 20,8 min/ciclo até existirem apontamentos.
+          O <b>tempo médio por cesto</b> é calculado a partir dos apontamentos da Tela 08 no período selecionado:
+          para cada registro, o tempo decorrido (minsRaw) é dividido pela quantidade de cestos daquela embalagem
+          naquele registro (<code>⌈qtd ÷ cap⌉</code>), obtendo o tempo por cesto.
+          Em seguida aplica-se a <b>média aparada</b>: descarta-se o <b>único maior</b> e o <b>único menor</b>
+          valor (a partir de 3 apontamentos), reduzindo o efeito de outliers. Com menos de 3 usa-se a média simples.
+          Embalagem sem histórico usa a base de 20,8 min/cesto até existirem apontamentos.
         </div>
       </details>
     </div>
@@ -4028,9 +4030,9 @@ function calcRelatorioEmb(fde, fate){
   const map = {};
   EMBALAGENS.forEach(e=>{ map[e] = {durs:[], ciclos:[], total:0}; });
   lavR.forEach(r=>{
-    const d = minsRaw(r.hi, r.hf);            /* tempo bruto de máquina (min) — SEM desconto de refeição; usado pelo simulador como base por ciclo/cesto */
+    const d = minsRaw(r.hi, r.hf);  /* tempo bruto de máquina (min) — SEM desconto de refeição */
     if(!(d > 0)) return;
-    const nc = d / CICLO_MIN;               /* nº de ciclos calculado */
+    const nc = d / CICLO_MIN;
     let embs;
     if(r.itens && r.itens.length) embs = r.itens.map(it=>it.emb);
     else if(r.emb)                embs = r.emb.split(",").map(s=>s.trim());
@@ -4040,14 +4042,23 @@ function calcRelatorioEmb(fde, fate){
       if(!e || seen.has(e)) return;
       seen.add(e);
       if(!map[e]) map[e] = {durs:[], ciclos:[], total:0};
-      map[e].durs.push(d);
-      map[e].ciclos.push(nc);
+      /* quantidade desta embalagem neste registro */
+      let embQty = 0;
       if(r.itens && r.itens.length){
         const it = r.itens.find(x=>x.emb===e);
-        map[e].total += (it && it.total) || 0;
+        embQty = (it && it.total) || 0;
       } else {
-        map[e].total += r.total || 0;
+        embQty = r.total || 0;
       }
+      map[e].total += embQty;
+      /* cestos desta embalagem neste registro:
+         cestos = ⌈embQty ÷ cap⌉ ; se cap desconhecido usa 1 (evita ÷0)
+         Armazena tempo E ciclos POR CESTO para que o trimMean dê
+         avgT = tempo médio por cesto  →  tempo/emb = avgT ÷ cap  */
+      const cap = simCap(e);
+      const cestos = (cap && cap > 0 && embQty > 0) ? Math.ceil(embQty / cap) : 1;
+      map[e].durs.push(d / cestos);    /* min/cesto neste registro   */
+      map[e].ciclos.push(nc / cestos); /* ciclos/cesto neste registro */
     });
   });
   const rows = [];
@@ -4118,7 +4129,7 @@ function renderRelatorioEmb(){
    SIMULAÇÃO DE LAVAGEM (aba "Simulação")
    - Emb. por cesto: lidas do anexo, editáveis (salvas no navegador)
    - Tempo médio por ciclo: lido da tela 08 (avgT por embalagem, via calcRelatorioEmb)
-   - cestos = ⌈qtd/cap⌉ ; ciclos = ⌈cestos/gaiolas⌉ ; tempo = ciclos × tempo médio
+   - cestos = ⌈qtd/cap⌉ ; tempo = cestos × tempo médio por cesto  (tempo/emb = avgT ÷ cap)
    - Tempo exibido em h:min:s (HH:MM:SS)
    =================================================================== */
 const SIM_CAP_BASE = {
