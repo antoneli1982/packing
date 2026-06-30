@@ -4552,7 +4552,7 @@ function simFmtTempoUnit(min){
   const h=Math.floor(s/3600); s-=h*3600;
   const m=Math.floor(s/60); s-=m*60;
   const p=n=>String(n).padStart(2,"0");
-  return h>0 ? p(h)+":"+p(m)+":"+p(s) : p(m)+":"+p(s);
+  return p(h)+":"+p(m)+":"+p(s);
 }
 function simCalcLinha(ln, tmap){
   const cap = simCap(ln.emb);
@@ -7594,6 +7594,7 @@ async function initEmbalagens(){
   }
   embCadPronto = true;
   applyEmbalagens();
+  await embCorrigirTemposUmaVez(false);   // corrige dados locais já salvos (antes do Firebase)
   // Se Firebase conectar depois, sincroniza em background
   _embSincFirebase();
 }
@@ -7628,6 +7629,7 @@ async function _embSincFirebase(){
           console.info('[Firebase] ' + novas.length + ' nova(s) embalagem(ns) sincronizada(s).');
         }
         // Atualizar lista se estiver visível
+        await embCorrigirTemposUmaVez(true);   // corrige/grava dados vindos do Firebase
         if(document.getElementById('view-cadEmb').classList.contains('on')) renderCadEmb();
         return;
       }
@@ -7639,6 +7641,7 @@ async function _embSincFirebase(){
     });
     await batch.commit();
     console.info('[Firebase] Lista de embalagens sincronizada (' + embCadLista.length + ' itens).');
+    await embCorrigirTemposUmaVez(true);   // dados já corrigidos na init; apenas trava a flag
   }catch(e){ console.warn('embSincFirebase:', e.message); }
 }
 
@@ -7654,6 +7657,49 @@ async function _embSalvarFirebase(lista){
 async function _embExcluirFirebase(id){
   if(backend!=='firebase' || !fb) return;
   try{ await fb.collection('embalagens').doc(String(id)).delete(); }catch(e){}
+}
+
+/* ===================================================================
+   CORREÇÃO ÚNICA DOS TEMPOS POR EMBALAGEM (anexo da planilha)
+   Reaplica os tempos padrão corrigidos sobre dados JÁ SALVOS
+   (localStorage e Firebase) que ficaram com valores antigos/errados
+   (ex.: exibindo "média 00:00"). Roda só uma vez por navegador (flag)
+   e só altera embalagens cujo tempo difere do padrão corrigido —
+   não mexe em edições/medições futuras feitas pelo usuário.
+   =================================================================== */
+const TEMPOS_CORRIGIDOS_FLAG = "sas_tempos_emb_corrigidos_v2";
+
+function embAplicarCorrecaoTempos(lista){
+  let mudou = false;
+  (lista||[]).forEach(item=>{
+    if(!item || !item.nome) return;
+    const def = embTempoDefault(item.nome);
+    if(!def || !def.length) return;            // só embalagens com tempo padrão no anexo
+    const atual = simNormalizaTempos(item.tempos);
+    const igual = atual.length===def.length && atual.every((v,i)=>Math.abs(v-def[i])<1e-6);
+    if(!igual){ item.tempos = def.slice(); mudou = true; }
+  });
+  return mudou;
+}
+
+async function embCorrigirTemposUmaVez(firebaseReconciliado){
+  let jaFeito = false;
+  try{ jaFeito = !!localStorage.getItem(TEMPOS_CORRIGIDOS_FLAG); }catch(e){}
+  if(jaFeito) return;
+  const mudou = embAplicarCorrecaoTempos(embCadLista);
+  if(mudou){
+    embLS_save(embCadLista);
+    applyEmbalagens();
+    if(typeof renderCadEmb==='function' && document.getElementById('cadEmb-lista')) renderCadEmb();
+    await _embSalvarFirebase(embCadLista);     // persiste a correção no Firebase (se ativo)
+    console.info('[Tempos] Tempos por embalagem corrigidos a partir do anexo.');
+  }
+  /* Só "trava" a correção depois que o Firebase reconciliar (ou se não houver
+     Firebase), garantindo que dados antigos vindos do Firebase no primeiro
+     load também sejam corrigidos antes de gravar a flag. */
+  if(firebaseReconciliado || backend!=='firebase' || !fb){
+    try{ localStorage.setItem(TEMPOS_CORRIGIDOS_FLAG, "1"); }catch(e){}
+  }
 }
 
 /* --------- applyEmbalagens: atualiza EMBALAGENS + selects --------- */
