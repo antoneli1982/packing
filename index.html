@@ -2380,6 +2380,17 @@
             ⚠️ SEMPRE OPTE POR DEIXAR IMAGEM CADASTRADA, VISANDO AUXILIAR O OPERADOR A REALIZAR O APONTAMENTO
           </div>
 
+          <div class="field">
+            <label>Tempos por embalagem <span style="color:var(--txt-faint);font-weight:500;text-transform:none;letter-spacing:.2px">(opcional)</span></label>
+            <textarea id="cadEmb-tempos" placeholder="Exemplo:
+00:15
+00:18
+00:20" style="width:100%;min-height:98px;resize:vertical;background:var(--panel-2);border:1px solid var(--line);color:var(--txt);border-radius:6px;padding:10px 11px;font-family:'Poppins',sans-serif;font-size:13px;line-height:1.45;outline:none"></textarea>
+            <div style="font-size:10px;color:var(--txt-faint);line-height:1.5;margin-top:6px">
+              Cadastre um tempo por linha. Aceita <b>mm:ss</b>, <b>hh:mm:ss</b> ou minutos decimais. Estes tempos alimentam o botão <b>Tempos do cadastro</b> na simulação.
+            </div>
+          </div>
+
           <div class="hint" id="cadEmb-hint"></div>
 
           <button type="button" class="submit" id="cadEmb-submit" style="margin-top:12px">Salvar Embalagem</button>
@@ -2467,6 +2478,11 @@
         font-family:'Poppins',sans-serif;font-size:13px}
       #view-sim .sim-ctl select{height:30px;padding:4px 8px;font-weight:700;background:var(--bg);
         border:1px solid var(--line);color:var(--txt);border-radius:8px;font-family:'Poppins',sans-serif;font-size:12.5px;cursor:pointer}
+      #view-sim .sim-fonte{display:flex;align-items:center;gap:5px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:10px;padding:5px}
+      #view-sim .sim-fonte-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--txt-faint);padding:0 5px;white-space:nowrap}
+      #view-sim .sim-fonte-btn{cursor:pointer;border:1px solid var(--line);background:var(--bg);color:var(--txt-dim);border-radius:8px;padding:6px 10px;font-family:'Poppins',sans-serif;font-size:11px;font-weight:800;transition:.13s;white-space:nowrap}
+      #view-sim .sim-fonte-btn:hover{border-color:var(--blue-soft);color:var(--blue-soft)}
+      #view-sim .sim-fonte-btn.on{background:var(--blue);border-color:var(--blue);color:#fff}
       #view-sim .sim-cfg-note{padding:0 16px 12px;font-size:11px;color:var(--txt-dim);line-height:1.55}
       #view-sim .sim-tbl{overflow-x:auto;border-top:1px solid var(--line-soft)}
       #view-sim table.sim-table{width:100%;border-collapse:collapse;font-size:12px;min-width:480px}
@@ -2507,12 +2523,18 @@
             <div class="sim-ctl"><label for="sim-mtbf">MTBF (h)</label><input type="number" id="sim-mtbf" min="0.1" step="0.5" value="40" inputmode="decimal" title="Tempo médio entre falhas (horas)"></div>
             <div class="sim-ctl"><label for="sim-mttr">MTTR (h)</label><input type="number" id="sim-mttr" min="0" step="0.5" value="2" inputmode="decimal" title="Tempo médio de reparo (horas)"></div>
             <div class="sim-ctl"><label for="sim-meses">Período médias</label><select id="sim-meses" title="Quantos meses de histórico entram nas médias por embalagem. 'Global' usa todos os registros; janelas menores refletem melhor o processo atual."></select></div>
+            <div class="sim-fonte" title="Escolha de onde vem o tempo usado na simulação">
+              <span class="sim-fonte-lbl">Tempo</span>
+              <button type="button" class="sim-fonte-btn" id="sim-fonte-hist" data-fonte="historico">Média existente</button>
+              <button type="button" class="sim-fonte-btn" id="sim-fonte-cad" data-fonte="cadastro">Tempos do cadastro</button>
+            </div>
             <button class="btn-ghost" id="sim-clear">↺ Limpar</button>
           </div>
         </div>
         <div style="padding:11px 16px 0;font-size:11px;color:var(--txt-faint);line-height:1.5">
-          Informe a quantidade de cada embalagem. O tempo médio por embalagem vem automaticamente do
-          <b style="color:var(--txt-dim)">Relatório Analítico por Embalagem (Dashboard · 08)</b>.
+          Informe a quantidade de cada embalagem e escolha a fonte do tempo no botão <b style="color:var(--blue-soft)">Tempo</b>:
+          <b style="color:var(--txt-dim)">Média existente</b> usa o Relatório Analítico por Embalagem (Dashboard · 08);
+          <b style="color:var(--txt-dim)">Tempos do cadastro</b> usa todos os tempos registrados dentro do Cadastro de Embalagens.
           <br><b style="color:var(--orange)">Base de cálculo:</b> a máquina comporta até <b>25 gaiolas</b>, mas a carga/descarga do operador é de <b>5 gaiolas por vez</b> — por isso o ciclo de tempo é medido a cada <b>5 gaiolas</b> (campo <i>Gaiolas/carga</i> acima).
           <br><span id="sim-media-global"></span>
         </div>
@@ -2541,13 +2563,13 @@
         <summary><span class="tag" style="background:#9a6cf0">DADOS</span>Capacidades por cesto e tempos médios</summary>
         <div class="sim-cfg-note">
           <b>Emb. por cesto</b> vieram do seu anexo e são editáveis (salvas neste navegador).
-          <b>Tempo médio/emb.</b> é lido da tela 08 — o número entre parênteses é a quantidade de
-          lavagens usadas no cálculo; a média = soma dos tempos (rateados por cestos) ÷ soma dos totais, incluindo conjugadas (descarta 1 maior/1 menor se destoar demais, com 4+ lavagens). <span style="color:var(--orange);font-weight:600">CONFERIR</span> =
+          <b>Tempo usado/emb.</b> muda conforme o botão escolhido no topo: média histórica da tela 08 ou média dos tempos cadastrados na própria embalagem.
+          No modo histórico, o número entre parênteses é a quantidade de lavagens usadas; no modo cadastro, é a quantidade de tempos manuais registrados. <span style="color:var(--orange);font-weight:600">CONFERIR</span> =
           falta informar a emb./cesto ou leitura com dúvida; o aviso some assim que você informa o valor.
         </div>
         <div class="sim-tbl">
           <table class="sim-table">
-            <thead><tr><th>Embalagem</th><th style="text-align:center">Emb. por cesto</th><th style="text-align:center">Tempo médio/emb.<br>(tela 08)</th></tr></thead>
+            <thead><tr><th>Embalagem</th><th style="text-align:center">Emb. por cesto</th><th style="text-align:center">Tempo usado/emb.<br><span id="sim-cfg-fonte-th">média existente</span></th></tr></thead>
             <tbody id="sim-cfg-body"></tbody>
           </table>
         </div>
@@ -2573,9 +2595,9 @@
       <details class="sim-acc">
         <summary><span class="tag" style="background:var(--blue)">i</span>Como o cálculo funciona</summary>
         <div class="sim-explain">
-          Para cada embalagem: <code>tempo = quantidade × tempo médio por embalagem − 20,8 × média Nº de Ciclos (calc)</code> (descontado em todos os casos; nunca abaixo de 0).
+          Para cada embalagem: <code>tempo = quantidade × tempo por embalagem − 20,8 × média Nº de Ciclos (calc)</code> (o desconto de ciclos só existe quando a fonte é a média histórica; nunca fica abaixo de 0).
           <code>cestos = ⌈qtd ÷ emb. por cesto⌉</code> é informativo (define o nº de cargas/ciclos). Os totais somam tudo.
-          O <b>tempo médio por embalagem</b> = <code>soma dos tempos (rateados por cestos) ÷ soma dos totais</code>, incluindo conjugadas (com 4+ lavagens, descarta 1 maior >2× ou 1 menor <½ da mediana).
+          No botão <b>Média existente</b>, o tempo vem da tela 08: <code>soma dos tempos rateados ÷ soma dos totais</code>, incluindo conjugadas. No botão <b>Tempos do cadastro</b>, o sistema busca todos os tempos registrados na embalagem e usa a média desses tempos manuais por unidade.
           <br><br>
           <b>Simultaneidade (🔗):</b> em cada linha você pode marcar um <i>grupo</i> (A, B, …). Embalagens com o <b>mesmo grupo</b> rodam <b>ao mesmo tempo</b>, então o tempo desse grupo não soma — vale o <b>maior</b> tempo entre elas. Cestos e ciclos continuam somando (é o trabalho físico realizado). Deixe em “—” para a linha rodar de forma independente.
           <br><br>
@@ -2588,11 +2610,11 @@
           o bloco completo de máquina parada e divide a demanda pela <b>capacidade produtiva diária</b> —
           22 h menos todas as paradas — indicando quantos dias a demanda exige.
           <br><br>
-          O <b>tempo médio por embalagem</b> é calculado a partir dos apontamentos da Tela 08 no período selecionado,
+          O <b>tempo médio por embalagem</b> da opção <b>Média existente</b> é calculado a partir dos apontamentos da Tela 08 no período selecionado,
           usando <b>todas as lavagens</b>: nas conjugadas, como cada cesto leva um único tipo, a duração é rateada
           entre as embalagens proporcionalmente aos cestos de cada uma. É a <b>soma dos tempos rateados</b> dividida pela <b>soma das quantidades</b>
-          de embalagens lavadas (min por unidade). Com 4 ou mais lavagens, descarta-se no máximo 1 maior (acima de 2× a mediana) e 1 menor (abaixo de ½ da mediana) antes da média. Embalagem sem nenhuma lavagem com quantidade usa a base de
-          20,8 min/cesto ÷ capacidade até existirem apontamentos.
+          de embalagens lavadas (min por unidade). Com 4 ou mais lavagens, descarta-se no máximo 1 maior (acima de 2× a mediana) e 1 menor (abaixo de ½ da mediana) antes da média.
+          Na opção <b>Tempos do cadastro</b>, cadastre os tempos no Cadastro de Embalagens, um por linha, em <b>mm:ss</b>, <b>hh:mm:ss</b> ou minutos decimais. Embalagem sem tempo na fonte escolhida usa a base de 20,8 min/cesto ÷ capacidade até existir dado registrado.
         </div>
       </details>
     </div>
@@ -4300,10 +4322,12 @@ const SIM_LS_CAP = "sas-sim-cap";
 const SIM_LS_CAPOK = "sas-sim-cap-ok";   /* embalagens cuja emb./cesto já foi informada/confirmada */
 const SIM_LS_GPC = "sas-sim-gpc-carga";
 const SIM_LS_MESES = "sas-sim-meses-media";   /* janela de meses p/ as médias; "global" = todos */
+const SIM_LS_FONTE = "sas-sim-fonte-tempo";   /* historico ou cadastro */
 let simState = null;     /* [{emb, qtd}] */
 let simGpc = 5;
 const SIM_DESC_GAIOLA = 0.028;   /* última carga: -2,8% de tempo por gaiola abaixo da carga cheia */
 let simMesesMedia = "global";   /* "global" ou "1".."24" */
+let simFonteTempo = "historico"; /* historico = tela 08; cadastro = tempos cadastrados na embalagem */
 let simCapOv = {};
 let simCapConfirm = new Set();
 (function simLoadCfg(){
@@ -4311,6 +4335,7 @@ let simCapConfirm = new Set();
   try{ const a=JSON.parse(localStorage.getItem(SIM_LS_CAPOK)||"[]"); if(Array.isArray(a)) simCapConfirm=new Set(a); }catch(e){}
   try{ const g=parseInt(localStorage.getItem(SIM_LS_GPC),10); if(g>0) simGpc=g; }catch(e){}
   try{ const mm=localStorage.getItem(SIM_LS_MESES); if(mm==="global"||(parseInt(mm,10)>=1 && parseInt(mm,10)<=24)) simMesesMedia=mm; }catch(e){}
+  try{ const ft=localStorage.getItem(SIM_LS_FONTE); if(ft==="historico"||ft==="cadastro") simFonteTempo=ft; }catch(e){}
 })();
 
 /* ===== Sincronização da "Emb. por cesto" entre navegadores (Firebase) =====
@@ -4323,7 +4348,8 @@ async function _capSalvarFirebase(){
       cap: Object.assign({}, simCapOv),
       ok:  [...simCapConfirm],
       gpcCarga: simGpc,
-      mesesMedia: String(simMesesMedia)
+      mesesMedia: String(simMesesMedia),
+      fonteTempo: String(simFonteTempo)
     });
     console.info('capacidade por cesto: salva no Firebase.');
   }catch(e){
@@ -4372,6 +4398,11 @@ async function _capSincFirebase(){
       try{ localStorage.setItem(SIM_LS_MESES, simMesesMedia); }catch(e2){}
       const mm=document.getElementById('sim-meses'); if(mm) mm.value=simMesesMedia;
     }
+    if(d.fonteTempo==="historico" || d.fonteTempo==="cadastro"){
+      simFonteTempo=String(d.fonteTempo);
+      try{ localStorage.setItem(SIM_LS_FONTE, simFonteTempo); }catch(e2){}
+      if(typeof simAtualizarBotoesFonte==='function') simAtualizarBotoesFonte();
+    }
     /* Redesenha a tabela de capacidades e recalcula a simulação com os valores recebidos */
     if(typeof simRenderCfg==='function') simRenderCfg();
     if(typeof simRecalc==='function') simRecalc();
@@ -4404,24 +4435,75 @@ function simPeriodoTxt(){
   const n = parseInt(simMesesMedia,10);
   return (n>=1 && n<=24) ? ("últimos "+n+(n===1?" mês":" meses")) : "todos os registros (global)";
 }
-function simTempoMap(){
+function simFonteTxt(){
+  return simFonteTempo==="cadastro" ? "tempos cadastrados por embalagem" : "média existente da tela 08";
+}
+function simAtualizarBotoesFonte(){
+  document.querySelectorAll('#view-sim .sim-fonte-btn').forEach(b=>{
+    b.classList.toggle('on', b.dataset.fonte===simFonteTempo);
+  });
+  const th=document.getElementById('sim-cfg-fonte-th');
+  if(th) th.textContent = simFonteTempo==="cadastro" ? "tempos cadastro" : "média existente";
+}
+function simParseTempoUnit(v){
+  const raw = String(v==null?"":v).trim();
+  if(!raw) return null;
+  if(raw.indexOf(":")>=0){
+    const parts = raw.split(":").map(x=>parseFloat(String(x).replace(",",".")));
+    if(parts.some(x=>!isFinite(x) || x<0)) return null;
+    let min = null;
+    if(parts.length===2) min = parts[0] + parts[1]/60;
+    else if(parts.length===3) min = parts[0]*60 + parts[1] + parts[2]/60;
+    return (min!=null && min>0) ? min : null;
+  }
+  const n = parseFloat(raw.indexOf(",")>=0 ? raw.replace(/\./g,"").replace(",",".") : raw);
+  return (isFinite(n) && n>0) ? n : null;
+}
+function simNormalizaTempos(arr){
+  if(!Array.isArray(arr)) return [];
+  return arr.map(v=>typeof v==="number" ? v : simParseTempoUnit(v)).filter(v=>isFinite(v) && v>0);
+}
+function simTemposCadastro(emb){
+  const item = (typeof embCadLista!=="undefined" && Array.isArray(embCadLista))
+    ? embCadLista.find(x=>x && x.nome===emb) : null;
+  return simNormalizaTempos(item && item.tempos);
+}
+function simTempoMapHistorico(){
   const map={};
-  try{ calcRelatorioEmb(simMediaFde(), null).forEach(r=>{ if(r.avgTunit>0) map[r.emb]={minEmb:r.avgTunit, ocor:r.ocorPuro, avgC:r.avgC}; }); }
+  try{ calcRelatorioEmb(simMediaFde(), null).forEach(r=>{ if(r.avgTunit>0) map[r.emb]={minEmb:r.avgTunit, ocor:r.ocorPuro, avgC:r.avgC, fonte:"historico"}; }); }
   catch(e){}
   return map;
+}
+function simTempoMapCadastro(){
+  const map={};
+  try{
+    (embCadLista||[]).forEach(item=>{
+      const tempos = simNormalizaTempos(item.tempos);
+      if(tempos.length){
+        const avg = tempos.reduce((a,b)=>a+b,0)/tempos.length;
+        map[item.nome] = {minEmb:avg, ocor:tempos.length, avgC:0, fonte:"cadastro"};
+      }
+    });
+  }catch(e){}
+  return map;
+}
+function simTempoMap(){
+  return simFonteTempo==="cadastro" ? simTempoMapCadastro() : simTempoMapHistorico();
 }
 /* Média global = média (não ponderada) das médias por embalagem com histórico no período */
 function simRenderMediaGlobal(tmap){
   const el=document.getElementById("sim-media-global"); if(!el) return;
   tmap = tmap || simTempoMap();
   const vals = Object.keys(tmap).map(k=>tmap[k].minEmb).filter(v=>v>0);
+  const fonte = simFonteTempo==="cadastro" ? "tempos cadastrados" : "média existente";
+  const periodo = simFonteTempo==="cadastro" ? "Cadastro de Embalagens" : simPeriodoTxt();
   if(!vals.length){
-    el.innerHTML = '<b style="color:var(--blue-soft)">Média global:</b> sem lavagens com quantidade no período ('+simPeriodoTxt()+').';
+    el.innerHTML = '<b style="color:var(--blue-soft)">Fonte ativa:</b> '+fonte+' · sem tempos válidos em '+periodo+'.';
     return;
   }
   const media = vals.reduce((a,b)=>a+b,0)/vals.length;
-  el.innerHTML = '<b style="color:var(--blue-soft)">Média global:</b> '+simFmtHMS(media)+'/emb · '
-    + 'média de '+vals.length+' embalagem(ns) com histórico individual · período: '+simPeriodoTxt()+'.';
+  el.innerHTML = '<b style="color:var(--blue-soft)">Fonte ativa:</b> '+fonte+' · média global '+simFmtHMS(media)+'/emb · '
+    + vals.length+' embalagem(ns) com dado · origem: '+periodo+'.';
 }
 function simFmtHMS(min){
   let s = Math.round((isFinite(min)?min:0)*60); if(s<0) s=0;
@@ -4429,6 +4511,13 @@ function simFmtHMS(min){
   const m=Math.floor(s/60); s-=m*60;
   const p=n=>String(n).padStart(2,"0");
   return p(h)+":"+p(m)+":"+p(s);
+}
+function simFmtTempoUnit(min){
+  let s = Math.round((isFinite(min)?min:0)*60); if(s<0) s=0;
+  const h=Math.floor(s/3600); s-=h*3600;
+  const m=Math.floor(s/60); s-=m*60;
+  const p=n=>String(n).padStart(2,"0");
+  return h>0 ? p(h)+":"+p(m)+":"+p(s) : p(m)+":"+p(s);
 }
 function simCalcLinha(ln, tmap){
   const cap = simCap(ln.emb);
@@ -4463,6 +4552,7 @@ function renderSim(){
   if(!simState) simState = [{emb:(EMBALAGENS[0]||""), qtd:""}];
   simState.forEach(ln=>{ if(!EMBALAGENS.includes(ln.emb)) ln.emb = EMBALAGENS[0]||""; });
   const tmap = simTempoMap();
+  simAtualizarBotoesFonte();
   const gpcEl=document.getElementById("sim-gpc"); if(gpcEl) gpcEl.value=simGpc;
   const rowsEl=document.getElementById("sim-rows"); if(!rowsEl) return;
   rowsEl.innerHTML = simState.map((ln,i)=>{
@@ -4538,8 +4628,10 @@ function simRecalc(tmap){
       return;
     }
     const histChip = r.temHist
-      ? '<span class="sim-chip" title="'+r.ocor+' lavagem(ns) individual(is) na tela 08">média tela 08 · <b>'+simFmtHMS(r.minEmb)+'</b>/emb</span>'
-      : '<span class="sim-chip warn" title="sem histórico de lavagem — base de '+CICLO_MIN+' min/cesto ÷ capacidade">sem histórico · base <b>'+simFmtHMS(r.minEmb)+'</b>/emb</span>';
+      ? (simFonteTempo==="cadastro"
+          ? '<span class="sim-chip" title="'+r.ocor+' tempo(s) registrado(s) no Cadastro de Embalagens">tempos cadastro · <b>'+simFmtHMS(r.minEmb)+'</b>/emb</span>'
+          : '<span class="sim-chip" title="'+r.ocor+' lavagem(ns) individual(is) na tela 08">média tela 08 · <b>'+simFmtHMS(r.minEmb)+'</b>/emb</span>')
+      : '<span class="sim-chip warn" title="sem dado na fonte ativa — base de '+CICLO_MIN+' min/cesto ÷ capacidade">sem dado · base <b>'+simFmtHMS(r.minEmb)+'</b>/emb</span>';
     el.innerHTML =
       '<span class="sim-chip">Por cesto <b>'+r.cap+'</b></span>'+
       '<span class="sim-chip">Cestos <b>'+r.cestos+'</b></span>'+
@@ -4568,8 +4660,8 @@ function simRenderCfg(tmap){
     const capVal=(typeof cap==="number")?cap:"";
     const flag=simCfgPrecisaConferir(e);
     const t=tmap[e];
-    const tCell = t ? (simFmtHMS(t.minEmb)+'/emb <span class="sim-sub">('+t.ocor+')</span>')
-                    : '<span class="sim-sub">sem histórico</span>';
+    const tCell = t ? (simFmtHMS(t.minEmb)+'/emb <span class="sim-sub">('+t.ocor+' '+(simFonteTempo==="cadastro"?'tempo(s)':'lav.')+')</span>')
+                    : '<span class="sim-sub">sem dado na fonte ativa</span>';
     return '<tr>'+
       '<td class="sim-name">'+e+(flag?'<span class="sim-badge">CONFERIR</span>':'')+'</td>'+
       '<td style="text-align:center"><input class="sim-cfg-inp'+(capVal===""?" empty":"")+'" data-emb="'+e+'" type="number" min="0" step="1" inputmode="numeric" value="'+capVal+'" placeholder="?"></td>'+
@@ -4628,6 +4720,18 @@ function simRenderCfg(tmap){
     }
     simRecalc();
   });
+  document.querySelectorAll('#view-sim .sim-fonte-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const f=btn.dataset.fonte;
+      if(f!=="historico" && f!=="cadastro") return;
+      simFonteTempo=f;
+      try{ localStorage.setItem(SIM_LS_FONTE, simFonteTempo); }catch(e2){}
+      simAtualizarBotoesFonte();
+      _capSalvarFirebaseDebounced();
+      renderSim();
+    });
+  });
+  simAtualizarBotoesFonte();
   const addB=document.getElementById("sim-add");
   if(addB) addB.addEventListener("click", ()=>{
     if(!simState) simState=[];
@@ -7362,7 +7466,7 @@ function embLS_save(lista){
   }catch(e){
     // localStorage cheio (fotos grandes): tenta salvar só nomes
     try{
-      const mini = lista.map(x=>({id:x.id, nome:x.nome, foto:x.foto&&!FOTOS_EMB_DEFAULT_KEYS.includes(x.nome)?x.foto:''}));
+      const mini = lista.map(x=>({id:x.id, nome:x.nome, foto:x.foto&&!FOTOS_EMB_DEFAULT_KEYS.includes(x.nome)?x.foto:'', tempos:simNormalizaTempos(x.tempos)}));
       localStorage.setItem(KEY_EMB_CAD, JSON.stringify(mini));
     }catch(e2){ console.warn('localStorage cheio, usando só memória'); }
   }
@@ -7371,15 +7475,35 @@ function embLS_save(lista){
 /* Chaves das fotos padrão (para não duplicar no localStorage) */
 const FOTOS_EMB_DEFAULT_KEYS = Object.keys(FOTOS_EMB);
 
+function embTemposValidos(item){
+  return simNormalizaTempos(item && item.tempos);
+}
+function embTemposTexto(item){
+  return embTemposValidos(item).map(simFmtTempoUnit).join('\n');
+}
+function embParseTemposTexto(txt){
+  return String(txt||'').split(/[\n;,]+/).map(simParseTempoUnit).filter(v=>isFinite(v) && v>0);
+}
+function embSanitizarItem(item){
+  item = item || {};
+  return {
+    id: item.id || Date.now(),
+    nome: String(item.nome||'').trim(),
+    foto: item.foto || '',
+    tempos: simNormalizaTempos(item.tempos)
+  };
+}
+
 /* --------- Merge: garante que todas as EMBALAGENS_DEFAULT existam na lista --------- */
 function _mergeDefaults(lista){
+  lista = (lista||[]).map(embSanitizarItem).filter(x=>x.nome);
   const nomesExistentes = new Set(lista.map(x => x.nome));
   const maxId = lista.reduce((m, x) => Math.max(m, x.id || 0), 0);
   let nextId = Math.max(maxId + 1, 2000); // IDs novos começam em 2000+
   let novas = [];
   EMBALAGENS_DEFAULT.forEach(nome => {
     if(!nomesExistentes.has(nome)){
-      novas.push({ id: nextId++, nome, foto: FOTOS_EMB[nome] || '' });
+      novas.push({ id: nextId++, nome, foto: FOTOS_EMB[nome] || '', tempos: [] });
     }
   });
   if(novas.length === 0) return lista; // nada a acrescentar
@@ -7396,7 +7520,8 @@ async function initEmbalagens(){
     // Já tem cadastro — restaurar fotos e mesclar novas embalagens padrão
     let lista = salvo.map(item=>({
       ...item,
-      foto: item.foto || FOTOS_EMB[item.nome] || ''
+      foto: item.foto || FOTOS_EMB[item.nome] || '',
+      tempos: simNormalizaTempos(item.tempos)
     }));
     lista = _mergeDefaults(lista);
     embCadLista = lista;
@@ -7406,7 +7531,8 @@ async function initEmbalagens(){
     embCadLista = EMBALAGENS_DEFAULT.map((nome,i)=>({
       id: 1000 + i,
       nome,
-      foto: FOTOS_EMB[nome] || ''
+      foto: FOTOS_EMB[nome] || '',
+      tempos: []
     }));
     embLS_save(embCadLista);
   }
@@ -7427,7 +7553,8 @@ async function _embSincFirebase(){
         // Firebase tem dados: usar como base, mas mesclar novos padrões faltantes
         let listaAtualizada = lista.map(item=>({
           ...item,
-          foto: item.foto || FOTOS_EMB[item.nome] || ''
+          foto: item.foto || FOTOS_EMB[item.nome] || '',
+          tempos: simNormalizaTempos(item.tempos)
         }));
         listaAtualizada = _mergeDefaults(listaAtualizada);
         embCadLista = listaAtualizada;
@@ -7500,6 +7627,8 @@ function applyEmbalagens(){
   if(typeof dModeloMS !== "undefined" && dModeloMS) dModeloMS.setOptions(EMBALAGENS);
   if(typeof fEmbMS  !== "undefined" && fEmbMS)  fEmbMS.setOptions(EMBALAGENS);
   if(typeof vfEmbMS !== "undefined" && vfEmbMS) vfEmbMS.setOptions(EMBALAGENS);
+  const simView=document.getElementById('view-sim');
+  if(simView && simView.classList.contains('on') && typeof renderSim==='function') renderSim();
 }
 
 /* --------- Render da lista de cadastro --------- */
@@ -7520,6 +7649,7 @@ function renderCadEmb(){
   html+='<thead><tr>';
   html+='<th style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-faint);text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);width:60px">Foto</th>';
   html+='<th style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-faint);text-align:left;padding:8px 6px;border-bottom:1px solid var(--line)">Nome</th>';
+  html+='<th style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-faint);text-align:center;padding:8px 6px;border-bottom:1px solid var(--line);width:128px">Tempos</th>';
   html+='<th style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--txt-faint);text-align:right;padding:8px 6px;border-bottom:1px solid var(--line);width:130px">Ações</th>';
   html+='</tr></thead><tbody>';
 
@@ -7530,7 +7660,10 @@ function renderCadEmb(){
       : '<div style="width:52px;height:36px;background:var(--panel-2);border-radius:5px;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:18px">📦</div>';
     html+='<tr style="border-bottom:1px solid var(--line-soft)">';
     html+='<td style="padding:7px 6px">'+fotoHtml+'</td>';
+    const tempos = embTemposValidos(item);
+    const mediaTempo = tempos.length ? (tempos.reduce((a,b)=>a+b,0)/tempos.length) : 0;
     html+='<td style="padding:7px 6px;font-size:12px;font-weight:600;color:var(--txt)">'+item.nome+'</td>';
+    html+='<td style="padding:7px 6px;text-align:center;font-size:11px;color:var(--txt-dim)">'+(tempos.length ? '<b style="color:var(--blue-soft)">'+tempos.length+'</b><br><span style="font-size:9.5px">média '+simFmtTempoUnit(mediaTempo)+'</span>' : '<span style="color:var(--txt-faint)">—</span>')+'</td>';
     html+='<td style="padding:7px 6px;text-align:right;white-space:nowrap">';
     html+='<button class="edit" onclick="cadEmbEditar(\''+item.id+'\')" title="Editar" style="margin-right:4px">✏️</button>';
     html+='<button class="del" onclick="cadEmbExcluir(\''+item.id+'\')" title="Excluir">✕</button>';
@@ -7549,6 +7682,7 @@ function cadEmbEditar(id){
   embCadEditId = String(id);
   document.getElementById('cadEmb-nome').value   = item.nome;
   document.getElementById('cadEmb-file').value   = '';
+  const temposEl = document.getElementById('cadEmb-tempos'); if(temposEl) temposEl.value = embTemposTexto(item);
   document.getElementById('cadEmb-titulo').textContent = 'Editar: '+item.nome;
   document.getElementById('cadEmb-banner').classList.add('on');
   document.getElementById('cadEmb-cancelar').style.display = 'block';
@@ -7567,6 +7701,7 @@ function cadEmbCancelar(){
   embCadEditId = null;
   document.getElementById('cadEmb-nome').value = '';
   document.getElementById('cadEmb-file').value = '';
+  const temposEl = document.getElementById('cadEmb-tempos'); if(temposEl) temposEl.value = '';
   document.getElementById('cadEmb-titulo').textContent = 'Nova Embalagem';
   document.getElementById('cadEmb-banner').classList.remove('on');
   document.getElementById('cadEmb-cancelar').style.display = 'none';
@@ -7638,6 +7773,7 @@ function initCadEmbForm(){
   btnSubmit.addEventListener('click', async function(){
     const hintEl = document.getElementById('cadEmb-hint');
     const nome   = document.getElementById('cadEmb-nome').value.trim();
+    const tempos = embParseTemposTexto((document.getElementById('cadEmb-tempos')||{}).value || '');
     if(!nome){ hintEl.textContent='Informe o nome da embalagem'; hintEl.className='hint'; return; }
 
     const duplicado = embCadLista.find(x=>
@@ -7673,9 +7809,9 @@ function initCadEmbForm(){
 
     if(embCadEditId){
       const i = embCadLista.findIndex(x=>String(x.id)===String(embCadEditId));
-      if(i>=0){ embCadLista[i].nome=nome; embCadLista[i].foto=foto; }
+      if(i>=0){ embCadLista[i].nome=nome; embCadLista[i].foto=foto; embCadLista[i].tempos=tempos; }
     } else {
-      embCadLista.push({ id: Date.now(), nome, foto });
+      embCadLista.push({ id: Date.now(), nome, foto, tempos });
     }
 
     /* Reordenar alfabeticamente após qualquer alteração */
