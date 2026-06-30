@@ -1184,6 +1184,31 @@
   .rack-stepper input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
   .rack-stepper input[type=number]:focus{outline:none;color:#9a6cf0}
 
+
+
+  /* ===== Paginação e filtro recente — Histórico Lavagem de Rack ===== */
+  .rack-hist-toolbar-note{font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--txt-faint);align-self:center;white-space:nowrap}
+  .rack-pager{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--line-soft);background:var(--panel)}
+  .rack-pager-info{font-family:'Poppins',sans-serif;font-size:10.5px;font-weight:600;color:var(--txt-dim);line-height:1.45;letter-spacing:.2px}
+  .rack-pager-info b{color:var(--txt);font-weight:800}
+  .rack-pager-info .rec{color:#9a6cf0;font-weight:800}
+  .rack-pager-controls{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
+  .rack-pager-btn{cursor:pointer;background:var(--panel-2);border:1px solid var(--line);color:var(--txt-dim);border-radius:6px;min-width:34px;height:30px;padding:0 9px;font-family:'Poppins',sans-serif;font-size:11px;font-weight:800;transition:.13s}
+  .rack-pager-btn:hover:not(:disabled){border-color:#9a6cf0;color:#9a6cf0;background:rgba(154,108,240,.10)}
+  .rack-pager-btn:disabled{opacity:.35;cursor:not-allowed}
+  .rack-pager-current{display:inline-flex;align-items:center;justify-content:center;min-width:86px;height:30px;border-radius:6px;background:rgba(154,108,240,.12);border:1px solid rgba(154,108,240,.32);color:#9a6cf0;font-family:'Poppins',sans-serif;font-size:11px;font-weight:800;white-space:nowrap}
+  .rack-mini-toolbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--line-soft);border-bottom:1px solid var(--line-soft);background:var(--panel)}
+  .rack-mini-toolbar select{width:auto;font-size:12px;padding:7px 26px 7px 10px}
+  @media(max-width:600px){
+    .rack-pager{padding:9px 10px;align-items:stretch}
+    .rack-pager-info{width:100%;font-size:10px}
+    .rack-pager-controls{width:100%;justify-content:space-between}
+    .rack-pager-btn{flex:1;min-width:0;padding:0 5px}
+    .rack-pager-current{flex:1.35;min-width:0}
+    .rack-mini-toolbar select{flex:1 1 46%;font-size:13px;padding:7px 9px}
+    .rack-hist-toolbar-note{width:100%;font-size:9px}
+  }
+
   /* ===== Multi-seleção (filtros do dashboard) ===== */
   .ms{position:relative;display:inline-flex;flex-direction:column;font-family:'Poppins',sans-serif;vertical-align:top}
   .ms-trigger{display:flex;align-items:center;gap:8px;min-height:33px;width:auto;min-width:152px;max-width:280px;
@@ -1922,6 +1947,21 @@
                 <option value="area">Área de Lavagem</option>
                 <option value="linha">Racks limpos na linha</option>
               </select>
+              <select id="rf-recente" title="Acesso rápido por datas mais recentes">
+                <option value="30" selected>Últimos 30 dias</option>
+                <option value="15">Últimos 15 dias</option>
+                <option value="7">Últimos 7 dias</option>
+                <option value="hoje">Hoje</option>
+                <option value="mes">Este mês</option>
+                <option value="todos">Todos os registros</option>
+                <option value="manual">Usar datas De/Até</option>
+              </select>
+              <select id="rf-page-size" title="Quantidade de linhas por página">
+                <option value="10" selected>10 por página</option>
+                <option value="25">25 por página</option>
+                <option value="50">50 por página</option>
+                <option value="100">100 por página</option>
+              </select>
               <div class="ms" id="rf-item-ms"></div>
               <div class="range-group">
                 <div class="range-field"><span class="range-lbl">De</span><input type="date" id="rf-data-de" style="color-scheme:dark"></div>
@@ -2083,8 +2123,26 @@
             <div id="chart-rack-turno"></div>
           </div>
         </div>
+        <!-- Filtro rápido + paginação do histórico -->
+        <div class="rack-mini-toolbar">
+          <span class="rack-hist-toolbar-note">Histórico</span>
+          <select id="dash-rack-recente" title="Limita a tabela por datas mais recentes">
+            <option value="30" selected>Últimos 30 dias</option>
+            <option value="15">Últimos 15 dias</option>
+            <option value="7">Últimos 7 dias</option>
+            <option value="hoje">Hoje</option>
+            <option value="mes">Este mês</option>
+            <option value="todos">Todos os registros filtrados</option>
+          </select>
+          <select id="dash-rack-page-size" title="Quantidade de linhas por página">
+            <option value="10" selected>10 por página</option>
+            <option value="25">25 por página</option>
+            <option value="50">50 por página</option>
+            <option value="100">100 por página</option>
+          </select>
+        </div>
         <!-- Tabela de registros -->
-        <div class="table-scroll" style="border-top:1px solid var(--line-soft)">
+        <div class="table-scroll">
           <table>
             <colgroup>
               <col style="width:90px"><col style="width:80px"><col style="width:130px"><col style="width:auto">
@@ -2096,6 +2154,7 @@
           </table>
           <div id="dash-rack-empty"></div>
         </div>
+        <div id="dash-rack-pager"></div>
       </div>
 
       <!-- Painel 08: Relatório Analítico por Embalagem -->
@@ -6509,22 +6568,89 @@ function renderConsistencia(base){
   });
 }
 
+
+/* ===== Histórico Rack: datas recentes + paginação ===== */
+var rackHistPage = 1;
+var dashRackHistPage = 1;
+var RACK_HIST_DEFAULT_PAGE_SIZE = 10;
+function rackISODate(d){
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function rackRecentRange(valor){
+  if(!valor || valor==='manual' || valor==='todos') return null;
+  var hoje = new Date();
+  var ate = rackISODate(hoje);
+  var deDate = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+  var label = '';
+  if(valor==='hoje'){
+    label = 'Hoje';
+  } else if(valor==='mes'){
+    deDate = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    label = 'Este mês';
+  } else {
+    var dias = parseInt(valor,10) || 30;
+    deDate.setDate(deDate.getDate() - (dias - 1));
+    label = 'Últimos '+dias+' dias';
+  }
+  return {de:rackISODate(deDate), ate:ate, label:label};
+}
+function rackRecentLabel(valor){
+  if(valor==='todos') return 'Todos os registros';
+  if(valor==='manual') return 'Período manual';
+  var r = rackRecentRange(valor);
+  return r ? r.label : 'Período manual';
+}
+function rackApplyRecentFilter(lista, valor){
+  var rg = rackRecentRange(valor);
+  if(!rg) return lista;
+  return lista.filter(function(r){ return r.data && r.data >= rg.de && r.data <= rg.ate; });
+}
+function rackPageSizeFrom(id){
+  var el = document.getElementById(id);
+  var n = el ? parseInt(el.value,10) : RACK_HIST_DEFAULT_PAGE_SIZE;
+  return (n && n > 0) ? n : RACK_HIST_DEFAULT_PAGE_SIZE;
+}
+function rackPagerHtml(prefix, page, totalPages, total, start, end, pageSize, label){
+  if(total <= 0) return '';
+  var fn = prefix === 'dash' ? 'dashRackHistGo' : 'rackHistGo';
+  var disFirst = page <= 1 ? ' disabled' : '';
+  var disLast  = page >= totalPages ? ' disabled' : '';
+  return '<div class="rack-pager">'+
+    '<div class="rack-pager-info">Exibindo <b>'+start+'–'+end+'</b> de <b>'+total.toLocaleString('pt-BR')+'</b> registro'+(total!==1?'s':'')+' · <span class="rec">'+label+'</span> · '+pageSize+' por página</div>'+
+    '<div class="rack-pager-controls">'+
+      '<button type="button" class="rack-pager-btn" onclick="'+fn+'(1)"'+disFirst+' title="Primeira página">«</button>'+
+      '<button type="button" class="rack-pager-btn" onclick="'+fn+'('+(page-1)+')"'+disFirst+' title="Página anterior">‹</button>'+
+      '<span class="rack-pager-current">Página '+page+' / '+totalPages+'</span>'+
+      '<button type="button" class="rack-pager-btn" onclick="'+fn+'('+(page+1)+')"'+disLast+' title="Próxima página">›</button>'+
+      '<button type="button" class="rack-pager-btn" onclick="'+fn+'('+totalPages+')"'+disLast+' title="Última página">»</button>'+
+    '</div>'+
+  '</div>';
+}
+window.rackHistGo = function(page){
+  rackHistPage = Math.max(1, parseInt(page,10)||1);
+  if(typeof window.rackRender === 'function') window.rackRender();
+};
+window.dashRackHistGo = function(page){
+  dashRackHistPage = Math.max(1, parseInt(page,10)||1);
+  if(typeof renderDash === 'function') renderDash();
+};
+
 /* ===== Painel 07: Lavagem de Rack no Dashboard ===== */
 function renderDashRack(ftArr, fde, fate){
   /* KPI total */
   const kpiEl = document.getElementById('d-rack-total');
 
-  /* Filtra por turno e período (só data, rack não tem hora) */
-  let lista = [...rackRegistros];
-  if(ftArr && ftArr.length) lista = lista.filter(r => ftArr.includes(String(r.turno)));
-  if(fde) lista = lista.filter(r => r.data >= fde);
-  if(fate) lista = lista.filter(r => r.data <= fate);
+  /* Filtra por turno e período principal do dashboard (só data, rack não tem hora) */
+  let listaBase = [...rackRegistros];
+  if(ftArr && ftArr.length) listaBase = listaBase.filter(r => ftArr.includes(String(r.turno)));
+  if(fde) listaBase = listaBase.filter(r => r.data >= fde);
+  if(fate) listaBase = listaBase.filter(r => r.data <= fate);
 
-  if(kpiEl) kpiEl.textContent = lista.length.toLocaleString('pt-BR');
+  if(kpiEl) kpiEl.textContent = listaBase.length.toLocaleString('pt-BR');
 
   /* ---- Gráfico: itens mais lavados ---- */
   const porItem = {};
-  lista.forEach(r => {
+  listaBase.forEach(r => {
     (r.itens||[]).forEach(it => {
       const nome = typeof it === 'object' ? it.nome : it;
       if(!porItem[nome]) porItem[nome] = 0;
@@ -6543,23 +6669,38 @@ function renderDashRack(ftArr, fde, fate){
   /* ---- Gráfico: registros por turno ---- */
   const porTurno = ['1','2','3'].map(t => ({
     k: t+'º Turno',
-    v: lista.filter(r => String(r.turno) === t).length,
+    v: listaBase.filter(r => String(r.turno) === t).length,
     color: RACK_TURNO_COLOR[t] || '#9a6cf0'
   }));
   const chartTurno = document.getElementById('chart-rack-turno');
   if(chartTurno) bars(chartTurno, porTurno, {});
 
-  /* ---- Tabela de registros ---- */
+  /* ---- Tabela de histórico com filtro recente e paginação ---- */
   const tbody = document.getElementById('dash-rack-tbody');
   const emptyEl = document.getElementById('dash-rack-empty');
+  const pagerEl = document.getElementById('dash-rack-pager');
   if(!tbody) return;
+
+  const recentEl = document.getElementById('dash-rack-recente');
+  const recentVal = recentEl ? recentEl.value : '30';
+  const pageSize = rackPageSizeFrom('dash-rack-page-size');
+  let lista = [...listaBase].sort((a,b) => b.id - a.id);
+  lista = rackApplyRecentFilter(lista, recentVal);
+
   if(!lista.length){
     tbody.innerHTML = '';
-    if(emptyEl) emptyEl.innerHTML = '<div class="empty"><div class="big">▦</div><div class="txt">NENHUM REGISTRO DE LAVAGEM DE RACK</div></div>';
+    if(pagerEl) pagerEl.innerHTML = '';
+    if(emptyEl) emptyEl.innerHTML = '<div class="empty"><div class="big">▦</div><div class="txt">NENHUM REGISTRO DE LAVAGEM DE RACK PARA '+rackRecentLabel(recentVal).toUpperCase()+'</div></div>';
     return;
   }
   if(emptyEl) emptyEl.innerHTML = '';
-  tbody.innerHTML = lista.sort((a,b) => b.id - a.id).map(r => {
+
+  const totalPages = Math.max(1, Math.ceil(lista.length / pageSize));
+  dashRackHistPage = Math.min(Math.max(1, dashRackHistPage), totalPages);
+  const startIdx = (dashRackHistPage - 1) * pageSize;
+  const pageRows = lista.slice(startIdx, startIdx + pageSize);
+
+  tbody.innerHTML = pageRows.map(r => {
     const corArea = r.area ? (RACK_AREA_COLOR[r.area] || '#9a6cf0') : null;
     const labelArea = r.area ? (RACK_AREA_LABEL[r.area] || r.area) : '';
     const corT = RACK_TURNO_COLOR[r.turno] || 'var(--txt-dim)';
@@ -6579,7 +6720,21 @@ function renderDashRack(ftArr, fde, fate){
       '<td style="line-height:2">'+itensHtml+'</td>'+
     '</tr>';
   }).join('');
+
+  if(pagerEl){
+    pagerEl.innerHTML = rackPagerHtml('dash', dashRackHistPage, totalPages, lista.length, startIdx+1, Math.min(startIdx+pageSize, lista.length), pageSize, rackRecentLabel(recentVal));
+  }
 }
+
+(function initDashRackHistoricoControls(){
+  ['dash-rack-recente','dash-rack-page-size'].forEach(function(id){
+    var el=document.getElementById(id);
+    if(el) el.addEventListener('change', function(){
+      dashRackHistPage = 1;
+      if(document.getElementById('view-dash').classList.contains('on')) renderDash();
+    });
+  });
+})();
 
 /* ========================================================
    EMBALAGEM VAZIA — Aba separada, sem horas
@@ -7963,19 +8118,31 @@ async function loadRack(){
     const fItemSet=new Set(rfItemMS?rfItemMS.getValues():[]);
     const fDe=document.getElementById('rf-data-de').value;
     const fAte=document.getElementById('rf-data-ate').value;
+    const recentEl=document.getElementById('rf-recente');
+    const recentVal=recentEl?recentEl.value:'30';
+    const pageSize=rackPageSizeFrom('rf-page-size');
     let lista=[...rackRegistros].sort((a,b)=>b.id-a.id);
     if(fTurno) lista=lista.filter(r=>String(r.turno)===String(fTurno));
     if(fArea)  lista=lista.filter(r=>r.area===fArea);
     if(fItemSet.size) lista=lista.filter(r=>(r.itens||[]).some(it=>fItemSet.has(typeof it==='object'?it.nome:it)));
-    if(fDe)    lista=lista.filter(r=>r.data>=fDe);
-    if(fAte)   lista=lista.filter(r=>r.data<=fAte);
+    if(fDe || fAte || recentVal==='manual'){
+      if(fDe)  lista=lista.filter(r=>r.data>=fDe);
+      if(fAte) lista=lista.filter(r=>r.data<=fAte);
+    } else {
+      lista=rackApplyRecentFilter(lista, recentVal);
+    }
     if(!lista.length){
       tbody.innerHTML='';
-      box.innerHTML='<div class="empty"><div class="big" style="font-size:0"><img src="'+document.querySelector('.rack-area-btn img') ? '' : ''+'"></div><div class="txt">NENHUM REGISTRO ENCONTRADO</div></div>';
+      box.innerHTML='<div class="empty"><div class="big">▦</div><div class="txt">NENHUM REGISTRO ENCONTRADO</div></div>';
       return;
     }
-    box.innerHTML='';
-    tbody.innerHTML=lista.map(r=>{
+
+    const totalPages=Math.max(1,Math.ceil(lista.length/pageSize));
+    rackHistPage=Math.min(Math.max(1,rackHistPage),totalPages);
+    const startIdx=(rackHistPage-1)*pageSize;
+    const pageRows=lista.slice(startIdx,startIdx+pageSize);
+
+    tbody.innerHTML=pageRows.map(r=>{
       const corArea=r.area?(RACK_AREA_COLOR[r.area]||'#9a6cf0'):null;
       const labelArea=r.area?(RACK_AREA_LABEL[r.area]||r.area):'';
       const tNum = r.turno||'—';
@@ -8003,6 +8170,9 @@ async function loadRack(){
         '</td>'+
       '</tr>';
     }).join('');
+
+    const label = (fDe || fAte || recentVal==='manual') ? 'Período manual' : rackRecentLabel(recentVal);
+    box.innerHTML = rackPagerHtml('rack', rackHistPage, totalPages, lista.length, startIdx+1, Math.min(startIdx+pageSize, lista.length), pageSize, label);
   };
 
   /* ---- Editar ---- */
@@ -8111,11 +8281,20 @@ async function loadRack(){
 
   /* ---- Filtros ---- */
   var rfItemMS = createMultiSelect(document.getElementById('rf-item-ms'), {
-    options: [], placeholder: 'Todos os itens', searchable: true, onChange: ()=>rackRender()
+    options: [], placeholder: 'Todos os itens', searchable: true, onChange: ()=>{ rackHistPage=1; rackRender(); }
   });
-  ['rf-turno','rf-area','rf-data-de','rf-data-ate'].forEach(id=>{
+  ['rf-turno','rf-area','rf-recente','rf-page-size'].forEach(id=>{
     const el=document.getElementById(id);
-    if(el) el.addEventListener('change', rackRender);
+    if(el) el.addEventListener('change', ()=>{ rackHistPage=1; rackRender(); });
+  });
+  ['rf-data-de','rf-data-ate'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('change', ()=>{
+      const r=document.getElementById('rf-recente');
+      if(r) r.value='manual';
+      rackHistPage=1;
+      rackRender();
+    });
   });
   document.getElementById('rf-clear').addEventListener('click',()=>{
     document.getElementById('rf-turno').value='';
@@ -8123,6 +8302,9 @@ async function loadRack(){
     if(rfItemMS) rfItemMS.clear();
     document.getElementById('rf-data-de').value='';
     document.getElementById('rf-data-ate').value='';
+    const rr=document.getElementById('rf-recente'); if(rr) rr.value='30';
+    const ps=document.getElementById('rf-page-size'); if(ps) ps.value='10';
+    rackHistPage=1;
     rackRender();
   });
 
