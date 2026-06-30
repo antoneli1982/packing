@@ -2641,11 +2641,15 @@ const EMBALAGENS_DEFAULT=[
   "COBERTURAS (BLOCOS, CABEÇOTE)",
   /* ── DIVISÓRIAS ── */
   "DIVISORIA CABEÇOTE RDH (EA111/EA211)",
+  "DIVISORIAS CABECOTE ROH",
   "DIVISORIA CANOA",
+  "DIVISORIA TURBINA",
+  "DIVISORIA VOLANTE",
   "DIVISORIA USINAGEM (BLOCOS, CABEÇOTE)",
   "DIVISÓRIAS EKLT (POLIONDAS)",
   "DIVISORIA VIBRABREQUIM",
   "Divisoria BLO/ CAB","Cobertura da usinagem","Divisoria de bomba","Divisoria de cárter",
+  "DISPOSITIVO LINHA",
   /* ── OUTROS ── */
   "BERÇO VOLANTE / EMBREAGEM"];
 let EMBALAGENS=[...EMBALAGENS_DEFAULT].sort((a,b)=>a.localeCompare(b,'pt-BR',{sensitivity:'base'}));
@@ -2679,6 +2683,37 @@ const METAS_EMBALAGENS={
   "DIVISORIA VIBRABREQUIM":60,
   "BERÇO VOLANTE / EMBREAGEM":24
 };
+/* ===================================================================
+   TEMPOS PADRÃO POR EMBALAGEM — importados do Excel anexo
+   Origem: cada aba da planilha "Tempos embalagens lavadora.xlsx".
+   Campo usado: "Tempo / Embal (hr)" convertido de hora para minuto.
+   O cadastro aceita minutos decimais; ao editar, o sistema mostra em mm:ss.
+   =================================================================== */
+const TEMPOS_EMB_DEFAULT={
+  "EKLT6414":[0.042241645163],
+  "EKLT6421":[0.044003368779],
+  "EKLT6428":[0.045659367262],
+  "EKLT4314":[0.030356761744],
+  "EKLT3214":[0.019665539043],
+  "TAMPAS EKLT 3214":[0.014290804807],
+  "TAMPAS EKLT 4314":[0.015737842578],
+  "TAMPAS EKLT 64**":[0.027908169902],
+  "CANOA PLASTICA (VW)":[0.088838796149],
+  "COBERTURA CANOAS / TAMPA":[0.051120449464],
+  "DIVISORIA VIBRABREQUIM":[0.200503092904],
+  "DIVISORIA TURBINA":[0.062302619170],
+  "COBERTURAS (BLOCOS, CABEÇOTE)":[0.066689492969],
+  "Cobertura da usinagem":[0.066689492969],
+  "DIVISORIA USINAGEM (BLOCOS, CABEÇOTE)":[0.043505089675],
+  "Divisoria BLO/ CAB":[0.043505089675],
+  "DIVISORIA VOLANTE":[0.033817378659],
+  "BERÇO VOLANTE / EMBREAGEM":[0.033817378659],
+  "DISPOSITIVO LINHA":[0.050910397573],
+  "DIVISORIAS CABECOTE ROH":[0.060753689952],
+  "DIVISORIA CABEÇOTE RDH (EA111/EA211)":[0.060753689952],
+  "DIVISÓRIAS EKLT (POLIONDAS)":[0.053676461612],
+};
+
 const MOTIVOS=["Abastecimento de água na máquina","Falta de embalagem","Falta de energia","Manutenção geral (descreva na observação)","Parada por máquina","Quebra de espinho","Trabalho em outro setor","Troca de filtro"];
 const TLABEL={"1":"1º Turno","2":"2º Turno","3":"3º Turno"};
 const TCOLOR={"1":"var(--t1)","2":"var(--t2)","3":"var(--t3)"};
@@ -7475,6 +7510,27 @@ function embLS_save(lista){
 /* Chaves das fotos padrão (para não duplicar no localStorage) */
 const FOTOS_EMB_DEFAULT_KEYS = Object.keys(FOTOS_EMB);
 
+function embNormNome(nome){
+  return String(nome||'')
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .toUpperCase().replace(/[^A-Z0-9]+/g,' ').trim();
+}
+function embTempoDefault(nome){
+  const mapa = (typeof TEMPOS_EMB_DEFAULT !== 'undefined') ? TEMPOS_EMB_DEFAULT : {};
+  if(mapa[nome]) return mapa[nome].slice();
+  const alvo = embNormNome(nome);
+  const k = Object.keys(mapa).find(x => embNormNome(x) === alvo);
+  return k ? mapa[k].slice() : [];
+}
+function embAplicarTempoDefault(item){
+  item = item || {};
+  const temposAtuais = simNormalizaTempos(item.tempos);
+  const temposDefault = embTempoDefault(item.nome);
+  if(!temposAtuais.length && temposDefault.length) item.tempos = temposDefault;
+  else item.tempos = temposAtuais;
+  return item;
+}
+
 function embTemposValidos(item){
   return simNormalizaTempos(item && item.tempos);
 }
@@ -7486,12 +7542,13 @@ function embParseTemposTexto(txt){
 }
 function embSanitizarItem(item){
   item = item || {};
-  return {
+  const out = {
     id: item.id || Date.now(),
     nome: String(item.nome||'').trim(),
     foto: item.foto || '',
     tempos: simNormalizaTempos(item.tempos)
   };
+  return embAplicarTempoDefault(out);
 }
 
 /* --------- Merge: garante que todas as EMBALAGENS_DEFAULT existam na lista --------- */
@@ -7503,7 +7560,7 @@ function _mergeDefaults(lista){
   let novas = [];
   EMBALAGENS_DEFAULT.forEach(nome => {
     if(!nomesExistentes.has(nome)){
-      novas.push({ id: nextId++, nome, foto: FOTOS_EMB[nome] || '', tempos: [] });
+      novas.push(embAplicarTempoDefault({ id: nextId++, nome, foto: FOTOS_EMB[nome] || '', tempos: [] }));
     }
   });
   if(novas.length === 0) return lista; // nada a acrescentar
@@ -7518,10 +7575,9 @@ async function initEmbalagens(){
   const salvo = embLS_load();
   if(salvo && salvo.length > 0){
     // Já tem cadastro — restaurar fotos e mesclar novas embalagens padrão
-    let lista = salvo.map(item=>({
+    let lista = salvo.map(item=>embSanitizarItem({
       ...item,
-      foto: item.foto || FOTOS_EMB[item.nome] || '',
-      tempos: simNormalizaTempos(item.tempos)
+      foto: item.foto || FOTOS_EMB[item.nome] || ''
     }));
     lista = _mergeDefaults(lista);
     embCadLista = lista;
@@ -7532,7 +7588,7 @@ async function initEmbalagens(){
       id: 1000 + i,
       nome,
       foto: FOTOS_EMB[nome] || '',
-      tempos: []
+      tempos: embTempoDefault(nome)
     }));
     embLS_save(embCadLista);
   }
@@ -7551,10 +7607,9 @@ async function _embSincFirebase(){
       const lista = snap.docs.map(d=>d.data());
       if(lista.length > 0){
         // Firebase tem dados: usar como base, mas mesclar novos padrões faltantes
-        let listaAtualizada = lista.map(item=>({
+        let listaAtualizada = lista.map(item=>embSanitizarItem({
           ...item,
-          foto: item.foto || FOTOS_EMB[item.nome] || '',
-          tempos: simNormalizaTempos(item.tempos)
+          foto: item.foto || FOTOS_EMB[item.nome] || ''
         }));
         listaAtualizada = _mergeDefaults(listaAtualizada);
         embCadLista = listaAtualizada;
