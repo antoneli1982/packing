@@ -2434,6 +2434,18 @@
       #view-sim .sim-row select.sim-grp{width:auto;min-width:56px;padding:4px 22px 4px 9px;font-size:12px;font-weight:700}
       #view-sim .sim-chip.grp{border-color:rgba(154,108,240,.45);color:var(--purple-txt)}
       @media(max-width:560px){#view-sim .sim-grp-wrap{margin-left:0;padding-left:0;border-left:0}}
+      #view-sim .sim-seq{flex:0 0 26px;display:flex;flex-direction:column;align-items:center;gap:2px}
+      #view-sim .sim-seq-n{font-size:12px;font-weight:800;color:var(--txt);line-height:1;font-variant-numeric:tabular-nums}
+      #view-sim .sim-seq-btn{width:22px;height:15px;border:1px solid var(--line);background:var(--bg);color:var(--txt-faint);
+        border-radius:5px;cursor:pointer;font-size:8px;line-height:1;display:flex;align-items:center;justify-content:center;
+        padding:0;transition:.12s}
+      #view-sim .sim-seq-btn:hover{border-color:var(--blue-soft);color:var(--blue-soft)}
+      #view-sim .sim-seq-btn:disabled{opacity:.25;cursor:not-allowed}
+      #view-sim .sim-date-wrap{display:inline-flex;align-items:center;gap:6px}
+      #view-sim .sim-row input[type=date]{background:var(--bg);border:1px solid var(--line);color:var(--txt);
+        font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;border-radius:8px;padding:5px 8px;
+        height:30px;outline:none;color-scheme:dark}
+      #view-sim .sim-row input[type=date]:focus{border-color:var(--blue-soft)}
       #view-sim .sim-row.bad{border-color:rgba(240,83,63,.45)}
       #view-sim .sim-row select,#view-sim .sim-row input[type=number]{width:100%;background:var(--bg);
         border:1px solid var(--line);color:var(--txt);font-family:'Poppins',sans-serif;font-size:13px;
@@ -4642,8 +4654,14 @@ function renderSim(){
     const foto = FOTOS_EMB[ln.emb]
       ? '<img class="sim-foto" src="'+FOTOS_EMB[ln.emb]+'" alt="'+ln.emb+'" loading="lazy">'
       : '<div class="sim-foto sim-foto-ph" title="sem foto cadastrada">▦</div>';
+    const seq = '<div class="sim-seq" title="Posição '+(i+1)+' de '+simState.length+' — use as setas para reordenar">'+
+        '<button type="button" class="sim-seq-btn sim-seq-up" data-i="'+i+'" title="Mover para cima"'+(i===0?" disabled":"")+'>▲</button>'+
+        '<span class="sim-seq-n">'+(i+1)+'</span>'+
+        '<button type="button" class="sim-seq-btn sim-seq-down" data-i="'+i+'" title="Mover para baixo"'+(i===simState.length-1?" disabled":"")+'>▼</button>'+
+      '</div>';
     return '<div class="sim-row">'+
       '<div class="sim-top">'+
+      seq+
       foto+
       '<div class="sim-emb">'+
         '<select class="sim-sel" data-i="'+i+'" title="'+ln.emb+'">'+opts+'</select>'+
@@ -4659,6 +4677,8 @@ function renderSim(){
         '<span class="sim-extra-n" data-extra-n="'+i+'">'+(parseInt(ln.extra,10)||0)+'</span>'+
         '<button class="sim-extra-btn sim-extra-plus" data-i="'+i+'" title="+1 ciclo (00:20:48)">+</button>'+
         '<span class="sim-extra-hint">cada +1 = 00:20:48</span>'+
+        '<span class="sim-date-wrap"><span class="sim-extra-lbl">📅 Data</span>'+
+        '<input type="date" class="sim-data" data-i="'+i+'" value="'+(ln.data||"")+'" title="Data prevista para esta embalagem (opcional). Deixe em branco se o planejamento não for de um processo com data definida."></span>'+
         '<span class="sim-grp-wrap"><span class="sim-extra-lbl">🔗 Simult.</span>'+
         '<select class="sim-grp" data-i="'+i+'" title="Embalagens que rodam ao mesmo tempo: marque o mesmo grupo (A, B, …). O tempo do grupo é o MAIOR entre elas (não soma).">'+
         simGrpOptions(ln.grp)+'</select></span>'+
@@ -4763,6 +4783,8 @@ function simRenderCfg(tmap){
     if(s){ simState[+s.dataset.i].emb=s.value; renderSim(); return; }
     const g=e.target.closest(".sim-grp");
     if(g){ simState[+g.dataset.i].grp=g.value; simRecalc(); return; }
+    const d=e.target.closest(".sim-data");
+    if(d){ simState[+d.dataset.i].data=d.value; return; }
   });
   rows.addEventListener("input", e=>{
     const q=e.target.closest(".sim-qtd"); if(!q||!simState) return;
@@ -4770,6 +4792,14 @@ function simRenderCfg(tmap){
   });
   rows.addEventListener("click", e=>{
     if(!simState) return;
+    const up=e.target.closest(".sim-seq-up");
+    if(up){ const i=+up.dataset.i;
+      if(i>0){ const tmp=simState[i-1]; simState[i-1]=simState[i]; simState[i]=tmp; renderSim(); }
+      return; }
+    const down=e.target.closest(".sim-seq-down");
+    if(down){ const i=+down.dataset.i;
+      if(i<simState.length-1){ const tmp=simState[i+1]; simState[i+1]=simState[i]; simState[i]=tmp; renderSim(); }
+      return; }
     const rm=e.target.closest(".sim-rm");
     if(rm){ const i=+rm.dataset.i;
       if(simState.length===1){ simState[0].qtd=""; simState[0].extra=0; } else simState.splice(i,1);
@@ -4820,11 +4850,11 @@ function simRenderCfg(tmap){
     if(!simState) simState=[];
     const used=new Set(simState.map(l=>l.emb));
     const next=EMBALAGENS.find(e=>!used.has(e))||EMBALAGENS[0]||"";
-    simState.push({emb:next,qtd:""}); renderSim();
+    simState.push({emb:next,qtd:"",data:""}); renderSim();
   });
   const clrB=document.getElementById("sim-clear");
   if(clrB) clrB.addEventListener("click", ()=>{
-    if(simState) simState.forEach(l=>{l.qtd="";l.extra=0;l.grp="";}); renderSim();
+    if(simState) simState.forEach(l=>{l.qtd="";l.extra=0;l.grp="";l.data="";}); renderSim();
   });
   const g=document.getElementById("sim-gpc");
   if(g) g.addEventListener("input", ()=>{
@@ -4941,7 +4971,7 @@ function simComputeAll(stateArr){
   const linhas = (stateArr || simState || []).map(ln=>{
     const r = simCalcLinha(ln, tmap);
     const t = tmap[ln.emb];
-    return Object.assign({ emb: ln.emb, grp:(ln.grp||"").trim(), mediaT: r.minEmb, mediaC: (t ? t.avgC : null), temHist: !!t }, r);
+    return Object.assign({ emb: ln.emb, grp:(ln.grp||"").trim(), data:(ln.data||"").trim(), mediaT: r.minEmb, mediaC: (t ? t.avgC : null), temHist: !!t }, r);
   });
   const agg = simAgrega(linhas);
   return { linhas, tCestos:agg.tCestos, tCiclos:agg.tCiclos, tTempo:agg.tTempo, grpMax:agg.grpMax, grpCount:agg.grpCount };
@@ -5032,28 +5062,47 @@ function simGerarPDF(comp, opts){
 
   /* ---- Tabela principal (valores apresentados) ---- */
   const fmtC2 = v => (v==null ? "—" : Number(v).toFixed(2).replace(".",","));
-  const head = [["Embalagem","Qtd","Emb/\ncesto","Tempo médio\n/emb","Média\nciclos","Cestos","Ciclos","Tempo total\n(h:min:s)"]];
-  const body = validas.map(l=>[
-    l.emb + (l.grp ? "  (gr. "+l.grp+")" : ""),
-    (l.qtd||0).toLocaleString("pt-BR"),
-    (typeof l.cap==="number" ? String(l.cap) : "—"),
-    simFmtHMS(l.mediaT),
-    fmtC2(l.mediaC),
-    String(l.cestos),
-    String(l.ciclos),
-    simFmtHMS(l.tempo)
-  ]);
-  body.push([
-    { content:"TOTAL", styles:{ fontStyle:"bold", halign:"left" } }, "", "", "", "",
+  /* Data (opcional): só entra no relatório se ao menos uma linha tiver uma data definida —
+     um plano sem datas (processo em aberto) não precisa de uma coluna vazia de "—". */
+  const fmtDataBR = iso => {
+    if(!iso) return "—";
+    const partes = String(iso).split("-");
+    if(partes.length!==3) return "—";
+    return partes[2] + "/" + partes[1] + "/" + partes[0];
+  };
+  const temData = validas.some(l => l.data);
+  const headCols = ["Seq.","Embalagem"];
+  if(temData) headCols.push("Data");
+  headCols.push("Qtd","Emb/\ncesto","Tempo médio\n/emb","Média\nciclos","Cestos","Ciclos","Tempo total\n(h:min:s)");
+  const head = [headCols];
+  const body = validas.map((l,idx)=>{
+    const row = [String(idx+1), l.emb + (l.grp ? "  (gr. "+l.grp+")" : "")];
+    if(temData) row.push(fmtDataBR(l.data));
+    row.push(
+      (l.qtd||0).toLocaleString("pt-BR"),
+      (typeof l.cap==="number" ? String(l.cap) : "—"),
+      simFmtHMS(l.mediaT),
+      fmtC2(l.mediaC),
+      String(l.cestos),
+      String(l.ciclos),
+      simFmtHMS(l.tempo)
+    );
+    return row;
+  });
+  const totalRow = ["", { content:"TOTAL", styles:{ fontStyle:"bold", halign:"left" } }];
+  if(temData) totalRow.push("");
+  totalRow.push(
+    "", "", "", "",
     { content:String(comp.tCestos), styles:{ fontStyle:"bold" } },
     { content:String(comp.tCiclos), styles:{ fontStyle:"bold" } },
     { content:simFmtHMS(comp.tTempo), styles:{ fontStyle:"bold" } }
-  ]);
+  );
+  body.push(totalRow);
   doc.autoTable({
     head:head, body:body, startY:y+6, theme:"grid",
     styles:{ font:"helvetica", fontSize:8.5, cellPadding:5, halign:"center", lineColor:[210,216,224], lineWidth:0.5 },
     headStyles:{ fillColor:[56,102,247], textColor:255, fontStyle:"bold", halign:"center", valign:"middle" },
-    columnStyles:{ 0:{ halign:"left", fontStyle:"bold" } },
+    columnStyles:{ 0:{ halign:"center" }, 1:{ halign:"left", fontStyle:"bold" } },
     alternateRowStyles:{ fillColor:[244,247,252] },
     margin:{ left:40, right:40 }
   });
