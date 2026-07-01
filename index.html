@@ -1343,7 +1343,7 @@
     <div class="tab" data-view="rack"><span class="dot"></span>Lavagem de Rack</div>
     <div class="tab" data-view="dash"><span class="dot"></span>Dashboard</div>
     <div class="tab" data-view="cadEmb"><span class="dot"></span>Cadastro de Embalagens</div>
-    <div class="tab" data-view="sim"><span class="dot"></span>PCL</div>
+    <div class="tab" data-view="sim"><span class="dot"></span>PCEmb</div>
   </div>
 
   <!-- ===== TICKER CNN ===== -->
@@ -2533,7 +2533,7 @@
     <div class="sim-grid">
       <div class="panel">
         <div class="panel-head">
-          <span class="tag" style="background:var(--green)">PCL</span><h2>PLANEJAMENTO E CONTROLE DE EMBALAGENS</h2>
+          <span class="tag" style="background:var(--green)">PCEmb</span><h2>PLANEJAMENTO E CONTROLE DE EMBALAGENS</h2>
           <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <div class="sim-ctl"><label for="sim-mtbf">MTBF (h)</label><input type="number" id="sim-mtbf" min="0.1" step="0.5" value="40" inputmode="decimal" title="Tempo médio entre falhas (horas)"></div>
             <div class="sim-ctl"><label for="sim-mttr">MTTR (h)</label><input type="number" id="sim-mttr" min="0" step="0.5" value="2" inputmode="decimal" title="Tempo médio de reparo (horas)"></div>
@@ -2553,6 +2553,20 @@
           </div>
           <button type="button" class="btn-ghost" id="sim-pcl-save">💾 Salvar planejamento</button>
           <button type="button" class="btn-ghost" id="sim-pcl-new" style="display:none">＋ Novo planejamento</button>
+        </div>
+        <div style="margin:12px 16px 0;padding:12px 14px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:12px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:9px">
+            <span class="tag" style="background:var(--blue)">📁</span>
+            <b style="font-size:12.5px;color:var(--txt)">Planejamentos salvos</b>
+            <span id="sim-pcl-count" style="color:var(--txt-faint);font-weight:500;font-size:11px"></span>
+          </div>
+          <div class="sim-tbl" style="border-top:0">
+            <table class="sim-table">
+              <thead><tr><th>Título</th><th>Última atualização</th><th style="text-align:center">Ações</th></tr></thead>
+              <tbody id="sim-pcl-body"></tbody>
+            </table>
+          </div>
+          <div class="sim-cfg-note" id="sim-pcl-empty" style="display:none;padding:2px 2px 0">Nenhum planejamento salvo ainda. Preencha os dados abaixo, informe um título acima e clique em <b>Salvar planejamento</b>.</div>
         </div>
         <div class="sim-capacidade-box">
           <div>
@@ -2591,17 +2605,6 @@
           <span class="sim-imp-hint">A planilha precisa de uma coluna com a embalagem (modelo) e outra com a quantidade. O relatório automático divide a demanda pela capacidade de 22 h/dia.</span>
         </div>
       </div>
-
-      <details class="sim-acc" id="sim-pcl-acc" open>
-        <summary><span class="tag" style="background:var(--blue)">📁</span>Planejamentos salvos <span id="sim-pcl-count" style="color:var(--txt-faint);font-weight:500;margin-left:4px"></span></summary>
-        <div class="sim-tbl">
-          <table class="sim-table">
-            <thead><tr><th>Título</th><th>Última atualização</th><th style="text-align:center">Ações</th></tr></thead>
-            <tbody id="sim-pcl-body"></tbody>
-          </table>
-        </div>
-        <div class="sim-cfg-note" id="sim-pcl-empty" style="display:none">Nenhum planejamento salvo ainda. Preencha a simulação acima, informe um título e clique em <b>Salvar planejamento</b>.</div>
-      </details>
 
       <details class="sim-acc">
         <summary><span class="tag" style="background:#9a6cf0">DADOS</span>Capacidades por cesto e tempos médios</summary>
@@ -4971,7 +4974,7 @@ function pclDadosRelatorio(nomeArquivoPadrao){
     const slug = pclSlugifyArquivo(tit);
     return {
       titulo: "PLANEJAMENTO E CONTROLE DE EMBALAGENS — " + tit,
-      nome: "PCL - " + (slug || "planejamento") + ".pdf"
+      nome: "PCEmb - " + (slug || "planejamento") + ".pdf"
     };
   }
   return { titulo: "PLANEJAMENTO E CONTROLE DE EMBALAGENS", nome: nomeArquivoPadrao };
@@ -4992,14 +4995,32 @@ function simGerarPDF(comp, opts){
   const pageW = doc.internal.pageSize.getWidth();
 
   /* ---- Logo SESÉ (canto superior direito) ---- */
+  const _logoW = 92, _logoH = _logoW * 120 / 419;   /* mantém a proporção original 419×120 do logo */
   try{
-    const _lw = 92, _lh = _lw * 120 / 419;   /* mantém a proporção original 419×120 do logo */
-    doc.addImage(SESE_LOGO_DATAURI, "PNG", pageW - 40 - _lw, 22, _lw, _lh);
+    doc.addImage(SESE_LOGO_DATAURI, "PNG", pageW - 40 - _logoW, 22, _logoW, _logoH);
   }catch(_e){ /* se o logo não carregar, o relatório segue sem ele */ }
 
-  /* ---- Cabeçalho ---- */
-  doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.setTextColor(20,30,45);
-  doc.text(opts.titulo || "PLANEJAMENTO E CONTROLE DE EMBALAGENS", 40, 42);
+  /* ---- Cabeçalho — o título nunca invade a área da logo: a fonte
+     encolhe automaticamente (até 9pt) e, em último caso, corta com
+     reticências, já que o título agora inclui o nome do planejamento
+     e pode ficar bem mais longo que o texto padrão. ---- */
+  doc.setFont("helvetica","bold"); doc.setTextColor(20,30,45);
+  const _tituloTxt = opts.titulo || "PLANEJAMENTO E CONTROLE DE EMBALAGENS";
+  const _tituloMaxW = pageW - 80 - _logoW - 16; /* margens (40+40) + folga antes da logo (16) */
+  let _tSize = 15;
+  doc.setFontSize(_tSize);
+  while(_tSize > 9 && doc.getTextWidth(_tituloTxt) > _tituloMaxW){
+    _tSize -= 0.5;
+    doc.setFontSize(_tSize);
+  }
+  let _tituloFinal = _tituloTxt;
+  if(doc.getTextWidth(_tituloFinal) > _tituloMaxW){
+    while(_tituloFinal.length > 8 && doc.getTextWidth(_tituloFinal + "…") > _tituloMaxW){
+      _tituloFinal = _tituloFinal.slice(0, -1);
+    }
+    _tituloFinal += "…";
+  }
+  doc.text(_tituloFinal, 40, 42);
   doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(90,100,110);
   let y = 60;
   if(opts.origem){ doc.text(String(opts.origem), 40, y); y += 14; }
@@ -5153,7 +5174,7 @@ function simGerarPDF(comp, opts){
   doc.setFont("helvetica","normal"); doc.setFontSize(7.5); doc.setTextColor(140,150,160);
   doc.text("Gerado em " + new Date().toLocaleString("pt-BR") + " — SAS · Lavadora de Embalagem (SESÉ)", 40, fy);
 
-  doc.save(opts.nome || "PCL-Planejamento.pdf");
+  doc.save(opts.nome || "PCEmb-Planejamento.pdf");
 }
 
 /* Relatório PDF da simulação MANUAL (dados digitados na tela) */
@@ -5161,7 +5182,7 @@ function simGerarPDFManual(){
   const comp = simComputeAll();
   const algo = comp.linhas.some(l => l.qtd>0 || l.tempo>0);
   if(!algo){ alert("Informe ao menos uma embalagem com quantidade para gerar o relatório."); return; }
-  const dados = pclDadosRelatorio("PCL-Planejamento.pdf");
+  const dados = pclDadosRelatorio("PCEmb-Planejamento.pdf");
   simGerarPDF(comp, {
     titulo: dados.titulo,
     origem:"Entrada manual",
@@ -5227,7 +5248,7 @@ function simHandleExcel(file){
       }
       const stateExcel = simAggregate(rows);
       const comp = simComputeAll(stateExcel);
-      const dados = pclDadosRelatorio("PCL-Demanda-Excel.pdf");
+      const dados = pclDadosRelatorio("PCEmb-Demanda-Excel.pdf");
       simGerarPDF(comp, {
         titulo: dados.titulo,
         origem:"Demanda importada: " + (file.name||"planilha") + "   •   " + stateExcel.length + " embalagem(ns)",
