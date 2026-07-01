@@ -2473,7 +2473,7 @@
       #view-sim .sim-ctl{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--txt-dim);
         background:var(--panel-2);border:1px solid var(--line-soft);border-radius:10px;padding:7px 11px}
       #view-sim .sim-ctl label{font-weight:600;color:var(--txt)}
-      #view-sim .sim-ctl input{width:62px;height:30px;padding:5px;text-align:center;font-weight:700;
+      #view-sim .sim-ctl input{width:86px;height:30px;padding:5px;text-align:center;font-weight:700;
         background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:8px;
         font-family:'Poppins',sans-serif;font-size:13px}
       #view-sim .sim-ctl select{height:30px;padding:4px 8px;font-weight:700;background:var(--bg);
@@ -2511,6 +2511,13 @@
       #view-sim .sim-disp-chip b{font-variant-numeric:tabular-nums}
       #view-sim .sim-imp{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 16px 14px}
       #view-sim .sim-imp-hint{font-size:10.5px;color:var(--txt-faint);line-height:1.5;flex:1 1 220px;min-width:180px}
+      #view-sim .sim-capacidade-box{margin:12px 16px 2px;padding:13px 14px;background:linear-gradient(135deg,rgba(56,102,247,.14),rgba(63,185,80,.08));border:1px solid rgba(56,102,247,.35);border-radius:12px;display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:12px;align-items:center}
+      #view-sim .sim-capacidade-title{font-size:12px;font-weight:800;color:var(--txt);letter-spacing:.2px;margin-bottom:4px}
+      #view-sim .sim-capacidade-desc{font-size:10.5px;color:var(--txt-dim);line-height:1.45}
+      #view-sim .sim-capacidade-input label{display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--blue-soft);margin-bottom:5px}
+      #view-sim .sim-capacidade-input input{width:100%;height:44px;text-align:center;font-size:20px;font-weight:900;background:var(--bg);border:1px solid var(--blue);color:var(--txt);border-radius:10px;font-family:'Poppins',sans-serif;padding:6px 8px}
+      #view-sim .sim-capacidade-input input:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 3px rgba(63,185,80,.16)}
+      @media(max-width:560px){#view-sim .sim-capacidade-box{grid-template-columns:1fr;margin:10px 12px 0}#view-sim .sim-capacidade-input input{text-align:left;padding-left:12px}}
       @media(max-width:560px){#view-sim .sim-totals{grid-template-columns:1fr}#view-sim .sim-foto{flex-basis:40px;width:40px;height:40px}#view-sim .sim-emb{flex-basis:140px;min-width:110px}#view-sim .sim-q{flex-basis:84px}}
     </style>
 
@@ -2519,7 +2526,6 @@
         <div class="panel-head">
           <span class="tag" style="background:var(--green)">SIM</span><h2>Simulação de Lavagem</h2>
           <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-            <div class="sim-ctl"><label for="sim-gpc">Gaiolas/carga</label><input type="number" id="sim-gpc" min="1" step="1" value="5" inputmode="numeric" title="Carga/descarga do operador = 5 gaiolas por vez. A máquina comporta até 25 gaiolas, mas o tempo médio é medido por carga de 5."></div>
             <div class="sim-ctl"><label for="sim-mtbf">MTBF (h)</label><input type="number" id="sim-mtbf" min="0.1" step="0.5" value="40" inputmode="decimal" title="Tempo médio entre falhas (horas)"></div>
             <div class="sim-ctl"><label for="sim-mttr">MTTR (h)</label><input type="number" id="sim-mttr" min="0" step="0.5" value="2" inputmode="decimal" title="Tempo médio de reparo (horas)"></div>
             <div class="sim-ctl"><label for="sim-meses">Período médias</label><select id="sim-meses" title="Quantos meses de histórico entram nas médias por embalagem. 'Global' usa todos os registros; janelas menores refletem melhor o processo atual."></select></div>
@@ -2531,11 +2537,21 @@
             <button class="btn-ghost" id="sim-clear">↺ Limpar</button>
           </div>
         </div>
+        <div class="sim-capacidade-box">
+          <div>
+            <div class="sim-capacidade-title">Capacidade disponível da lavadora</div>
+            <div class="sim-capacidade-desc">Digite quantos cestos/gaiolas você quer considerar disponíveis para cada processo. O sistema calcula: <b>cestos/gaiolas necessários ÷ cestos disponíveis no processo</b>.</div>
+          </div>
+          <div class="sim-capacidade-input">
+            <label for="sim-gpc">Cestos disponíveis</label>
+            <input type="number" id="sim-gpc" min="1" step="1" value="5" inputmode="numeric" title="Quantidade de cestos/gaiolas disponíveis que entram no processo por ciclo. Ciclos de lavagem = quantidade de cestos/gaiolas ÷ cestos disponíveis no processo, arredondando para cima quando sobrar cesto.">
+          </div>
+        </div>
         <div style="padding:11px 16px 0;font-size:11px;color:var(--txt-faint);line-height:1.5">
           Informe a quantidade de cada embalagem e escolha a fonte do tempo no botão <b style="color:var(--blue-soft)">Tempo</b>:
           <b style="color:var(--txt-dim)">Média existente</b> usa o Relatório Analítico por Embalagem (Dashboard · 08);
           <b style="color:var(--txt-dim)">Tempos do cadastro</b> usa todos os tempos registrados dentro do Cadastro de Embalagens.
-          <br><b style="color:var(--orange)">Base de cálculo:</b> a máquina comporta até <b>25 gaiolas</b>, mas a carga/descarga do operador é de <b>5 gaiolas por vez</b> — por isso o ciclo de tempo é medido a cada <b>5 gaiolas</b> (campo <i>Gaiolas/carga</i> acima).
+          <br><b style="color:var(--orange)">Base de cálculo:</b> o ciclo de lavagem é calculado por <b>quantidade de cestos/gaiolas ÷ cestos disponíveis no processo</b>, arredondando para cima quando houver sobra.
           <br><span id="sim-media-global"></span>
         </div>
         <div style="padding:14px 16px">
@@ -2596,7 +2612,7 @@
         <summary><span class="tag" style="background:var(--blue)">i</span>Como o cálculo funciona</summary>
         <div class="sim-explain">
           Para cada embalagem: <code>tempo = quantidade × tempo por embalagem − 20,8 × média Nº de Ciclos (calc)</code> (o desconto de ciclos só existe quando a fonte é a média histórica; nunca fica abaixo de 0).
-          <code>cestos = ⌈qtd ÷ emb. por cesto⌉</code> é informativo (define o nº de cargas/ciclos). Os totais somam tudo.
+          <code>cestos = ⌈qtd ÷ emb. por cesto⌉</code> e <code>ciclos = ⌈cestos/gaiolas ÷ cestos para o processo⌉</code>. Os totais somam tudo.
           No botão <b>Média existente</b>, o tempo vem da tela 08: <code>soma dos tempos rateados ÷ soma dos totais</code>, incluindo conjugadas. No botão <b>Tempos do cadastro</b>, o sistema busca todos os tempos registrados na embalagem e usa a média desses tempos manuais por unidade.
           <br><br>
           <b>Simultaneidade (🔗):</b> em cada linha você pode marcar um <i>grupo</i> (A, B, …). Embalagens com o <b>mesmo grupo</b> rodam <b>ao mesmo tempo</b>, então o tempo desse grupo não soma — vale o <b>maior</b> tempo entre elas. Cestos e ciclos continuam somando (é o trabalho físico realizado). Deixe em “—” para a linha rodar de forma independente.
@@ -2614,7 +2630,7 @@
           usando <b>todas as lavagens</b>: nas conjugadas, como cada cesto leva um único tipo, a duração é rateada
           entre as embalagens proporcionalmente aos cestos de cada uma. É a <b>soma dos tempos rateados</b> dividida pela <b>soma das quantidades</b>
           de embalagens lavadas (min por unidade). Com 4 ou mais lavagens, descarta-se no máximo 1 maior (acima de 2× a mediana) e 1 menor (abaixo de ½ da mediana) antes da média.
-          Na opção <b>Tempos do cadastro</b>, cadastre os tempos no Cadastro de Embalagens, um por linha, em <b>mm:ss</b>, <b>hh:mm:ss</b> ou minutos decimais. Embalagem sem tempo na fonte escolhida usa a base de 20,8 min/cesto ÷ capacidade até existir dado registrado.
+          Na opção <b>Tempos do cadastro</b>, cadastre os tempos no Cadastro de Embalagens, um por linha, em <b>mm:ss</b>, <b>hh:mm:ss</b> ou minutos decimais. Embalagem sem tempo na fonte escolhida usa a base de 20,8 min/cesto ÷ capacidade até existir dado registrado. O nº de ciclos usa a quantidade de cestos/gaiolas dividida pela quantidade de cestos disponíveis no processo.
         </div>
       </details>
     </div>
@@ -4355,11 +4371,11 @@ const SIM_FLAG = new Set([
 ]);
 const SIM_LS_CAP = "sas-sim-cap";
 const SIM_LS_CAPOK = "sas-sim-cap-ok";   /* embalagens cuja emb./cesto já foi informada/confirmada */
-const SIM_LS_GPC = "sas-sim-gpc-carga";
+const SIM_LS_GPC = "sas-sim-gpc-carga";   /* compatível com versões antigas: agora representa cestos/gaiolas disponíveis no processo */
 const SIM_LS_MESES = "sas-sim-meses-media";   /* janela de meses p/ as médias; "global" = todos */
 const SIM_LS_FONTE = "sas-sim-fonte-tempo";   /* historico ou cadastro */
 let simState = null;     /* [{emb, qtd}] */
-let simGpc = 5;
+let simGpc = 5;   /* quantidade de cestos/gaiolas disponíveis no processo */
 const SIM_DESC_GAIOLA = 0.028;   /* última carga: -2,8% de tempo por gaiola abaixo da carga cheia */
 let simMesesMedia = "global";   /* "global" ou "1".."24" */
 let simFonteTempo = "historico"; /* historico = tela 08; cadastro = tempos cadastrados na embalagem */
@@ -4382,7 +4398,7 @@ async function _capSalvarFirebase(){
     await fb.collection('config').doc('capacidades').set({
       cap: Object.assign({}, simCapOv),
       ok:  [...simCapConfirm],
-      gpcCarga: simGpc,
+      gpcCarga: simGpc, /* cestos/gaiolas disponíveis no processo */
       mesesMedia: String(simMesesMedia),
       fonteTempo: String(simFonteTempo)
     });
@@ -4567,7 +4583,7 @@ function simCalcLinha(ln, tmap){
   if(qtd<=0 || !capOk) return {qtd,cap,capOk,minEmb,temHist:!!t,ocor:t?t.ocor:0,cestos:0,ciclosCalc:0,extra,ciclos:extra,tempo:tExtra};
   const cestos = Math.ceil(qtd/cap);
   const gpc = Math.max(1, simGpc);
-  const ciclosCalc = Math.ceil(cestos / gpc);  /* nº de cargas (informativo) */
+  const ciclosCalc = Math.ceil(cestos / gpc);  /* ciclo de lavagem = cestos/gaiolas ÷ cestos para o processo; arredonda para cima se sobrar */
   /* Tempo total = quantidade × tempo médio por unidade (+ ciclos extras),
      DESCONTANDO 20,8 × média Nº de Ciclos (calc) da embalagem — em todos os casos.
      mcCalc = média de ciclos por cesto (avgC); sem histórico = 0. Piso em 0. */
@@ -4670,6 +4686,7 @@ function simRecalc(tmap){
     el.innerHTML =
       '<span class="sim-chip">Por cesto <b>'+r.cap+'</b></span>'+
       '<span class="sim-chip">Cestos <b>'+r.cestos+'</b></span>'+
+      '<span class="sim-chip" title="Cálculo: cestos/gaiolas ÷ cestos disponíveis no processo ('+simGpc+'), arredondando para cima quando sobrar.">Cestos disponíveis <b>'+simGpc+'</b></span>'+
       '<span class="sim-chip">Ciclos <b>'+r.ciclos+'</b>'+ciclosTag+'</span>'+
       '<span class="sim-chip blue">Tempo <b>'+simFmtHMS(r.tempo)+'</b></span>'+
       histChip + gChip;
@@ -4928,8 +4945,9 @@ function simGerarPDF(comp, opts){
   doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(90,100,110);
   let y = 60;
   if(opts.origem){ doc.text(String(opts.origem), 40, y); y += 14; }
-  doc.text("Gaiolas por carga: " + simGpc + "   •   Base do ciclo: " + fmtH(CICLO_MIN) + " min   •   Médias: " + simPeriodoTxt(), 40, y); y += 14;
+  doc.text("Cestos disponíveis por processo: " + simGpc + "   •   Ciclos = cestos/gaiolas ÷ cestos disponíveis   •   Base do ciclo: " + fmtH(CICLO_MIN) + " min   •   Médias: " + simPeriodoTxt(), 40, y); y += 14;
   doc.setFontSize(8); doc.setTextColor(120,90,160);
+  doc.text("Ciclos de lavagem = quantidade de cestos/gaiolas ÷ quantidade de cestos disponíveis no processo, arredondando para cima quando houver sobra.", 40, y); y += 10;
   doc.text("Tempo total por linha = quantidade × tempo médio/emb − 20,8 × média de Nº de Ciclos (calc), com piso em 0.", 40, y); y += 13;
   doc.setFontSize(9); doc.setTextColor(90,100,110);
 
