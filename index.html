@@ -1343,7 +1343,7 @@
     <div class="tab" data-view="rack"><span class="dot"></span>Lavagem de Rack</div>
     <div class="tab" data-view="dash"><span class="dot"></span>Dashboard</div>
     <div class="tab" data-view="cadEmb"><span class="dot"></span>Cadastro de Embalagens</div>
-    <div class="tab" data-view="sim"><span class="dot"></span>Simulação</div>
+    <div class="tab" data-view="sim"><span class="dot"></span>PCL</div>
   </div>
 
   <!-- ===== TICKER CNN ===== -->
@@ -2509,6 +2509,15 @@
       #view-sim .sim-disp-chip{display:inline-flex;align-items:center;gap:6px;background:rgba(240,83,63,.12);
         border:1px solid rgba(240,83,63,.4);color:var(--red);border-radius:20px;padding:5px 11px;font-size:11px;font-weight:600}
       #view-sim .sim-disp-chip b{font-variant-numeric:tabular-nums}
+      #view-sim #sim-pdf{display:inline-flex;align-items:center;gap:10px;background:linear-gradient(135deg,#f0533f,#c92a1d);
+        border:1px solid #a8241a;color:#fff;padding:13px 22px;font-size:13px;font-weight:800;letter-spacing:.3px;
+        text-transform:none;border-radius:12px;box-shadow:0 6px 16px rgba(200,42,29,.35),0 2px 5px rgba(0,0,0,.18);
+        transition:.15s ease;margin-left:auto}
+      #view-sim #sim-pdf:hover{transform:translateY(-1px);filter:brightness(1.06);
+        box-shadow:0 10px 22px rgba(200,42,29,.45),0 3px 7px rgba(0,0,0,.22);border-color:#a8241a;color:#fff}
+      #view-sim #sim-pdf:active{transform:translateY(0);filter:brightness(.98)}
+      #view-sim #sim-pdf .pdf-ico{flex:0 0 24px;width:24px;height:28px;display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.18))}
+      @media(max-width:560px){#view-sim #sim-pdf{margin-left:0;width:100%;justify-content:center}}
       #view-sim .sim-imp{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:0 16px 14px}
       #view-sim .sim-imp-hint{font-size:10.5px;color:var(--txt-faint);line-height:1.5;flex:1 1 220px;min-width:180px}
       #view-sim .sim-capacidade-box{margin:12px 16px 2px;padding:13px 14px;background:linear-gradient(135deg,rgba(56,102,247,.14),rgba(63,185,80,.08));border:1px solid rgba(56,102,247,.35);border-radius:12px;display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:12px;align-items:center}
@@ -2524,7 +2533,7 @@
     <div class="sim-grid">
       <div class="panel">
         <div class="panel-head">
-          <span class="tag" style="background:var(--green)">SIM</span><h2>Simulação de Lavagem</h2>
+          <span class="tag" style="background:var(--green)">PCL</span><h2>PLANEJAMENTO E CONTROLE DE EMBALAGENS</h2>
           <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <div class="sim-ctl"><label for="sim-mtbf">MTBF (h)</label><input type="number" id="sim-mtbf" min="0.1" step="0.5" value="40" inputmode="decimal" title="Tempo médio entre falhas (horas)"></div>
             <div class="sim-ctl"><label for="sim-mttr">MTTR (h)</label><input type="number" id="sim-mttr" min="0" step="0.5" value="2" inputmode="decimal" title="Tempo médio de reparo (horas)"></div>
@@ -2536,6 +2545,14 @@
             </div>
             <button class="btn-ghost" id="sim-clear">↺ Limpar</button>
           </div>
+        </div>
+        <div style="padding:12px 16px 0;display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;border-top:1px dashed var(--line-soft)">
+          <div style="flex:1 1 260px;min-width:200px">
+            <label for="sim-titulo" style="display:block;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.7px;color:var(--txt-faint);margin-bottom:5px">Título do planejamento</label>
+            <input type="text" id="sim-titulo" placeholder="Ex.: Planejamento Semana 27" style="width:100%;height:38px;padding:0 10px;background:var(--bg);border:1px solid var(--line);color:var(--txt);border-radius:9px;font-family:'Poppins',sans-serif;font-size:13px;outline:none">
+          </div>
+          <button type="button" class="btn-ghost" id="sim-pcl-save">💾 Salvar planejamento</button>
+          <button type="button" class="btn-ghost" id="sim-pcl-new" style="display:none">＋ Novo planejamento</button>
         </div>
         <div class="sim-capacidade-box">
           <div>
@@ -2566,7 +2583,7 @@
         <div id="sim-simult-note" style="display:none;padding:0 16px 4px;font-size:10.5px;color:var(--purple-txt);line-height:1.5"></div>
         <div class="sim-actions">
           <span class="sim-disp-chip" title="Disponibilidade operacional = (22 h − todas as paradas) ÷ 22 h">Disp. operacional <b id="sim-disp">95,2%</b></span>
-          <button class="btn-ghost danger" id="sim-pdf">⬇ Gerar relatório PDF</button>
+          <button type="button" class="btn-ghost danger" id="sim-pdf"><svg class="pdf-ico" viewBox="0 0 24 28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M3 2h12l6 6v18a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" fill="#fff"/><path d="M15 2l6 6h-6z" fill="#e2554a"/><text x="12" y="20" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="8" font-weight="800" fill="#c92a1d">PDF</text></svg>Gerar relatório PDF</button>
         </div>
         <div class="sim-imp">
           <button class="btn-ghost xls" id="sim-xls-btn">⬆ Importar demanda (Excel)</button>
@@ -2574,6 +2591,17 @@
           <span class="sim-imp-hint">A planilha precisa de uma coluna com a embalagem (modelo) e outra com a quantidade. O relatório automático divide a demanda pela capacidade de 22 h/dia.</span>
         </div>
       </div>
+
+      <details class="sim-acc" id="sim-pcl-acc" open>
+        <summary><span class="tag" style="background:var(--blue)">📁</span>Planejamentos salvos <span id="sim-pcl-count" style="color:var(--txt-faint);font-weight:500;margin-left:4px"></span></summary>
+        <div class="sim-tbl">
+          <table class="sim-table">
+            <thead><tr><th>Título</th><th>Última atualização</th><th style="text-align:center">Ações</th></tr></thead>
+            <tbody id="sim-pcl-body"></tbody>
+          </table>
+        </div>
+        <div class="sim-cfg-note" id="sim-pcl-empty" style="display:none">Nenhum planejamento salvo ainda. Preencha a simulação acima, informe um título e clique em <b>Salvar planejamento</b>.</div>
+      </details>
 
       <details class="sim-acc">
         <summary><span class="tag" style="background:#9a6cf0">DADOS</span>Capacidades por cesto e tempos médios</summary>
@@ -4919,6 +4947,36 @@ function simComputeAll(stateArr){
 /* Logo SESÉ embutido em base64 — usado no cabeçalho do relatório de simulação */
 const SESE_LOGO_DATAURI = "data:image/png;base64,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";
 
+/* ---- Título do planejamento (aba PCL) → usado no cabeçalho do PDF e no
+   nome do arquivo exportado, para identificar cada relatório salvo. ---- */
+function pclTituloAtual(){
+  const el = document.getElementById("sim-titulo");
+  return el ? el.value.trim() : "";
+}
+/* Remove acentos e caracteres inválidos para um nome de arquivo seguro */
+function pclSlugifyArquivo(s){
+  return String(s||"")
+    .normalize("NFD").replace(/[\u0300-\u036f]/g,"")
+    .replace(/[^a-zA-Z0-9\s-]/g,"")
+    .trim()
+    .replace(/\s+/g,"-")
+    .replace(/-+/g,"-")
+    .slice(0,80);
+}
+/* Monta {titulo, nome} do relatório a partir do título do planejamento;
+   sem título informado, usa os textos/arquivo padrão recebidos. */
+function pclDadosRelatorio(nomeArquivoPadrao){
+  const tit = pclTituloAtual();
+  if(tit){
+    const slug = pclSlugifyArquivo(tit);
+    return {
+      titulo: "PLANEJAMENTO E CONTROLE DE EMBALAGENS — " + tit,
+      nome: "PCL - " + (slug || "planejamento") + ".pdf"
+    };
+  }
+  return { titulo: "PLANEJAMENTO E CONTROLE DE EMBALAGENS", nome: nomeArquivoPadrao };
+}
+
 /* Monta o PDF a partir do dataset calculado. opts: {titulo, origem, nome} */
 function simGerarPDF(comp, opts){
   if(!window.jspdf || !window.jspdf.jsPDF){
@@ -4941,7 +4999,7 @@ function simGerarPDF(comp, opts){
 
   /* ---- Cabeçalho ---- */
   doc.setFont("helvetica","bold"); doc.setFontSize(15); doc.setTextColor(20,30,45);
-  doc.text(opts.titulo || "SAS · Simulação de Lavagem — Carga Máquina", 40, 42);
+  doc.text(opts.titulo || "PLANEJAMENTO E CONTROLE DE EMBALAGENS", 40, 42);
   doc.setFont("helvetica","normal"); doc.setFontSize(9); doc.setTextColor(90,100,110);
   let y = 60;
   if(opts.origem){ doc.text(String(opts.origem), 40, y); y += 14; }
@@ -5095,7 +5153,7 @@ function simGerarPDF(comp, opts){
   doc.setFont("helvetica","normal"); doc.setFontSize(7.5); doc.setTextColor(140,150,160);
   doc.text("Gerado em " + new Date().toLocaleString("pt-BR") + " — SAS · Lavadora de Embalagem (SESÉ)", 40, fy);
 
-  doc.save(opts.nome || "SAS-Simulacao-Lavagem.pdf");
+  doc.save(opts.nome || "PCL-Planejamento.pdf");
 }
 
 /* Relatório PDF da simulação MANUAL (dados digitados na tela) */
@@ -5103,10 +5161,11 @@ function simGerarPDFManual(){
   const comp = simComputeAll();
   const algo = comp.linhas.some(l => l.qtd>0 || l.tempo>0);
   if(!algo){ alert("Informe ao menos uma embalagem com quantidade para gerar o relatório."); return; }
+  const dados = pclDadosRelatorio("PCL-Planejamento.pdf");
   simGerarPDF(comp, {
-    titulo:"SAS · Simulação de Lavagem — Carga Máquina (manual)",
+    titulo: dados.titulo,
     origem:"Entrada manual",
-    nome:"SAS-Simulacao-Manual.pdf"
+    nome: dados.nome
   });
 }
 
@@ -5168,10 +5227,11 @@ function simHandleExcel(file){
       }
       const stateExcel = simAggregate(rows);
       const comp = simComputeAll(stateExcel);
+      const dados = pclDadosRelatorio("PCL-Demanda-Excel.pdf");
       simGerarPDF(comp, {
-        titulo:"SAS · Simulação de Lavagem — Demanda (Excel)",
+        titulo: dados.titulo,
         origem:"Demanda importada: " + (file.name||"planilha") + "   •   " + stateExcel.length + " embalagem(ns)",
-        nome:"SAS-Simulacao-Demanda.pdf"
+        nome: dados.nome
       });
     }catch(err){
       alert("Falha ao ler a planilha: " + (err && err.message ? err.message : err));
@@ -7247,7 +7307,7 @@ async function loadVazia(){
 }
 
 /* Inicialização sequencial — loadVazia e loadRack aguardam load() para garantir que idb está pronto */
-load().then(()=>{ loadVazia(); loadRack(); });
+load().then(()=>{ loadVazia(); loadRack(); loadPcl(); });
 (function(){
   function toDateStr(d){
     return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -7416,6 +7476,232 @@ function atualizarTickerVelocidade(){
   document.getElementById('submit-btn').textContent = 'Registrar ' + TPLABEL['lav'];
   document.getElementById('submit-btn').classList.add('lav');
   document.getElementById('submit-btn').style.background = '';
+})();
+</script>
+
+<script>
+/* ===================================================================
+   PLANEJAMENTO E CONTROLE DE EMBALAGENS (PCL) — armazenamento dos
+   planejamentos feitos na aba PCL (antiga "Simulação"). Cada registro
+   guarda o título e todo o estado da simulação (embalagens/quantidades,
+   MTBF, MTTR, cestos disponíveis, período das médias e fonte do tempo),
+   podendo ser recarregado (edição) ou excluído a qualquer momento.
+   Usa o mesmo backend (IndexedDB/Firebase/window.storage) do restante
+   do sistema, com fallback em localStorage — mesmo padrão de Lavagem
+   de Rack (persistRack) e Embalagem Vazia (persistAddVazia).
+   =================================================================== */
+const KEY_PCL = 'sas_pcl_v1';
+const COLECAO_PCL = 'pcl';
+var pclRegistros = [];
+var pclEditId = null;
+
+async function dbLoadPcl(){
+  try{
+    if(idb){ const v=await idbGet(KEY_PCL); if(v) return JSON.parse(v); }
+    else if(backend==="storage"){ const r=await window.storage.get(KEY_PCL); if(r&&r.value) return JSON.parse(r.value); }
+  }catch(e){}
+  try{ const raw=localStorage.getItem(KEY_PCL); return raw?JSON.parse(raw):[]; }catch(e){}
+  return [];
+}
+async function dbSavePcl(){
+  try{
+    if(idb){ await idbSet(KEY_PCL, JSON.stringify(pclRegistros)); }
+    else if(backend==="storage"){ await window.storage.set(KEY_PCL, JSON.stringify(pclRegistros)); }
+  }catch(e){}
+  try{ localStorage.setItem(KEY_PCL, JSON.stringify(pclRegistros)); }catch(e){}
+}
+
+/* ---- Persistência: grava local + Firebase (igual a persistRack) ---- */
+async function persistPcl(reg, isEdit){
+  if(isEdit) pclRegistros = pclRegistros.map(x=>x.id===reg.id?reg:x);
+  else pclRegistros.unshift(reg);
+  await dbSavePcl();
+  if(backend==="firebase" && window.fb){
+    try{ await window.fb.collection(COLECAO_PCL).doc(String(reg.id)).set(reg); }
+    catch(e){ console.warn('Firebase PCL write falhou (salvo localmente):', e.message); }
+  }
+}
+async function persistPclDel(id){
+  pclRegistros = pclRegistros.filter(r=>r.id!==id);
+  await dbSavePcl();
+  if(backend==="firebase" && window.fb){
+    try{ await window.fb.collection(COLECAO_PCL).doc(String(id)).delete(); }catch(e){}
+  }
+}
+
+/* ---- Carrega do Firebase e ativa listener em tempo real ---- */
+async function pclLoadFromFirebase(){
+  if(backend!=="firebase" || !window.fb) return;
+  try{
+    const snap = await window.fb.collection(COLECAO_PCL).orderBy('id','desc').get();
+    if(!snap.empty){
+      const fbDados = snap.docs.map(d=>d.data()).sort((a,b)=>b.id-a.id);
+      if(fbDados.length >= pclRegistros.length){
+        pclRegistros = fbDados;
+        await dbSavePcl();
+        pclRender();
+      }
+    }
+    window.fb.collection(COLECAO_PCL).onSnapshot(snap=>{
+      pclRegistros = snap.docs.map(d=>d.data()).sort((a,b)=>b.id-a.id);
+      dbSavePcl().catch(()=>{});
+      pclRender();
+    }, err=>{ console.warn('Firebase PCL onSnapshot:', err.message); });
+  }catch(e){ console.warn('pclLoadFromFirebase:', e.message); }
+}
+
+/* ---- Carrega local imediatamente + Firebase em seguida ---- */
+async function loadPcl(){
+  pclRegistros = await dbLoadPcl();
+  pclRender();
+  if(backend==="firebase" && window.fb){
+    await pclLoadFromFirebase();
+  }
+}
+
+/* ---- Formata data/hora salva (timestamp em ms) ---- */
+function pclFmtData(ts){
+  try{
+    const d = new Date(ts);
+    if(isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'});
+  }catch(e){ return '—'; }
+}
+
+/* ---- Lê o estado atual da simulação para salvar ---- */
+function pclCollectState(){
+  const mtbfEl = document.getElementById('sim-mtbf');
+  const mttrEl = document.getElementById('sim-mttr');
+  return {
+    rows: JSON.parse(JSON.stringify(simState||[])),
+    mtbf: (mtbfEl && parseFloat(mtbfEl.value)>0) ? parseFloat(mtbfEl.value) : simMTBF,
+    mttr: (mttrEl && parseFloat(mttrEl.value)>=0) ? parseFloat(mttrEl.value) : simMTTR,
+    gpc: simGpc,
+    meses: simMesesMedia,
+    fonte: simFonteTempo
+  };
+}
+
+/* ---- Aplica um planejamento salvo de volta na tela (carregar/editar) ---- */
+function pclApplyState(reg){
+  if(!reg) return;
+  simState = JSON.parse(JSON.stringify(reg.rows||[]));
+  if(reg.gpc>0) simGpc = reg.gpc;
+  if(reg.meses==="global" || (parseInt(reg.meses,10)>=1 && parseInt(reg.meses,10)<=24)) simMesesMedia = reg.meses;
+  if(reg.fonte==="historico" || reg.fonte==="cadastro") simFonteTempo = reg.fonte;
+  try{ localStorage.setItem(SIM_LS_GPC, String(simGpc)); }catch(e){}
+  try{ localStorage.setItem(SIM_LS_MESES, String(simMesesMedia)); }catch(e){}
+  try{ localStorage.setItem(SIM_LS_FONTE, String(simFonteTempo)); }catch(e){}
+  const mesesEl = document.getElementById('sim-meses'); if(mesesEl) mesesEl.value = String(simMesesMedia);
+  if(typeof renderSim==="function") renderSim();
+  const mtbfEl = document.getElementById('sim-mtbf');
+  if(mtbfEl && reg.mtbf>0){ mtbfEl.value = reg.mtbf; mtbfEl.dispatchEvent(new Event('input')); }
+  const mttrEl = document.getElementById('sim-mttr');
+  if(mttrEl && reg.mttr>=0){ mttrEl.value = reg.mttr; mttrEl.dispatchEvent(new Event('input')); }
+  if(typeof simRecalc==="function") simRecalc();
+}
+
+/* ---- Lista de planejamentos salvos (tabela) ---- */
+function pclRender(){
+  const body = document.getElementById('sim-pcl-body');
+  const empty = document.getElementById('sim-pcl-empty');
+  const countEl = document.getElementById('sim-pcl-count');
+  if(!body) return;
+  if(countEl) countEl.textContent = pclRegistros.length ? '(' + pclRegistros.length + ')' : '';
+  if(!pclRegistros.length){
+    body.innerHTML = '';
+    if(empty) empty.style.display = 'block';
+    return;
+  }
+  if(empty) empty.style.display = 'none';
+  body.innerHTML = pclRegistros.map(function(r){
+    const tit = String(r.titulo||'Sem título').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const editando = (r.id===pclEditId) ? ' <span class="sim-badge">EDITANDO</span>' : '';
+    return '<tr>'
+      + '<td class="sim-name">' + tit + editando + '</td>'
+      + '<td class="sim-sub">' + pclFmtData(r.atualizadoEm||r.criadoEm||r.id) + '</td>'
+      + '<td style="text-align:center;white-space:nowrap">'
+        + '<button type="button" class="btn-ghost" data-pcl-load="' + r.id + '" style="padding:5px 10px;font-size:11px">Carregar</button> '
+        + '<button type="button" class="btn-ghost danger" data-pcl-del="' + r.id + '" style="padding:5px 10px;font-size:11px">Excluir</button>'
+      + '</td>'
+      + '</tr>';
+  }).join('');
+}
+
+/* ---- Interações: salvar / carregar / excluir / novo ---- */
+(function pclUiSetup(){
+  function pclAtualizarBotoes(){
+    const novoB = document.getElementById('sim-pcl-new');
+    if(novoB) novoB.style.display = pclEditId ? 'inline-flex' : 'none';
+    const saveB = document.getElementById('sim-pcl-save');
+    if(saveB) saveB.textContent = pclEditId ? '💾 Salvar alterações' : '💾 Salvar planejamento';
+  }
+
+  const body = document.getElementById('sim-pcl-body');
+  if(body){
+    body.addEventListener('click', async function(e){
+      const lb = e.target.closest('[data-pcl-load]');
+      if(lb){
+        const id = Number(lb.dataset.pclLoad);
+        const reg = pclRegistros.find(function(r){return r.id===id;});
+        if(!reg) return;
+        pclEditId = id;
+        const tEl = document.getElementById('sim-titulo'); if(tEl) tEl.value = reg.titulo || '';
+        pclApplyState(reg);
+        pclAtualizarBotoes();
+        pclRender();
+        return;
+      }
+      const db = e.target.closest('[data-pcl-del]');
+      if(db){
+        const id = Number(db.dataset.pclDel);
+        const reg = pclRegistros.find(function(r){return r.id===id;});
+        if(!confirm('Excluir o planejamento "' + (reg?reg.titulo:'') + '"? Esta ação não pode ser desfeita.')) return;
+        await persistPclDel(id);
+        if(pclEditId===id){
+          pclEditId = null;
+          const tEl = document.getElementById('sim-titulo'); if(tEl) tEl.value = '';
+          pclAtualizarBotoes();
+        }
+        pclRender();
+        return;
+      }
+    });
+  }
+
+  const saveB = document.getElementById('sim-pcl-save');
+  if(saveB) saveB.addEventListener('click', async function(){
+    const tEl = document.getElementById('sim-titulo');
+    const titulo = (tEl ? tEl.value : '').trim();
+    if(!titulo){ alert('Informe um título para o planejamento antes de salvar.'); if(tEl) tEl.focus(); return; }
+    if(!simState || !simState.length){ alert('Não há dados na simulação para salvar.'); return; }
+    const st = pclCollectState();
+    const isEdit = !!pclEditId;
+    const anterior = isEdit ? pclRegistros.find(function(r){return r.id===pclEditId;}) : null;
+    const reg = Object.assign({
+      id: isEdit ? pclEditId : Date.now(),
+      titulo: titulo,
+      criadoEm: (anterior && anterior.criadoEm) ? anterior.criadoEm : Date.now(),
+      atualizadoEm: Date.now()
+    }, st);
+    await persistPcl(reg, isEdit);
+    pclEditId = reg.id;
+    pclAtualizarBotoes();
+    pclRender();
+    const txtOriginal = pclEditId ? '💾 Salvar alterações' : '💾 Salvar planejamento';
+    saveB.textContent = '✅ Salvo!';
+    setTimeout(function(){ pclAtualizarBotoes(); }, 1400);
+  });
+
+  const novoB = document.getElementById('sim-pcl-new');
+  if(novoB) novoB.addEventListener('click', function(){
+    pclEditId = null;
+    const tEl = document.getElementById('sim-titulo'); if(tEl) tEl.value = '';
+    pclAtualizarBotoes();
+    pclRender();
+  });
+
+  pclAtualizarBotoes();
 })();
 </script>
 
