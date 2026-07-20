@@ -1127,14 +1127,14 @@
   .word-page h1,.word-page h2,.word-page h3{margin:12px 0 6px;color:#1a1a1a}
   .word-page ul,.word-page ol{padding-left:24px;margin:4px 0 8px}
   @media print{
-    .word-toolbar,.word-page-area{display:none}
-    .word-page{
+    body.print-word .word-toolbar,body.print-word .word-page-area{display:none}
+    body.print-word .word-page{
       width:100%!important;padding:0!important;
       box-shadow:none!important;margin:0!important;
       color:#000!important;background:#fff!important;
     }
-    body *:not(.word-page):not(.word-page *){display:none!important}
-    .word-page{display:block!important}
+    body.print-word *:not(.word-page):not(.word-page *){display:none!important}
+    body.print-word .word-page{display:block!important}
   }
   .msg-section-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:var(--txt-dim);margin-bottom:10px}
   .msg-list{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
@@ -1643,6 +1643,16 @@
               <tbody id="tbody"></tbody>
             </table>
           </div>
+          <div class="rack-mini-toolbar apont-mini-toolbar">
+            <span class="rack-hist-toolbar-note">Paginação dos apontamentos</span>
+            <select id="apont-page-size" title="Quantidade de linhas por página">
+              <option value="10" selected>10 por página</option>
+              <option value="20">20 por página</option>
+              <option value="50">50 por página</option>
+              <option value="100">100 por página</option>
+            </select>
+          </div>
+          <div id="apont-pager"></div>
           <div id="state-box"></div>
         </div>
       </div>
@@ -1994,7 +2004,7 @@
   <!-- ============ VIEW: DASHBOARD ============ -->
   <div class="view" id="view-dash">
     <div class="panel" style="margin-bottom:22px">
-      <div class="panel-head"><span class="tag">FILTRO</span><h2>Filtros do Dashboard</h2><button type="button" class="btn-ghost" id="btn-print" style="margin-left:auto;flex:0 0 auto">🖨 Imprimir</button></div>
+      <div class="panel-head"><span class="tag">FILTRO</span><h2>Filtros do Dashboard</h2><button type="button" class="btn-ghost" id="btn-print" style="margin-left:auto;flex:0 0 auto">🖨 Relatório completo</button></div>
       <div class="toolbar">
         <div class="ms" id="d-fmodelo-ms"></div>
         <div class="ms" id="d-fturno-ms"></div>
@@ -2985,6 +2995,7 @@ async function persistAdd(reg,isEdit){
   /* Atualiza array local em memória */
   if(isEdit) registros=registros.map(x=>x.id===reg.id?reg:x);
   else registros.unshift(reg);
+  if(!isEdit && typeof apontHistPage!=="undefined") apontHistPage=1;
   /* Salva no IDB local SEMPRE (garante persistência no F5) */
   await dbSave();
   refreshStatus();render();
@@ -4036,16 +4047,22 @@ document.getElementById("btn-clear").addEventListener("click",async()=>{
     await persistClear();
   }
 });
-document.getElementById("f-tipo").addEventListener("change",render);
-document.getElementById("f-turno").addEventListener("change",render);
-document.getElementById("f-data-de").addEventListener("change",render);
-document.getElementById("f-hora-de").addEventListener("change",render);
-document.getElementById("f-data-ate").addEventListener("change",render);
-document.getElementById("f-hora-ate").addEventListener("change",render);
-/* filtro de embalagem (múltipla seleção) */
+var apontHistPage=1;
+function renderApontPrimeiraPagina(){
+  apontHistPage=1;
+  render();
+}
+window.apontHistGo=function(page){
+  apontHistPage=Math.max(1,parseInt(page,10)||1);
+  render();
+};
+["f-tipo","f-turno","f-data-de","f-hora-de","f-data-ate","f-hora-ate"].forEach(id=>
+  document.getElementById(id).addEventListener("change",renderApontPrimeiraPagina));
+/* filtro de embalagem com múltipla seleção */
 var fEmbMS = createMultiSelect(document.getElementById("f-emb-ms"), {
-  options: EMBALAGENS, placeholder: "Todas as embalagens", searchable: true, onChange: ()=>render()
+  options: EMBALAGENS, placeholder: "Todas as embalagens", searchable: true, onChange: renderApontPrimeiraPagina
 });
+document.getElementById("apont-page-size").addEventListener("change",renderApontPrimeiraPagina);
 document.getElementById("f-clear").addEventListener("click",()=>{
   document.getElementById("f-tipo").value="";
   document.getElementById("f-turno").value="";
@@ -4054,7 +4071,7 @@ document.getElementById("f-clear").addEventListener("click",()=>{
   document.getElementById("f-hora-de").value="";
   document.getElementById("f-data-ate").value="";
   document.getElementById("f-hora-ate").value="";
-  render();
+  renderApontPrimeiraPagina();
 });
 
 function totalDanifReg(r){return (r.itens&&r.itens.length)?r.itens.reduce((a,it)=>a+(it.danif||0),0):0;}
@@ -5421,22 +5438,235 @@ function simHandleExcel(file){
   });
 })();
 
-/* ===== IMPRESSÃO ===== Botão imprime com tema claro (fundo branco, economiza tinta).
-   Usa beforeprint/afterprint para também cobrir o atalho Ctrl+P. */
+/* ===== IMPRESSÃO ===== */
 (function printSetup(){
   const root=document.documentElement;
   window.addEventListener("beforeprint",()=>{
     root.dataset.prevTheme=root.getAttribute("data-theme")||"";
     root.setAttribute("data-theme","light");
+    document.body.classList.remove("print-word");
+    const editor=document.getElementById("view-editor");
+    if(editor&&editor.classList.contains("on"))document.body.classList.add("print-word");
   });
   window.addEventListener("afterprint",()=>{
     const prev=root.dataset.prevTheme||"";
     if(prev) root.setAttribute("data-theme",prev); else root.removeAttribute("data-theme");
     delete root.dataset.prevTheme;
+    document.body.classList.remove("print-word");
   });
   const btn=document.getElementById("btn-print");
-  if(btn) btn.addEventListener("click",()=>{ setTimeout(()=>window.print(),50); });
+  if(btn)btn.addEventListener("click",gerarRelatorioDashboardImpressao);
 })();
+
+function dashPrintEscape(valor){
+  return String(valor==null?"":valor)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+function dashPrintMinutos(valor){
+  const txt=String(valor||"").trim();
+  const m=txt.match(/^(\d+)h(\d{1,2})$/i);
+  if(m)return parseInt(m[1],10)*60+parseInt(m[2],10);
+  const c=txt.match(/^(\d+):(\d{1,2})$/);
+  if(c)return parseInt(c[1],10)*60+parseInt(c[2],10);
+  return 0;
+}
+function gerarRelatorioDashboardImpressao(){
+  const btn=document.getElementById("btn-print");
+  const btnTexto=btn?btn.innerHTML:"";
+  if(btn){btn.disabled=true;btn.innerHTML="Preparando relatório…";}
+
+  try{
+    renderDash();
+    if(typeof renderRelatorioEmb==="function")renderRelatorioEmb();
+  }catch(e){console.warn("Falha ao atualizar dashboard para impressão:",e);}
+
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+    try{
+      const fonte=document.getElementById("view-dash");
+      if(!fonte)throw new Error("Dashboard não encontrado");
+
+      const clone=fonte.cloneNode(true);
+      clone.classList.add("on","report-dashboard");
+
+      const filtro=Array.from(clone.children).find(el=>el.classList&&el.classList.contains("panel"));
+      if(filtro)filtro.remove();
+      clone.querySelectorAll("button,.toolbar").forEach(el=>el.remove());
+
+      const mesSel=document.getElementById("d-fmes");
+      const mesTexto=mesSel&&mesSel.selectedOptions&&mesSel.selectedOptions[0]
+        ?mesSel.selectedOptions[0].textContent:"Mês selecionado";
+      const monthPanel=clone.querySelector("#month-day-chart")?.closest(".panel");
+      if(monthPanel){
+        const nav=monthPanel.querySelector(".month-nav");
+        if(nav)nav.remove();
+        const cab=monthPanel.querySelector(".panel-head");
+        if(cab){
+          const nota=document.createElement("span");
+          nota.className="report-head-note";
+          nota.textContent=mesTexto;
+          cab.appendChild(nota);
+        }
+        const barras=monthPanel.querySelector(".day-bars-wrap");
+        if(barras)barras.classList.remove("hide-paradas");
+      }
+
+      const rackPanel=clone.querySelector("#chart-rack-itens")?.closest(".panel");
+      if(rackPanel){
+        rackPanel.querySelectorAll(".rack-mini-toolbar,.table-scroll,#dash-rack-pager,#dash-rack-empty").forEach(el=>el.remove());
+      }
+
+      const diariaTabela=clone.querySelector(".ed-table-wrap");
+      if(diariaTabela)diariaTabela.remove();
+
+      const escopo=document.getElementById("d-scope")?.textContent||"Visão global";
+      const trabTxt=document.getElementById("d-trab")?.textContent||"0h00";
+      const parTxt=document.getElementById("d-par")?.textContent||"0h00";
+      const trabMin=dashPrintMinutos(trabTxt);
+      const parMin=dashPrintMinutos(parTxt);
+      const disponibilidade=(trabMin+parMin)>0?Math.round((trabMin/(trabMin+parMin))*1000)/10:0;
+      const totalEmb=document.getElementById("d-emb")?.textContent||"0";
+      const topEmb=document.getElementById("d-top")?.textContent||"Sem dados";
+      const motivoRow=document.querySelector("#chart-motivo .bar-row");
+      const motivoNome=motivoRow?.querySelector(".bar-lbl")?.textContent||"Sem paradas";
+      const motivoValor=motivoRow?.querySelector(".bar-val-main")?.textContent||"0h00";
+      const motivoResumo=motivoValor!=="0h00"?motivoNome+" • "+motivoValor:"Sem paradas no escopo";
+      const emitido=new Date().toLocaleString("pt-BR",{dateStyle:"long",timeStyle:"short"});
+      const logoSrc=document.querySelector(".logo-chip img")?.src||"";
+      const appStyles=Array.from(document.querySelectorAll("style")).map(st=>st.textContent).join("\n");
+      const fontLink=document.querySelector('link[href*="fonts.googleapis.com"]')?.outerHTML||"";
+
+      const reportCss=`
+        @page{size:A4 landscape;margin:9mm}
+        *{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}
+        html,body{margin:0!important;padding:0!important;background:#eef2f7!important;color:#16202e!important}
+        body.dash-report{font-family:'Poppins',Arial,sans-serif;background:#eef2f7!important;background-image:none!important}
+        .report-shell{max-width:1120px;margin:0 auto;padding:18px}
+        .report-cover{display:grid;grid-template-columns:minmax(0,1fr) 250px;gap:24px;align-items:stretch;
+          background:linear-gradient(135deg,#10233f,#1f4b84);color:#fff;border-radius:18px;padding:24px 28px;
+          box-shadow:0 12px 30px rgba(16,35,63,.16);margin-bottom:14px;break-inside:avoid}
+        .report-brand{display:flex;align-items:center;gap:14px;margin-bottom:16px}
+        .report-logo{background:#fff;border-radius:10px;padding:9px 13px;display:flex;align-items:center;justify-content:center;min-width:118px}
+        .report-logo img{height:26px;max-width:150px;object-fit:contain}
+        .report-brand-text{font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;opacity:.8}
+        .report-cover h1{font-size:25px;line-height:1.12;margin:0 0 8px;letter-spacing:-.5px;color:#fff}
+        .report-cover p{font-size:11px;line-height:1.6;margin:0;color:rgba(255,255,255,.82)}
+        .report-scope{margin-top:16px;padding:10px 13px;border:1px solid rgba(255,255,255,.22);border-radius:9px;
+          background:rgba(255,255,255,.08);font-size:10px;font-weight:600;line-height:1.5}
+        .report-meta{display:flex;flex-direction:column;justify-content:space-between;background:rgba(255,255,255,.1);
+          border:1px solid rgba(255,255,255,.2);border-radius:13px;padding:17px}
+        .report-meta-label{font-size:8.5px;text-transform:uppercase;letter-spacing:1.2px;opacity:.68;margin-bottom:4px}
+        .report-meta-value{font-size:11px;font-weight:700;line-height:1.45}
+        .report-meta-code{font-size:9px;opacity:.7;margin-top:16px}
+        .report-highlights{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin-bottom:14px;break-inside:avoid}
+        .report-highlight{background:#fff;border:1px solid #dbe3ec;border-radius:11px;padding:13px 14px;min-height:76px}
+        .report-highlight span{display:block;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:#708093;margin-bottom:7px}
+        .report-highlight strong{display:block;font-size:18px;line-height:1.15;color:#17273d}
+        .report-highlight small{display:block;font-size:9px;color:#718096;margin-top:4px;line-height:1.35}
+        .report-section-title{display:flex;align-items:center;gap:10px;font-size:10px;font-weight:800;text-transform:uppercase;
+          letter-spacing:1.2px;color:#40546d;margin:4px 0 10px}
+        .report-section-title:before{content:"";width:26px;height:3px;border-radius:2px;background:#3866f7}
+        .report-dashboard{display:block!important}
+        .report-dashboard>.stats{grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:8px!important;margin-bottom:12px!important}
+        .report-dashboard .stat{background:#fff!important;border:1px solid #dbe3ec!important;border-radius:9px!important;padding:10px 11px!important;box-shadow:none!important}
+        .report-dashboard .stat .v{font-size:17px!important;color:#17273d!important}
+        .report-dashboard .stat .k{font-size:7.5px!important;color:#66768a!important;letter-spacing:.55px!important;line-height:1.35}
+        .report-dashboard>.dash-grid{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important;gap:11px!important}
+        .report-dashboard .panel{background:#fff!important;border:1px solid #dbe3ec!important;border-radius:10px!important;box-shadow:none!important;
+          break-inside:avoid-page;page-break-inside:avoid;margin:0!important}
+        .report-dashboard .panel-head{padding:10px 12px!important;border-bottom:1px solid #e4e9f0!important}
+        .report-dashboard .panel-head h2{font-size:11px!important;color:#1a2b42!important}
+        .report-dashboard .panel-head .tag{font-size:8px!important;padding:2px 6px!important}
+        .report-head-note{margin-left:auto;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:#66768a}
+        .report-dashboard .chart{padding:11px!important}
+        .report-dashboard .bar-row{margin:7px 0!important;gap:8px!important}
+        .report-dashboard .bar-lbl{font-size:9px!important;width:132px!important;color:#536276!important}
+        .report-dashboard .bar-track{height:16px!important;background:#edf1f5!important}
+        .report-dashboard .bar-val{font-size:9px!important;color:#1d2a3b!important}
+        .report-dashboard .bar-sub{font-size:7.5px!important}
+        .report-dashboard .turno-hours-grid{padding:11px!important;gap:8px!important}
+        .report-dashboard .turno-hours-card{padding:10px!important;background:#f7f9fc!important;border-color:#e1e7ee!important}
+        .report-dashboard .month-summary-row{padding:0 11px 10px!important}
+        .report-dashboard .month-day-chart,.report-dashboard .ed-chart-wrap{overflow:visible!important;padding:10px 11px!important}
+        .report-dashboard .day-bars-wrap{min-height:170px!important;gap:2px!important}
+        .report-dashboard .day-col{min-width:26px!important}
+        .report-dashboard .ed-chart svg{max-width:100%!important;height:auto!important}
+        .report-dashboard .consist-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
+        .report-dashboard .consist-card{padding:9px 10px!important;background:#f7f9fc!important}
+        .report-dashboard .ed-foot{grid-template-columns:1fr 1fr!important}
+        .report-dashboard .table-scroll{overflow:visible!important}
+        .report-dashboard table{font-size:8px!important;table-layout:auto!important}
+        .report-dashboard thead th{font-size:7px!important;padding:5px!important}
+        .report-dashboard tbody td{font-size:8px!important;padding:5px!important}
+        .report-dashboard .dash-filter-info{font-size:8px!important;padding:7px 11px!important}
+        .report-footer{margin-top:14px;padding:10px 2px 0;border-top:1px solid #ccd6e2;display:flex;justify-content:space-between;
+          gap:20px;font-size:8px;color:#728196;letter-spacing:.35px}
+        @media print{
+          .report-shell{padding:0}
+          .report-cover{box-shadow:none}
+          .report-dashboard .panel{break-inside:avoid-page;page-break-inside:avoid}
+        }
+      `;
+
+      const html='<!DOCTYPE html><html lang="pt-BR" data-theme="light"><head><meta charset="UTF-8">'+
+        '<meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Relatório Gerencial SAS</title>'+fontLink+
+        '<style>'+appStyles+'</style><style>'+reportCss+'</style></head><body class="dash-report">'+
+        '<main class="report-shell">'+
+          '<header class="report-cover">'+
+            '<div><div class="report-brand">'+
+              (logoSrc?'<div class="report-logo"><img src="'+logoSrc+'" alt="SESÉ"></div>':'')+
+              '<div class="report-brand-text">SAS • Lavadora de Embalagem</div></div>'+
+              '<h1>Relatório Gerencial de Performance</h1>'+
+              '<p>Consolidação visual dos indicadores operacionais, produção, paradas, consistência, danos, visão mensal e lavagem de racks.</p>'+
+              '<div class="report-scope">Escopo aplicado: '+dashPrintEscape(escopo)+'</div>'+ 
+            '</div>'+ 
+            '<div class="report-meta">'+
+              '<div><div class="report-meta-label">Emitido em</div><div class="report-meta-value">'+dashPrintEscape(emitido)+'</div></div>'+ 
+              '<div><div class="report-meta-label">Período mensal exibido</div><div class="report-meta-value">'+dashPrintEscape(mesTexto)+'</div></div>'+ 
+              '<div class="report-meta-code">Documento gerado automaticamente pelo sistema</div>'+ 
+            '</div>'+ 
+          '</header>'+ 
+          '<section class="report-highlights">'+
+            '<div class="report-highlight"><span>Disponibilidade operacional</span><strong>'+disponibilidade.toLocaleString("pt-BR")+'%</strong><small>'+dashPrintEscape(trabTxt)+' trabalhadas • '+dashPrintEscape(parTxt)+' paradas</small></div>'+ 
+            '<div class="report-highlight"><span>Volume lavado</span><strong>'+dashPrintEscape(totalEmb)+'</strong><small>Embalagens no escopo selecionado</small></div>'+ 
+            '<div class="report-highlight"><span>Modelo líder</span><strong style="font-size:13px">'+dashPrintEscape(topEmb)+'</strong><small>Maior volume de lavagem</small></div>'+ 
+            '<div class="report-highlight"><span>Principal parada</span><strong style="font-size:12px">'+dashPrintEscape(motivoResumo)+'</strong><small>Maior duração acumulada</small></div>'+ 
+          '</section>'+ 
+          '<div class="report-section-title">Indicadores e gráficos consolidados</div>'+ 
+          '<section class="report-dashboard view on">'+clone.innerHTML+'</section>'+ 
+          '<footer class="report-footer"><span>SAS Lavadora de Embalagem • SESÉ</span><span>Relatório gerencial para acompanhamento operacional</span></footer>'+ 
+        '</main></body></html>';
+
+      const antigo=document.getElementById("dash-print-frame");
+      if(antigo)antigo.remove();
+      const frame=document.createElement("iframe");
+      frame.id="dash-print-frame";
+      frame.setAttribute("aria-hidden","true");
+      frame.style.position="fixed";
+      frame.style.right="0";
+      frame.style.bottom="0";
+      frame.style.width="1px";
+      frame.style.height="1px";
+      frame.style.border="0";
+      frame.style.opacity="0";
+      document.body.appendChild(frame);
+      const doc=frame.contentDocument||frame.contentWindow.document;
+      doc.open();doc.write(html);doc.close();
+
+      const limpar=()=>{setTimeout(()=>{if(frame.parentNode)frame.parentNode.removeChild(frame);},500);};
+      try{frame.contentWindow.addEventListener("afterprint",limpar,{once:true});}catch(e){}
+      setTimeout(()=>{
+        try{frame.contentWindow.focus();frame.contentWindow.print();}
+        catch(e){console.error(e);limpar();alert("Não foi possível abrir a impressão do relatório.");}
+      },700);
+    }catch(e){
+      console.error(e);
+      alert("Não foi possível preparar o relatório do dashboard.");
+    }finally{
+      if(btn){btn.disabled=false;btn.innerHTML=btnTexto;}
+    }
+  }));
+}
 
 /* ---- Exportar Excel ---- */
 function exportRelatorioEmbXLS(){
@@ -5710,13 +5940,13 @@ function render(){
   const fhAte=document.getElementById("f-hora-ate").value||"23:59";
   const dtDe =fdDe  ? fdDe +"T"+fhDe  : null;
   const dtAte=fdAte ? fdAte+"T"+fhAte : null;
-  const view=registros.filter(r=>
+  const view=[...registros].filter(r=>
     (!fp||r.tipo===fp)&&
     (!ft||r.turno===ft)&&
     (!feSet.size||(r.tipo==="lav"&&(feSet.has(r.emb)||(r.itens&&r.itens.some(it=>feSet.has(it.emb))))))&&
     (!dtDe ||recDT(r)>=dtDe)&&
     (!dtAte||recDT(r)<=dtAte)
-  );
+  ).sort((a,b)=>b.id-a.id);
 
   const lav=view.filter(r=>r.tipo==="lav");
   const par=view.filter(r=>r.tipo==="par");
@@ -5737,14 +5967,24 @@ function render(){
   }
 
   const tb=document.getElementById("tbody");tb.innerHTML="";
+  const pagerEl=document.getElementById("apont-pager");
   if(!view.length){
+    if(pagerEl)pagerEl.innerHTML="";
     document.getElementById("state-box").innerHTML=
       '<div class="empty"><div class="big">▦</div><div class="txt">'+
       (registros.length?"NENHUM RESULTADO PARA O FILTRO":"NENHUM APONTAMENTO REGISTRADO")+
       '</div></div>';
     return;
   }
-  view.forEach(r=>{
+
+  const pageSizeEl=document.getElementById("apont-page-size");
+  const pageSize=Math.max(1,parseInt(pageSizeEl?pageSizeEl.value:"10",10)||10);
+  const totalPages=Math.max(1,Math.ceil(view.length/pageSize));
+  apontHistPage=Math.min(Math.max(1,apontHistPage),totalPages);
+  const startIdx=(apontHistPage-1)*pageSize;
+  const pageRows=view.slice(startIdx,startIdx+pageSize);
+
+  pageRows.forEach(r=>{
     const tr=document.createElement("tr");
     const[y,m,d]=r.data.split("-");
     const ceVal=r.tipo==="lav"?calcCE(r.hi,r.hf):0;
@@ -5768,6 +6008,12 @@ function render(){
     tr.querySelector(".del").addEventListener("click",()=>excluir(r.id));
     tb.appendChild(tr);
   });
+
+  if(pagerEl){
+    const filtroAtivo=!!(fp||ft||feSet.size||dtDe||dtAte);
+    pagerEl.innerHTML=rackPagerHtml("apont",apontHistPage,totalPages,view.length,startIdx+1,
+      Math.min(startIdx+pageSize,view.length),pageSize,filtroAtivo?"Filtro aplicado":"Todos os apontamentos");
+  }
 }
 
 function bars(el,rows,opts){
@@ -6899,7 +7145,7 @@ function rackPageSizeFrom(id){
 }
 function rackPagerHtml(prefix, page, totalPages, total, start, end, pageSize, label){
   if(total <= 0) return '';
-  var fn = prefix === 'dash' ? 'dashRackHistGo' : 'rackHistGo';
+  var fn = prefix === 'dash' ? 'dashRackHistGo' : (prefix === 'apont' ? 'apontHistGo' : 'rackHistGo');
   var disFirst = page <= 1 ? ' disabled' : '';
   var disLast  = page >= totalPages ? ' disabled' : '';
   return '<div class="rack-pager">'+
