@@ -133,6 +133,17 @@
   .grid{display:grid;grid-template-columns:382px minmax(0,1fr);gap:22px}
   .grid>*{min-width:0}
   @media(max-width:840px){.grid{grid-template-columns:minmax(0,1fr)}}
+  .apont-form-page{max-width:720px;margin:0 auto}
+  .history-page{width:100%}
+  .history-page-head{display:flex;align-items:center;justify-content:space-between;gap:18px;
+    margin-bottom:14px;padding:16px 18px;background:linear-gradient(135deg,rgba(56,102,247,.16),rgba(56,102,247,.04));
+    border:1px solid rgba(56,102,247,.3);border-radius:8px}
+  .history-page-head h2{font-size:18px;font-weight:800;letter-spacing:.1px;margin:2px 0 3px}
+  .history-page-head p{font-size:11px;line-height:1.5;color:var(--txt-dim)}
+  .history-page-kicker{font-size:9px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;color:var(--blue-soft)}
+  .history-new-btn{cursor:pointer;flex:0 0 auto;border:1px solid var(--blue);background:var(--blue);color:#fff;
+    border-radius:7px;padding:10px 14px;font-family:'Poppins',sans-serif;font-size:11px;font-weight:800;transition:.13s}
+  .history-new-btn:hover{filter:brightness(1.08);transform:translateY(-1px)}
   .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px}
   .panel-head{display:flex;align-items:center;gap:9px;padding:13px 16px;
     border-bottom:1px solid var(--line-soft)}
@@ -246,7 +257,11 @@
   col.c-hi,col.c-hf{width:58px}
   col.c-dur{width:72px}
   col.c-total{width:62px}
+  col.c-registro{width:122px}
   col.c-acao{width:130px}
+  .registro-em{line-height:1.25}
+  .registro-em .registro-data{display:block;font-weight:600;color:var(--txt)}
+  .registro-em .registro-hora{display:block;margin-top:2px;font-size:10.5px;color:var(--txt-faint)}
   /* Botões de ação na tabela */
   .td-acoes{white-space:nowrap;text-align:right}
   .td-acoes .edit,.td-acoes .del{font-size:11px;padding:4px 8px}
@@ -442,6 +457,9 @@
     .clock .date{font-size:8px}
     .tabs{margin-bottom:12px;gap:5px}
     .tabs .tab{flex:1;justify-content:center;padding:9px 6px;font-size:12px}
+    .history-page-head{align-items:stretch;flex-direction:column;padding:13px 14px}
+    .history-page-head h2{font-size:16px}
+    .history-new-btn{width:100%}
     .grid{gap:12px}
     .grid>div,.dash-grid>*{min-width:0}
     .panel,.table-scroll{max-width:100%}
@@ -1339,6 +1357,7 @@
 
   <div class="tabs">
     <div class="tab on" data-view="apont"><span class="dot"></span>Apontamento</div>
+    <div class="tab" data-view="historico"><span class="dot"></span>Apontamentos Registrados</div>
     <div class="tab" data-view="vazia"><span class="dot"></span>Embalagem Vazia</div>
     <div class="tab" data-view="rack"><span class="dot"></span>Lavagem de Rack</div>
     <div class="tab" data-view="dash"><span class="dot"></span>Dashboard</div>
@@ -1357,7 +1376,7 @@
     <button type="button" class="ticker-edit-btn" id="ticker-edit-btn" title="Editar mensagem">✏️</button>
   </div>
   <div class="view on" id="view-apont">
-    <div class="grid">
+    <div class="apont-form-page">
 
       <div class="panel" style="align-self:start">
         <div class="panel-head"><span class="tag">REG</span><h2>Novo Apontamento</h2></div>
@@ -1578,7 +1597,20 @@
           <div class="hint" id="hint"></div>
         </form>
       </div>
+    </div>
+  </div>
 
+  <!-- ============ VIEW: APONTAMENTOS REGISTRADOS ============ -->
+  <div class="view" id="view-historico">
+    <div class="history-page">
+      <div class="history-page-head">
+        <div>
+          <div class="history-page-kicker">Controle dos lançamentos</div>
+          <h2>Apontamentos Registrados</h2>
+          <p>Consulte, filtre, exporte, edite e exclua os registros em uma área exclusiva.</p>
+        </div>
+        <button type="button" class="history-new-btn" id="history-new-btn">＋ Novo Apontamento</button>
+      </div>
       <div>
         <div class="stats">
           <div class="stat" data-c="lav"><div class="v" id="s-emb">0</div><div class="k">Embalagens Lavadas</div></div>
@@ -1634,11 +1666,13 @@
               <colgroup>
                 <col class="c-data"><col class="c-turno"><col class="c-tipo">
                 <col class="c-det"><col class="c-hi"><col class="c-hf">
-                <col class="c-dur"><col class="c-total"><col style="width:9%"><col class="c-acao">
+                <col class="c-dur"><col class="c-total"><col style="width:9%">
+                <col class="c-registro"><col class="c-acao">
               </colgroup>
               <thead><tr>
                 <th>Data</th><th>Turno</th><th>Tipo</th><th>Embalagem / Motivo</th>
-                <th>Início</th><th>Fim</th><th>Duração</th><th>Total</th><th>Ciclos Ext.</th><th></th>
+                <th>Início</th><th>Fim</th><th>Duração</th><th>Total</th><th>Ciclos Ext.</th>
+                <th>Registrado em</th><th></th>
               </tr></thead>
               <tbody id="tbody"></tbody>
             </table>
@@ -3602,12 +3636,18 @@ document.querySelectorAll(".tab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".view").forEach(x=>x.classList.remove("on"));
   t.classList.add("on");
   document.getElementById("view-"+t.dataset.view).classList.add("on");
+  if(t.dataset.view==="historico")render();
   if(t.dataset.view==="dash"){renderDash(); if(typeof renderRelatorioEmb==="function")renderRelatorioEmb();}
   if(t.dataset.view==="vazia")renderVazia();
   if(t.dataset.view==="cadEmb")renderCadEmb();
   if(t.dataset.view==="rack" && typeof renderRack==="function")renderRack();
   if(t.dataset.view==="sim" && typeof renderSim==="function")renderSim();
 }));
+document.getElementById("history-new-btn").addEventListener("click",()=>{
+  const tab=document.querySelector('.tab[data-view="apont"]');
+  if(tab)tab.click();
+  window.scrollTo({top:0,behavior:"smooth"});
+});
 
 function mins(hi,hf){
   if(!hi||!hf)return 0;
@@ -3663,6 +3703,36 @@ function proximoDia(s){
   return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 }
 function brData(s){ if(!s) return ""; const[y,m,d]=s.split("-"); return d+"/"+m+"/"+y; }
+function registroEmISO(r){
+  if(r&&r.registradoEm){
+    const gravado=new Date(r.registradoEm);
+    if(!isNaN(gravado.getTime()))return gravado.toISOString();
+  }
+  const id=Number(r&&r.id);
+  const limiteFuturo=Date.now()+(24*60*60*1000);
+  if(Number.isFinite(id)&&id>=946684800000&&id<=limiteFuturo){
+    return new Date(id).toISOString();
+  }
+  return "";
+}
+function registroEmPartes(r){
+  const iso=registroEmISO(r);
+  if(!iso)return {data:"Não informado",hora:""};
+  const dt=new Date(iso);
+  return {
+    data:dt.toLocaleDateString("pt-BR"),
+    hora:dt.toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit",second:"2-digit"})
+  };
+}
+function registroEmTexto(r){
+  const p=registroEmPartes(r);
+  return p.hora?p.data+" "+p.hora:p.data;
+}
+function registroEmHTML(r){
+  const p=registroEmPartes(r);
+  return '<span class="registro-data">'+p.data+'</span>'+
+    (p.hora?'<span class="registro-hora">'+p.hora+'</span>':'');
+}
 
 /* mostra/oculta o botão conforme a janela (página pode ficar aberta cruzando 02:00) */
 function atualizarBtnVirada(){
@@ -3748,7 +3818,7 @@ document.getElementById("form").addEventListener("submit",async e=>{
     if(!rackItens.length) return flash("Selecione ao menos um item lavado",false);
     if(!turno) return flash("Selecione o turno",false);
     if(!data) return flash("Informe a data",false);
-    const novoRack = {id:Date.now(), data, turno, area:rackArea, itens:rackItens};
+    const novoRack = {id:Date.now(), registradoEm:new Date().toISOString(), data, turno, area:rackArea, itens:rackItens};
     await persistRack(novoRack, false);
     flash("Lavagem de Rack registrada com sucesso",true);
     if(typeof resetRackInline==="function") resetRackInline();
@@ -3789,8 +3859,10 @@ document.getElementById("form").addEventListener("submit",async e=>{
     }
     if(!data)return flash("Informe a data",false);
     const eraEdicaoVaz=!!editingId;
+    const anteriorVaz=eraEdicaoVaz?registrosVazia.find(x=>x.id===editingId):null;
     const regV={
       id:editingId||Date.now(),
+      registradoEm:eraEdicaoVaz?registroEmISO(anteriorVaz):new Date().toISOString(),
       data,hora:horaVaz,turno,
       cicloExtra:false,cicloExtraCount:0,
       itens:formEmbItensVazia.map(it=>({emb:it.emb,total:it.total})),
@@ -3822,7 +3894,14 @@ document.getElementById("form").addEventListener("submit",async e=>{
     setDataHoje();bloquearData();
     return;
   }
-  const reg={id:editingId||Date.now(),tipo,data,turno,hi,hf,cicloExtra:cicloExtra==='sim',cicloExtraCount:cicloExtraCount};
+  const eraEdicao=!!editingId;
+  const anterior=eraEdicao?registros.find(x=>x.id===editingId):null;
+  const reg={
+    id:editingId||Date.now(),
+    registradoEm:eraEdicao?registroEmISO(anterior):new Date().toISOString(),
+    tipo,data,turno,hi,hf,
+    cicloExtra:cicloExtra==='sim',cicloExtraCount:cicloExtraCount
+  };
   if(tipo==="lav"){
     /* Aproveita um valor digitado no campo (mesmo sem ter clicado +),
        seja em novo registro ou durante a edição */
@@ -3856,8 +3935,6 @@ document.getElementById("form").addEventListener("submit",async e=>{
     reg.motivo=motivo;
     reg.obs=obs;
   }
-  const eraEdicao=!!editingId;
-
   /* ===== Gate do Lançamento da Virada ===== */
   if(viradaModo){
     if(!dentroJanelaVirada())        return flash("Fora da janela 00:00–02:00. Fale com o líder.",false);
@@ -3872,6 +3949,7 @@ document.getElementById("form").addEventListener("submit",async e=>{
     const principal={...reg, hf:"00:00", viradaId:vid, viradaParte:1};
     const continuacao={
       id:vid+1, tipo:reg.tipo, data:dataFim, turno:reg.turno,
+      registradoEm:reg.registradoEm,
       hi:"00:00", hf:reg.hf, cicloExtra:false, cicloExtraCount:0,
       cont:true, viradaId:vid, viradaParte:2, retroVirada:true,
       ...(reg.tipo==="lav" ? {itens:[], emb:reg.emb||"", total:0} : {}),
@@ -3962,6 +4040,8 @@ function editar(id){
   const r=registros.find(x=>x.id===id);
   if(!r)return;
   if(r.viradaId){ flash("Apontamento de virada de meia-noite: exclua o par (🌙) e recadastre para alterar.",false); return; }
+  const tabApont=document.querySelector('.tab[data-view="apont"]');
+  if(tabApont&&!tabApont.classList.contains("on"))tabApont.click();
   tipo=r.tipo;
   document.querySelectorAll(".tipo-btn").forEach(x=>x.classList.toggle("on",x.dataset.tp===tipo));
   document.getElementById("f-embalagem").classList.toggle("hide",tipo!=="lav");
@@ -4108,14 +4188,15 @@ function gerarXLS(fdDe,fhDe,fdAte,fhAte){
   ).reverse();
   if(!filtrado.length){alert("Nenhum apontamento no período selecionado.");return;}
   const periodoLabel=(fdDe||fdAte)?` (${fdDe?fdDe.split("-").reverse().join("/"):"início"} a ${fdAte?fdAte.split("-").reverse().join("/"):"hoje"})`:"";
-  const dados=[["Data","Turno","Tipo","Embalagem / Motivo","Hora Inicial","Hora Final","Duração","Embalagens Lavadas","Divisórias Danif./Segr.","Ciclo Extra","Ciclos Extras (calc)","Virada (retroativo)"]];
+  const dados=[["Data","Turno","Tipo","Embalagem / Motivo","Hora Inicial","Hora Final","Duração","Embalagens Lavadas","Divisórias Danif./Segr.","Ciclo Extra","Ciclos Extras (calc)","Virada (retroativo)","Registrado em"]];
   filtrado.forEach(r=>{
     const[y,m,d]=r.data.split("-");
     const ceVal=r.tipo==="lav"?calcCE(r.hi,r.hf):0;
     const danifTot=r.tipo==="lav"?totalDanifReg(r):0;
     dados.push([d+"/"+m+"/"+y,TLABEL[r.turno],TPLABEL[r.tipo],detalhe(r,true),
                 r.hi,r.hf,fmtMinXLS(mins(r.hi,r.hf)),r.tipo==="lav"?r.total:"",r.tipo==="lav"?danifTot:"",r.cicloExtra?(r.cicloExtraCount||1):"Não",
-                r.tipo==="lav"?Math.round(ceVal*100)/100:"",r.retroVirada?(r.cont?"SIM (continuação)":"SIM"):""]);
+                r.tipo==="lav"?Math.round(ceVal*100)/100:"",r.retroVirada?(r.cont?"SIM (continuação)":"SIM"):"",
+                registroEmTexto(r)]);
   });
   const wsD=XLSX.utils.aoa_to_sheet(dados);
   /* Formata coluna G (Duração, índice 6) como tempo hh:mm em todas as linhas de dados */
@@ -4130,7 +4211,7 @@ function gerarXLS(fdDe,fhDe,fdAte,fhAte){
     }
   }
   /* Mesmo para resumo por turno — coluna Tempo Trabalhado (índice 3) e Parado (índice 4) */
-  wsD["!cols"]=[{wch:12},{wch:11},{wch:20},{wch:28},{wch:12},{wch:12},{wch:11},{wch:20},{wch:22}];
+  wsD["!cols"]=[{wch:12},{wch:11},{wch:20},{wch:28},{wch:12},{wch:12},{wch:11},{wch:20},{wch:22},{wch:12},{wch:20},{wch:20},{wch:21}];
   const res=[["RESUMO POR TURNO"+periodoLabel],["Turno","Lavagens","Embalagens Lavadas","Tempo Trabalhado","Tempo Parado"]];
   ["1","2","3"].forEach(t=>{
     const rt=filtrado.filter(r=>r.turno===t);
@@ -5897,14 +5978,15 @@ function exportCSV(){
     (!dtDe||recDT(r)>=dtDe)&&(!dtAte||recDT(r)<=dtAte)
   ).reverse();
   if(!filtrado.length)return alert("Nenhum apontamento no período selecionado.");
-  const head=["Data","Turno","Tipo","Embalagem/Motivo","Hora Inicial","Hora Final","Duracao","Embalagens Lavadas","Divisorias Danif./Segr.","Ciclo Extra","Ciclos Extras (calc)","Virada (retroativo)"];
+  const head=["Data","Turno","Tipo","Embalagem/Motivo","Hora Inicial","Hora Final","Duracao","Embalagens Lavadas","Divisorias Danif./Segr.","Ciclo Extra","Ciclos Extras (calc)","Virada (retroativo)","Registrado em"];
   const rows=filtrado.map(r=>{
     const[y,m,d]=r.data.split("-");
     const ceVal=r.tipo==="lav"?calcCE(r.hi,r.hf):0;
     const danifTot=r.tipo==="lav"?totalDanifReg(r):0;
     return[d+"/"+m+"/"+y,TLABEL[r.turno],TPLABEL[r.tipo],detalhe(r,true),
            r.hi,r.hf,fmtMin(mins(r.hi,r.hf)),r.tipo==="lav"?r.total:"",r.tipo==="lav"?danifTot:"",r.cicloExtra?(r.cicloExtraCount||1):"Não",
-           r.tipo==="lav"?(Math.round(ceVal*100)/100).toString().replace(".",","):"",r.retroVirada?(r.cont?"SIM (continuacao)":"SIM"):""];
+           r.tipo==="lav"?(Math.round(ceVal*100)/100).toString().replace(".",","):"",r.retroVirada?(r.cont?"SIM (continuacao)":"SIM"):"",
+           registroEmTexto(r)];
   });
   const csv=[head,...rows].map(l=>l.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(";")).join("\r\n");
   const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
@@ -6001,6 +6083,7 @@ function render(){
       '<td class="mono" style="color:var(--txt-dim)">'+fmtMin(mins(r.hi,r.hf))+'</td>'+
       '<td class="mono qty">'+(r.tipo==="lav"||r.tipo==="vaz"?r.total.toLocaleString("pt-BR"):"—")+'</td>'+
       '<td class="mono" style="'+ceColor+'">'+ceDisp+'</td>'+
+      '<td class="mono registro-em">'+registroEmHTML(r)+'</td>'+
       '<td class="td-acoes">'+
       '<button class="edit" title="Editar">✏️ Editar</button> '+
       '<button class="del" title="Excluir">✕</button></td>';
