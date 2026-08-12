@@ -1,0 +1,284 @@
+--- a/index.html
++++ b/index.html
+@@ -1275,10 +1275,148 @@
+     .ms-panel{max-width:min(86vw,320px)}
+     .ms-label,.ms-search input{font-size:14px}
+   }
++
++
++  /* ===== Notas / Passagem de Turno — somente memória da sessão ===== */
++  .sas-notes-launch{
++    position:fixed;right:16px;top:142px;z-index:1200;
++    display:inline-flex;align-items:center;gap:7px;cursor:pointer;
++    background:var(--panel);color:var(--txt);border:1px solid var(--line);
++    border-radius:9px;padding:9px 12px;font-family:'Poppins',sans-serif;
++    font-size:11px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;
++    box-shadow:0 10px 28px rgba(0,0,0,.24);transition:.15s;
++  }
++  .sas-notes-launch:hover{border-color:var(--blue-soft);transform:translateY(-1px);color:var(--blue-soft)}
++  .sas-notes-launch .sn-ico{font-size:15px;line-height:1}
++  .sas-notes-badge{display:none;min-width:18px;height:18px;padding:0 5px;align-items:center;justify-content:center;
++    border-radius:999px;background:var(--red);color:#fff;font-size:9px;font-weight:800;line-height:18px}
++  .sas-notes-badge.on{display:inline-flex}
++
++  .sas-notes-overlay{display:none;position:fixed;inset:0;z-index:5000;background:rgba(3,7,13,.76);
++    backdrop-filter:blur(4px);padding:18px;align-items:center;justify-content:center}
++  .sas-notes-overlay.on{display:flex}
++  .sas-notes-modal{width:min(820px,96vw);max-height:92vh;overflow:auto;background:var(--panel);
++    border:1px solid var(--line);border-radius:12px;box-shadow:0 28px 90px rgba(0,0,0,.5)}
++  .sas-notes-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 18px;
++    border-bottom:1px solid var(--line-soft);position:sticky;top:0;background:var(--panel);z-index:3}
++  .sas-notes-head-title{display:flex;align-items:center;gap:10px;min-width:0}
++  .sas-notes-head-title .ico{font-size:23px;line-height:1}
++  .sas-notes-head h3{font-size:15px;font-weight:800;letter-spacing:.2px;margin:0}
++  .sas-notes-head p{font-size:9px;color:var(--txt-faint);text-transform:uppercase;letter-spacing:1px;margin-top:2px}
++  .sas-notes-close{cursor:pointer;background:var(--panel-2);border:1px solid var(--line);color:var(--txt-dim);
++    width:34px;height:34px;border-radius:8px;font-size:19px;line-height:1}
++  .sas-notes-close:hover{border-color:var(--red);color:var(--red)}
++  .sas-notes-body{padding:16px 18px 19px}
++  .sas-notes-session{font-size:10px;color:var(--txt-faint);padding:8px 10px;border:1px dashed var(--line);
++    border-radius:7px;margin-bottom:13px;line-height:1.45}
++  .sas-notes-meta{display:grid;grid-template-columns:1fr .8fr 1fr auto 1fr;gap:9px;align-items:end;margin-bottom:11px}
++  .sas-notes-meta .sn-field label{font-size:9px;margin-bottom:5px;letter-spacing:.8px}
++  .sas-notes-meta input,.sas-notes-meta select{font-size:12px;padding:8px 9px}
++  .sas-notes-arrow{font-size:18px;color:var(--blue-soft);font-weight:800;padding:0 2px 8px;text-align:center}
++  .sas-notes-toolbar{display:flex;align-items:center;gap:5px;flex-wrap:wrap;padding:8px;
++    background:var(--panel-2);border:1px solid var(--line);border-bottom:none;border-radius:8px 8px 0 0}
++  .sas-notes-tool,.sas-notes-size{height:31px;min-width:31px;cursor:pointer;background:var(--panel);border:1px solid var(--line);
++    color:var(--txt-dim);border-radius:5px;font-family:'Poppins',sans-serif;font-size:11px;font-weight:700;padding:0 8px}
++  .sas-notes-tool:hover,.sas-notes-size:hover{border-color:var(--blue-soft);color:var(--txt)}
++  .sas-notes-size{min-width:105px}
++  .sas-notes-color-wrap{height:31px;display:flex;align-items:center;gap:6px;padding:0 7px;background:var(--panel);
++    border:1px solid var(--line);border-radius:5px;font-size:9px;font-weight:700;color:var(--txt-dim);text-transform:uppercase}
++  .sas-notes-color{width:22px!important;height:22px!important;padding:0!important;border:none!important;border-radius:4px!important;background:transparent!important;cursor:pointer}
++  .sas-notes-editor{min-height:180px;max-height:320px;overflow:auto;background:var(--bg);border:1px solid var(--line);
++    border-radius:0 0 8px 8px;padding:14px;color:var(--txt);font-family:'Poppins',sans-serif;font-size:14px;line-height:1.65;outline:none}
++  .sas-notes-editor:focus{border-color:var(--blue)}
++  .sas-notes-editor:empty:before{content:attr(data-placeholder);color:var(--txt-faint);pointer-events:none}
++  .sas-notes-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:11px;flex-wrap:wrap}
++  .sas-notes-btn{cursor:pointer;border-radius:7px;padding:9px 13px;font-family:'Poppins',sans-serif;font-size:10.5px;
++    font-weight:800;letter-spacing:.4px;text-transform:uppercase;border:1px solid var(--line);background:var(--panel-2);color:var(--txt-dim)}
++  .sas-notes-btn:hover{border-color:var(--blue-soft);color:var(--txt)}
++  .sas-notes-btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
++  .sas-notes-btn.primary:hover{filter:brightness(1.08)}
++  .sas-notes-divider{height:1px;background:var(--line-soft);margin:18px 0 14px}
++  .sas-notes-list-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:9px}
++  .sas-notes-list-head h4{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--txt-dim)}
++  .sas-notes-list-count{font-size:9px;color:var(--txt-faint);font-weight:700}
++  .sas-note-card{border:1px solid var(--line);border-left:3px solid var(--orange);border-radius:8px;background:var(--panel-2);
++    padding:11px 12px;margin-bottom:9px}
++  .sas-note-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
++  .sas-note-route{font-size:11px;font-weight:800;color:var(--orange)}
++  .sas-note-date{font-size:9.5px;color:var(--txt-faint);margin-top:2px}
++  .sas-note-content{background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:10px 11px;
++    font-size:13px;line-height:1.55;overflow-wrap:anywhere}
++  .sas-note-ok{cursor:pointer;white-space:nowrap;border:1px solid rgba(63,185,80,.45);background:rgba(63,185,80,.11);
++    color:var(--green);border-radius:6px;padding:7px 10px;font-family:'Poppins',sans-serif;font-size:9.5px;font-weight:800;text-transform:uppercase}
++  .sas-note-ok:hover{background:var(--green);border-color:var(--green);color:#fff}
++  .sas-notes-empty{padding:18px 10px;text-align:center;border:1px dashed var(--line);border-radius:8px;color:var(--txt-faint);font-size:10px}
++  .sas-notes-toast{display:none;margin-top:10px;padding:8px 10px;border-radius:6px;background:rgba(63,185,80,.11);
++    border:1px solid rgba(63,185,80,.35);color:var(--green);font-size:10px;font-weight:700}
++  .sas-notes-toast.on{display:block}
++  @media(max-width:700px){
++    .sas-notes-launch{right:9px;top:106px;padding:8px 10px}.sas-notes-launch .sn-txt{display:none}
++    .sas-notes-meta{grid-template-columns:1fr 1fr}.sas-notes-arrow{display:none}
++    .sas-notes-meta .sn-field:nth-child(3),.sas-notes-meta .sn-field:nth-child(5){grid-column:auto}
++    .sas-notes-body{padding:12px}.sas-notes-head{padding:12px}.sas-notes-editor{min-height:150px}
++    .sas-note-card-head{flex-direction:column}.sas-note-ok{width:100%}
++  }
++
+ </style>
+ </head>
+ <body>
+ 
++<button type="button" class="sas-notes-launch" id="sas-notes-launch" title="Abrir notas / passagem de turno" aria-label="Abrir notas">
++  <span class="sn-ico">📝</span><span class="sn-txt">Notas</span><span class="sas-notes-badge" id="sas-notes-badge">0</span>
++</button>
++
++
++<!-- ===== Notas / Passagem de Turno — sem armazenamento persistente ===== -->
++<div class="sas-notes-overlay" id="sas-notes-overlay" aria-hidden="true">
++  <div class="sas-notes-modal" role="dialog" aria-modal="true" aria-labelledby="sas-notes-title">
++    <div class="sas-notes-head">
++      <div class="sas-notes-head-title">
++        <div class="ico">📝</div>
++        <div><h3 id="sas-notes-title">Notas · Passagem de Turno</h3><p>Recados operacionais da sessão atual</p></div>
++      </div>
++      <button type="button" class="sas-notes-close" id="sas-notes-close" aria-label="Fechar">×</button>
++    </div>
++    <div class="sas-notes-body">
++      <div class="sas-notes-session">Os recados ficam apenas nesta tela enquanto ela estiver aberta. Não são enviados ao Firebase, IndexedDB ou localStorage e são apagados ao recarregar/fechar a página.</div>
++      <div class="sas-notes-meta">
++        <div class="sn-field"><label>Data</label><input type="date" id="sas-note-date"></div>
++        <div class="sn-field"><label>Hora</label><input type="time" id="sas-note-time"></div>
++        <div class="sn-field"><label>De turno</label><select id="sas-note-from"><option value="1">Turno 1</option><option value="2">Turno 2</option><option value="3">Turno 3</option></select></div>
++        <div class="sas-notes-arrow">→</div>
++        <div class="sn-field"><label>Para turno</label><select id="sas-note-to"><option value="1">Turno 1</option><option value="2" selected>Turno 2</option><option value="3">Turno 3</option></select></div>
++      </div>
++
++      <div class="sas-notes-toolbar" id="sas-notes-toolbar">
++        <select class="sas-notes-size" id="sas-notes-size" title="Tamanho da fonte">
++          <option value="10">Fonte 10</option><option value="12">Fonte 12</option><option value="14" selected>Fonte 14</option>
++          <option value="16">Fonte 16</option><option value="18">Fonte 18</option><option value="20">Fonte 20</option>
++          <option value="24">Fonte 24</option><option value="28">Fonte 28</option><option value="32">Fonte 32</option>
++        </select>
++        <span class="sas-notes-color-wrap">Cor <input class="sas-notes-color" type="color" id="sas-notes-color" value="#e8edf2" title="Cor do texto"></span>
++        <button type="button" class="sas-notes-tool" data-cmd="bold" title="Negrito"><b>B</b></button>
++        <button type="button" class="sas-notes-tool" data-cmd="italic" title="Itálico"><i>I</i></button>
++        <button type="button" class="sas-notes-tool" data-cmd="underline" title="Sublinhado"><u>U</u></button>
++        <button type="button" class="sas-notes-tool" data-cmd="insertUnorderedList" title="Lista">• Lista</button>
++        <button type="button" class="sas-notes-tool" data-cmd="justifyLeft" title="Alinhar à esquerda">≡</button>
++        <button type="button" class="sas-notes-tool" data-cmd="justifyCenter" title="Centralizar">≣</button>
++        <button type="button" class="sas-notes-tool" data-cmd="justifyRight" title="Alinhar à direita">≡→</button>
++      </div>
++      <div id="sas-notes-editor" class="sas-notes-editor" contenteditable="true" spellcheck="true" data-placeholder="Digite o recado para o próximo turno..."></div>
++      <div class="sas-notes-actions">
++        <button type="button" class="sas-notes-btn" id="sas-notes-clear">Limpar</button>
++        <button type="button" class="sas-notes-btn primary" id="sas-notes-save">✓ Deixar recado</button>
++      </div>
++      <div class="sas-notes-toast" id="sas-notes-toast"></div>
++
++      <div class="sas-notes-divider"></div>
++      <div class="sas-notes-list-head"><h4>Recados aguardando leitura</h4><span class="sas-notes-list-count" id="sas-notes-list-count">0 recados</span></div>
++      <div id="sas-notes-list"></div>
++    </div>
++  </div>
++</div>
++
++
+ <!-- ===== Modal Exportar Excel ===== -->
+ <div class="modal-overlay" id="modal-export">
+   <div class="modal">
+@@ -9369,5 +9507,132 @@
+   if(o) o.addEventListener("click",function(e){ if(e.target.id==="virada-modal-overlay") fecharModalVirada(); });
+ })();
+ </script>
++
++
++<script>
++/* ===== Notas / Passagem de Turno — propositalmente sem persistência ===== */
++(function(){
++  'use strict';
++  var notes = []; // somente memória desta aba; NÃO usar localStorage/Firebase/IndexedDB
++  var launch = document.getElementById('sas-notes-launch');
++  var overlay = document.getElementById('sas-notes-overlay');
++  var closeBtn = document.getElementById('sas-notes-close');
++  var editor = document.getElementById('sas-notes-editor');
++  var list = document.getElementById('sas-notes-list');
++  var badge = document.getElementById('sas-notes-badge');
++  var count = document.getElementById('sas-notes-list-count');
++  var toast = document.getElementById('sas-notes-toast');
++  var fromSel = document.getElementById('sas-note-from');
++  var toSel = document.getElementById('sas-note-to');
++  if(!launch || !overlay || !editor) return;
++
++  function pad(n){ return String(n).padStart(2,'0'); }
++  function nowFields(){
++    var d = new Date();
++    document.getElementById('sas-note-date').value = d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
++    document.getElementById('sas-note-time').value = pad(d.getHours())+':'+pad(d.getMinutes());
++  }
++  function guessShift(){
++    var h = new Date().getHours();
++    // aproximação visual: T1 manhã, T2 tarde, T3 noite/madrugada
++    var f = (h>=6 && h<14) ? '1' : (h>=14 && h<22) ? '2' : '3';
++    var t = f==='1'?'2':f==='2'?'3':'1';
++    fromSel.value=f; toSel.value=t;
++  }
++  function showToast(msg){
++    toast.textContent=msg; toast.classList.add('on');
++    clearTimeout(showToast._t); showToast._t=setTimeout(function(){toast.classList.remove('on');},2200);
++  }
++  function openNotes(){
++    overlay.classList.add('on'); overlay.setAttribute('aria-hidden','false');
++    if(!document.getElementById('sas-note-date').value) nowFields();
++    render();
++    setTimeout(function(){ editor.focus(); },80);
++  }
++  function closeNotes(){ overlay.classList.remove('on'); overlay.setAttribute('aria-hidden','true'); }
++
++  function exec(cmd, value){
++    editor.focus();
++    try{ document.execCommand(cmd,false,value||null); }catch(e){}
++  }
++  document.getElementById('sas-notes-toolbar').addEventListener('mousedown', function(e){
++    var b=e.target.closest('[data-cmd]'); if(!b) return;
++    e.preventDefault(); exec(b.dataset.cmd);
++  });
++  document.getElementById('sas-notes-size').addEventListener('change',function(){
++    var px=this.value; editor.focus();
++    try{
++      document.execCommand('fontSize',false,'7');
++      editor.querySelectorAll('font[size="7"]').forEach(function(el){el.removeAttribute('size');el.style.fontSize=px+'px';});
++    }catch(e){}
++  });
++  document.getElementById('sas-notes-color').addEventListener('input',function(){ exec('foreColor',this.value); });
++
++  function isBlank(){
++    return !((editor.innerText||'').replace(/\u00a0/g,' ').trim());
++  }
++  function safeHtml(html){
++    var box=document.createElement('div'); box.innerHTML=html;
++    box.querySelectorAll('script,style,iframe,object,embed,form,input,button,textarea,select').forEach(function(n){n.remove();});
++    box.querySelectorAll('*').forEach(function(el){
++      Array.from(el.attributes).forEach(function(a){
++        if(/^on/i.test(a.name) || a.name==='src' || a.name==='href') el.removeAttribute(a.name);
++      });
++    });
++    return box.innerHTML;
++  }
++  function formatDate(iso){
++    if(!iso) return '';
++    var p=iso.split('-'); return p.length===3 ? p[2]+'/'+p[1]+'/'+p[0] : iso;
++  }
++  function updateBadge(){
++    badge.textContent=notes.length;
++    badge.classList.toggle('on',notes.length>0);
++    count.textContent=notes.length+' '+(notes.length===1?'recado':'recados');
++  }
++  function render(){
++    updateBadge();
++    if(!notes.length){
++      list.innerHTML='<div class="sas-notes-empty">Nenhum recado aguardando leitura.</div>';
++      return;
++    }
++    list.innerHTML='';
++    notes.slice().reverse().forEach(function(n){
++      var card=document.createElement('div'); card.className='sas-note-card';
++      var head=document.createElement('div'); head.className='sas-note-card-head';
++      var meta=document.createElement('div');
++      meta.innerHTML='<div class="sas-note-route">TURNO '+n.from+' → TURNO '+n.to+'</div><div class="sas-note-date">'+formatDate(n.date)+' · '+n.time+'</div>';
++      var ok=document.createElement('button'); ok.type='button'; ok.className='sas-note-ok'; ok.textContent='✓ OK · Lido e finalizar';
++      ok.addEventListener('click',function(){
++        notes=notes.filter(function(x){return x.id!==n.id;});
++        render(); showToast('Recado finalizado e removido.');
++      });
++      head.appendChild(meta); head.appendChild(ok);
++      var body=document.createElement('div'); body.className='sas-note-content'; body.innerHTML=n.html;
++      card.appendChild(head); card.appendChild(body); list.appendChild(card);
++    });
++  }
++
++  document.getElementById('sas-notes-save').addEventListener('click',function(){
++    if(isBlank()){ showToast('Digite o recado antes de salvar.'); editor.focus(); return; }
++    var date=document.getElementById('sas-note-date').value;
++    var time=document.getElementById('sas-note-time').value;
++    if(!date || !time){ nowFields(); date=document.getElementById('sas-note-date').value; time=document.getElementById('sas-note-time').value; }
++    notes.push({id:Date.now()+Math.random(),date:date,time:time,from:fromSel.value,to:toSel.value,html:safeHtml(editor.innerHTML)});
++    editor.innerHTML=''; nowFields();
++    // encadeia o próximo turno automaticamente
++    fromSel.value=toSel.value; toSel.value=fromSel.value==='1'?'2':fromSel.value==='2'?'3':'1';
++    render(); showToast('Recado deixado para o próximo turno.');
++  });
++  document.getElementById('sas-notes-clear').addEventListener('click',function(){ editor.innerHTML=''; editor.focus(); });
++  launch.addEventListener('click',openNotes);
++  closeBtn.addEventListener('click',closeNotes);
++  overlay.addEventListener('click',function(e){ if(e.target===overlay) closeNotes(); });
++  document.addEventListener('keydown',function(e){ if(e.key==='Escape' && overlay.classList.contains('on')) closeNotes(); });
++
++  nowFields(); guessShift(); render();
++})();
++</script>
++
+ </body>
+ </html>
