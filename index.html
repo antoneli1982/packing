@@ -217,7 +217,8 @@
   .pturno-featured .pturno-btn-salvar{flex:0 0 auto;padding:7px 16px;font-size:10.5px}
   .pturno-featured .pturno-hint{min-height:0;margin-top:-2px}
   .pturno-featured .pturno-lista{flex-direction:row;flex-wrap:wrap;max-height:none;overflow:visible;margin-top:0;gap:6px}
-  .pturno-featured .pturno-post{width:184px;flex:0 0 184px;padding:7px 8px 6px}
+  .pturno-featured .pturno-post{width:184px;flex:0 0 184px;padding:7px 8px 6px;transition:transform .16s ease,box-shadow .16s ease;z-index:1}
+  .pturno-featured .pturno-post:hover{transform:scale(2.5) rotate(0deg);z-index:40;box-shadow:0 20px 54px rgba(0,0,0,.5)}
   [data-theme="light"] .pturno-featured{background:linear-gradient(135deg,rgba(47,90,224,.07),rgba(47,90,224,.01))}
 
   .grid{display:grid;grid-template-columns:382px minmax(0,1fr);gap:22px}
@@ -8237,6 +8238,16 @@ function pclRender(){
 })();
 </script>
 
+<!-- ===== MODAL — ZOOM DO RECADO DO PASSA TURNO ===== -->
+<div id="pturno-zoom-overlay" style="display:none;position:fixed;inset:0;z-index:10060;background:rgba(0,0,0,.78);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:24px">
+  <div id="pturno-zoom-card" style="position:relative;max-width:600px;width:100%;border-radius:12px;padding:34px 30px 28px;box-shadow:0 22px 60px rgba(0,0,0,.45)">
+    <button type="button" id="pturno-zoom-close" title="Fechar" style="position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:none;background:rgba(0,0,0,.15);color:inherit;cursor:pointer;font-size:18px;line-height:1;display:flex;align-items:center;justify-content:center">✕</button>
+    <div id="pturno-zoom-turnos" style="font-family:'Poppins',sans-serif;font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;opacity:.72;margin-bottom:16px"></div>
+    <div id="pturno-zoom-texto" style="font-family:'Poppins',sans-serif;font-size:30px;font-weight:700;line-height:1.42;white-space:pre-wrap;word-break:break-word"></div>
+    <div id="pturno-zoom-meta" style="margin-top:22px;font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;opacity:.62"></div>
+  </div>
+</div>
+
 <!-- ===== MODAL AVISO — LANÇAMENTO DA VIRADA (fora de qualquer form/wrap) ===== -->
 <div id="virada-modal-overlay" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.78);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px">
   <div style="background:var(--panel);border:2px solid var(--orange);border-radius:16px;width:620px;max-width:96vw;max-height:92vh;overflow:auto;box-shadow:0 28px 80px rgba(0,0,0,.6)">
@@ -9546,7 +9557,7 @@ function pturnoRender(){
   el.innerHTML = pturnoRegistros.map(r=>{
     const cor = r.cor || '#fff59d';
     const tam = r.tamanho || 'm';
-    return '<div class="pturno-post" style="background:'+cor+';color:#3a3220">'
+    return '<div class="pturno-post" data-id="'+r.id+'" style="background:'+cor+';color:#3a3220;cursor:pointer" title="Passe o mouse ou clique para ampliar">'
       + '<div class="pturno-post-turnos">'+pturnoEsc(PTURNO_TURNO_LABEL[r.de]||r.de)+' → '+pturnoEsc(PTURNO_TURNO_LABEL[r.para]||r.para)+'</div>'
       + '<div class="pturno-post-texto tam-'+tam+'">'+pturnoEsc(r.texto)+'</div>'
       + '<div class="pturno-post-meta"><span>'+pturnoTempoAtras(r.ts)+'</span>'
@@ -9554,12 +9565,38 @@ function pturnoRender(){
       + '</div>';
   }).join('');
   el.querySelectorAll('.pturno-post-del').forEach(btn=>{
-    btn.addEventListener('click', async ()=>{
+    btn.addEventListener('click', async (e)=>{
+      e.stopPropagation();
       const id = Number(btn.dataset.id);
       await persistPturnoDel(id);
       pturnoRender();
     });
   });
+  el.querySelectorAll('.pturno-post').forEach(card=>{
+    card.addEventListener('click', ()=>{
+      const id = Number(card.dataset.id);
+      const reg = pturnoRegistros.find(r=>r.id===id);
+      if(reg) pturnoAbrirZoom(reg);
+    });
+  });
+}
+
+/* ---- Zoom do recado (clique no post-it para ver ampliado) ---- */
+function pturnoAbrirZoom(reg){
+  const overlay = document.getElementById('pturno-zoom-overlay');
+  const card = document.getElementById('pturno-zoom-card');
+  if(!overlay || !card) return;
+  card.style.background = reg.cor || '#fff59d';
+  card.style.color = '#3a3220';
+  document.getElementById('pturno-zoom-turnos').textContent =
+    (PTURNO_TURNO_LABEL[reg.de]||reg.de)+' → '+(PTURNO_TURNO_LABEL[reg.para]||reg.para);
+  document.getElementById('pturno-zoom-texto').textContent = reg.texto;
+  document.getElementById('pturno-zoom-meta').textContent = pturnoTempoAtras(reg.ts);
+  overlay.style.display = 'flex';
+}
+function pturnoFecharZoom(){
+  const overlay = document.getElementById('pturno-zoom-overlay');
+  if(overlay) overlay.style.display = 'none';
 }
 
 (function(){
@@ -9597,6 +9634,17 @@ function pturnoRender(){
       setTimeout(()=>{ hint.textContent=''; }, 3000);
     });
   }
+
+  const zoomOverlay = document.getElementById('pturno-zoom-overlay');
+  const zoomClose = document.getElementById('pturno-zoom-close');
+  if(zoomClose) zoomClose.addEventListener('click', pturnoFecharZoom);
+  if(zoomOverlay) zoomOverlay.addEventListener('click', (e)=>{ if(e.target===zoomOverlay) pturnoFecharZoom(); });
+  document.addEventListener('keydown', (e)=>{
+    if(e.key==='Escape'){
+      const ov = document.getElementById('pturno-zoom-overlay');
+      if(ov && ov.style.display==='flex') pturnoFecharZoom();
+    }
+  });
 
   pturnoRender();
 })();
