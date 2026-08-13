@@ -130,6 +130,66 @@
   .tab .dot{width:7px;height:7px;border-radius:50%;background:currentColor;opacity:.7}
   .view{display:none}.view.on{display:block}
 
+  /* ===== LAYOUT LATERAL — menus na esquerda + espaço do Passa Turno ===== */
+  .app-body{display:flex;align-items:flex-start;gap:20px;margin-bottom:22px}
+  .app-sidebar{flex:0 0 216px;width:216px;display:flex;flex-direction:column;gap:16px;position:sticky;top:16px;align-self:flex-start}
+  .app-main{flex:1;min-width:0}
+  .app-sidebar .tabs{flex-direction:column;flex-wrap:nowrap;margin-bottom:0;gap:5px}
+  .app-sidebar .tab{width:100%;justify-content:flex-start;padding:11px 14px}
+  @media(max-width:840px){
+    .app-body{flex-direction:column}
+    .app-sidebar{width:100%;flex:1 1 auto;position:static;top:auto}
+    .app-sidebar .tabs{flex-direction:row;flex-wrap:wrap}
+    .app-sidebar .tab{width:auto;justify-content:center}
+  }
+
+  /* ===== PASSA TURNO — post-it de passagem de turno (fica no espaço da lateral) ===== */
+  .pturno-widget{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:10px}
+  .pturno-head{display:flex;align-items:center;gap:7px;font-family:'Poppins',sans-serif;font-weight:800;font-size:12px;letter-spacing:.5px;color:var(--txt);text-transform:uppercase}
+  .pturno-head .pturno-icon{font-size:15px}
+  .pturno-turnos{display:flex;align-items:center;gap:6px}
+  .pturno-turnos select{flex:1;min-width:0;background:var(--panel-2);border:1px solid var(--line);color:var(--txt);
+    border-radius:6px;padding:7px 6px;font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;color-scheme:dark}
+  [data-theme="light"] .pturno-turnos select{color-scheme:light}
+  .pturno-turnos .pturno-arrow{color:var(--txt-faint);font-size:13px;flex:0 0 auto}
+  .pturno-cores{display:flex;gap:6px}
+  .pturno-cor{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0;transition:.13s}
+  .pturno-cor:hover{transform:scale(1.14)}
+  .pturno-cor.on{border-color:var(--txt);box-shadow:0 0 0 2px var(--panel)}
+  .pturno-tamanhos{display:flex;gap:6px}
+  .pturno-tam{cursor:pointer;flex:1;border:1px solid var(--line);background:var(--panel-2);color:var(--txt-dim);
+    border-radius:6px;padding:6px 0;font-family:'Poppins',sans-serif;font-weight:800;transition:.13s;line-height:1}
+  .pturno-tam:hover{border-color:var(--txt-faint);color:var(--txt)}
+  .pturno-tam.on{background:var(--blue);border-color:var(--blue);color:#fff}
+  .pturno-tam[data-tam="p"]{font-size:10px}
+  .pturno-tam[data-tam="m"]{font-size:13.5px}
+  .pturno-tam[data-tam="g"]{font-size:18px}
+  .pturno-widget textarea{width:100%;min-height:60px;resize:vertical;background:var(--panel-2);border:1px solid var(--line);
+    color:var(--txt);border-radius:6px;padding:8px;font-family:'Poppins',sans-serif;font-size:12px;line-height:1.4}
+  .pturno-btn-salvar{cursor:pointer;border:1px solid var(--blue);background:var(--blue);color:#fff;border-radius:6px;
+    padding:9px;font-family:'Poppins',sans-serif;font-weight:700;font-size:11.5px;letter-spacing:.3px;transition:.13s}
+  .pturno-btn-salvar:hover{filter:brightness(1.08)}
+  .pturno-hint{font-size:10px;color:var(--txt-faint);min-height:12px}
+  .pturno-hint.ok{color:var(--green)}
+  .pturno-hint.err{color:var(--red)}
+  .pturno-lista{display:flex;flex-direction:column;gap:10px;max-height:420px;overflow-y:auto;padding-right:2px}
+  .pturno-post{position:relative;border-radius:3px 3px 8px 8px;padding:10px 10px 8px;box-shadow:0 3px 8px rgba(0,0,0,.22);
+    font-family:'Poppins',sans-serif;transform:rotate(-1deg);transition:.15s}
+  .pturno-post:nth-child(even){transform:rotate(1deg)}
+  .pturno-post:hover{transform:rotate(0deg) scale(1.02);box-shadow:0 5px 14px rgba(0,0,0,.3)}
+  .pturno-post-turnos{font-size:9.5px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;opacity:.72;margin-bottom:4px}
+  .pturno-post-texto{font-weight:600;line-height:1.4;word-break:break-word;white-space:pre-wrap}
+  .pturno-post-texto.tam-p{font-size:10.5px}
+  .pturno-post-texto.tam-m{font-size:13px}
+  .pturno-post-texto.tam-g{font-size:17px}
+  .pturno-post-meta{display:flex;align-items:center;justify-content:space-between;margin-top:7px;font-size:9px;opacity:.65;font-weight:600}
+  .pturno-post-del{cursor:pointer;border:none;background:rgba(0,0,0,.14);color:inherit;border-radius:50%;
+    width:26px;height:26px;flex:0 0 26px;display:inline-flex;align-items:center;justify-content:center;
+    font-size:16px;line-height:1;opacity:.75;padding:0;transition:.13s}
+  .pturno-post-del:hover{opacity:1;background:rgba(0,0,0,.26);transform:scale(1.08)}
+  .pturno-empty{font-size:10.5px;color:var(--txt-faint);text-align:center;padding:10px 4px}
+  [data-theme="light"] .pturno-post{box-shadow:0 3px 8px rgba(0,0,0,.14)}
+
   .grid{display:grid;grid-template-columns:382px minmax(0,1fr);gap:22px}
   .grid>*{min-width:0}
   @media(max-width:840px){.grid{grid-template-columns:minmax(0,1fr)}}
@@ -1355,6 +1415,8 @@
     </div>
   </header>
 
+  <div class="app-body">
+  <aside class="app-sidebar">
   <div class="tabs">
     <div class="tab on" data-view="apont"><span class="dot"></span>Apontamento</div>
     <div class="tab" data-view="historico"><span class="dot"></span>Apontamentos Registrados</div>
@@ -1365,6 +1427,42 @@
     <div class="tab" data-view="sim"><span class="dot"></span>PCEmb</div>
   </div>
 
+  <!-- ===== PASSA TURNO — recado entre turnos, em formato de post-it ===== -->
+  <div class="pturno-widget" id="pturno-widget">
+    <div class="pturno-head"><span class="pturno-icon">📌</span>Passa Turno</div>
+    <div class="pturno-turnos">
+      <select id="pturno-de" title="Turno que está deixando o recado">
+        <option value="1">1º Turno</option>
+        <option value="2">2º Turno</option>
+        <option value="3">3º Turno</option>
+      </select>
+      <span class="pturno-arrow">→</span>
+      <select id="pturno-para" title="Turno que vai receber o recado">
+        <option value="1">1º Turno</option>
+        <option value="2" selected>2º Turno</option>
+        <option value="3">3º Turno</option>
+      </select>
+    </div>
+    <div class="pturno-cores" id="pturno-cores">
+      <button type="button" class="pturno-cor on" data-cor="#fff59d" title="Amarelo" style="background:#fff59d"></button>
+      <button type="button" class="pturno-cor" data-cor="#f8bbd0" title="Rosa" style="background:#f8bbd0"></button>
+      <button type="button" class="pturno-cor" data-cor="#b3e5fc" title="Azul" style="background:#b3e5fc"></button>
+      <button type="button" class="pturno-cor" data-cor="#c8e6c9" title="Verde" style="background:#c8e6c9"></button>
+      <button type="button" class="pturno-cor" data-cor="#ffe0b2" title="Laranja" style="background:#ffe0b2"></button>
+    </div>
+    <div class="pturno-tamanhos" id="pturno-tamanhos">
+      <button type="button" class="pturno-tam" data-tam="p" title="Texto pequeno">A</button>
+      <button type="button" class="pturno-tam on" data-tam="m" title="Texto médio">A</button>
+      <button type="button" class="pturno-tam" data-tam="g" title="Texto grande">A</button>
+    </div>
+    <textarea id="pturno-texto" maxlength="280" placeholder="Recado para o próximo turno..."></textarea>
+    <button type="button" class="pturno-btn-salvar" id="pturno-salvar">Deixar recado</button>
+    <div class="pturno-hint" id="pturno-hint"></div>
+    <div class="pturno-lista" id="pturno-lista"></div>
+  </div>
+  </aside>
+
+  <main class="app-main">
   <!-- ===== TICKER CNN ===== -->
   <div class="ticker-bar" id="ticker-bar">
     <div class="ticker-label" id="ticker-label-el">📢 AVISO</div>
@@ -2722,6 +2820,8 @@
       </details>
     </div>
   </div>
+  </main>
+  </div><!-- /app-body -->
 
   <footer>
     <span id="db-status" class="dbstat">● Iniciando banco de dados…</span>
@@ -7706,7 +7806,7 @@ async function loadVazia(){
 }
 
 /* Inicialização sequencial — loadVazia e loadRack aguardam load() para garantir que idb está pronto */
-load().then(()=>{ loadVazia(); loadRack(); loadPcl(); });
+load().then(()=>{ loadVazia(); loadRack(); loadPcl(); loadPturno(); });
 (function(){
   function toDateStr(d){
     return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
@@ -9308,6 +9408,164 @@ async function loadRack(){
   window.renderRack = function(){ rackSetDataHoje(); rackRender(); };
 
   rackRender();
+})();
+</script>
+
+<script>
+/* ===================================================================
+   PASSA TURNO — recado (post-it) entre turnos
+   Cada registro: { id, de, para, cor, texto, ts }
+   Usa o mesmo backend (Firebase/IDB) do sistema principal.
+   =================================================================== */
+const KEY_PTURNO = 'sas_pturno_v1';
+const COLECAO_PTURNO = 'passaturno';
+const PTURNO_TURNO_LABEL = {'1':'1º Turno','2':'2º Turno','3':'3º Turno'};
+
+/* ---- Array global ---- */
+var pturnoRegistros = [];
+var pturnoCorSel = '#fff59d';
+var pturnoTamSel = 'm';
+
+/* ---- helpers IDB (mesmo padrão de rack/vazia/apontamentos) ---- */
+async function dbLoadPturno(){
+  try{
+    if(idb){ const v=await idbGet(KEY_PTURNO); return v?JSON.parse(v):[]; }
+    if(backend==="storage"){ const r=await window.storage.get(KEY_PTURNO); return r&&r.value?JSON.parse(r.value):[]; }
+  }catch(e){}
+  return [];
+}
+async function dbSavePturno(){
+  try{
+    if(idb){ await idbSet(KEY_PTURNO, JSON.stringify(pturnoRegistros)); return true; }
+    if(backend==="storage"){ await window.storage.set(KEY_PTURNO, JSON.stringify(pturnoRegistros)); return true; }
+  }catch(e){}
+  return false;
+}
+
+/* ---- Persistência: grava IDB + Firebase (igual a persistRack) ---- */
+async function persistPturno(reg){
+  pturnoRegistros.unshift(reg);
+  await dbSavePturno();
+  if(backend==="firebase" && window.fb){
+    try{ await window.fb.collection(COLECAO_PTURNO).doc(String(reg.id)).set(reg); }
+    catch(e){ console.warn('Firebase passaturno write falhou (salvo localmente):', e.message); }
+  }
+}
+async function persistPturnoDel(id){
+  pturnoRegistros = pturnoRegistros.filter(r=>r.id!==id);
+  await dbSavePturno();
+  if(backend==="firebase" && window.fb){
+    try{ await window.fb.collection(COLECAO_PTURNO).doc(String(id)).delete(); }catch(e){}
+  }
+}
+
+/* ---- Carrega do Firebase e ativa listener em tempo real ---- */
+async function pturnoLoadFromFirebase(){
+  if(backend!=="firebase" || !window.fb) return;
+  try{
+    const snap = await window.fb.collection(COLECAO_PTURNO).orderBy('id','desc').get();
+    if(!snap.empty){
+      const fbDados = snap.docs.map(d=>d.data()).sort((a,b)=>b.id-a.id);
+      if(fbDados.length >= pturnoRegistros.length){
+        pturnoRegistros = fbDados;
+        await dbSavePturno();
+        pturnoRender();
+      }
+    }
+    window.fb.collection(COLECAO_PTURNO).onSnapshot(snap=>{
+      pturnoRegistros = snap.docs.map(d=>d.data()).sort((a,b)=>b.id-a.id);
+      dbSavePturno().catch(()=>{});
+      pturnoRender();
+    }, err=>{ console.warn('Firebase passaturno onSnapshot:', err.message); });
+  }catch(e){ console.warn('pturnoLoadFromFirebase:', e.message); }
+}
+
+/* ---- Carrega IDB imediatamente + Firebase em seguida (igual a loadRack) ---- */
+async function loadPturno(){
+  pturnoRegistros = await dbLoadPturno();
+  pturnoRender();
+  if(backend==="firebase" && window.fb){
+    await pturnoLoadFromFirebase();
+  }
+}
+
+function pturnoEsc(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function pturnoTempoAtras(iso){
+  try{
+    const diffMs = Date.now() - new Date(iso).getTime();
+    const min = Math.floor(diffMs/60000);
+    if(min<1) return 'agora';
+    if(min<60) return min+'min atrás';
+    const h = Math.floor(min/60);
+    if(h<24) return h+'h atrás';
+    return Math.floor(h/24)+'d atrás';
+  }catch(e){ return ''; }
+}
+function pturnoRender(){
+  const el = document.getElementById('pturno-lista');
+  if(!el) return;
+  if(!pturnoRegistros.length){
+    el.innerHTML = '<div class="pturno-empty">Nenhum recado deixado ainda.</div>';
+    return;
+  }
+  el.innerHTML = pturnoRegistros.map(r=>{
+    const cor = r.cor || '#fff59d';
+    const tam = r.tamanho || 'm';
+    return '<div class="pturno-post" style="background:'+cor+';color:#3a3220">'
+      + '<div class="pturno-post-turnos">'+pturnoEsc(PTURNO_TURNO_LABEL[r.de]||r.de)+' → '+pturnoEsc(PTURNO_TURNO_LABEL[r.para]||r.para)+'</div>'
+      + '<div class="pturno-post-texto tam-'+tam+'">'+pturnoEsc(r.texto)+'</div>'
+      + '<div class="pturno-post-meta"><span>'+pturnoTempoAtras(r.ts)+'</span>'
+      + '<button type="button" class="pturno-post-del" data-id="'+r.id+'" title="Remover recado">✕</button></div>'
+      + '</div>';
+  }).join('');
+  el.querySelectorAll('.pturno-post-del').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const id = Number(btn.dataset.id);
+      await persistPturnoDel(id);
+      pturnoRender();
+    });
+  });
+}
+
+(function(){
+  document.querySelectorAll('.pturno-cor').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.pturno-cor').forEach(b=>b.classList.remove('on'));
+      btn.classList.add('on');
+      pturnoCorSel = btn.dataset.cor;
+    });
+  });
+
+  document.querySelectorAll('.pturno-tam').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.pturno-tam').forEach(b=>b.classList.remove('on'));
+      btn.classList.add('on');
+      pturnoTamSel = btn.dataset.tam;
+    });
+  });
+
+  const btnSalvar = document.getElementById('pturno-salvar');
+  if(btnSalvar){
+    btnSalvar.addEventListener('click', async ()=>{
+      const hint = document.getElementById('pturno-hint');
+      const texto = (document.getElementById('pturno-texto').value||'').trim();
+      const de = document.getElementById('pturno-de').value;
+      const para = document.getElementById('pturno-para').value;
+      if(!texto){ hint.textContent='Escreva o recado antes de salvar.'; hint.className='pturno-hint err'; return; }
+      if(de===para){ hint.textContent='Selecione turnos diferentes.'; hint.className='pturno-hint err'; return; }
+      const reg = { id: Date.now(), de, para, cor: pturnoCorSel, tamanho: pturnoTamSel, texto, ts: new Date().toISOString() };
+      await persistPturno(reg);
+      document.getElementById('pturno-texto').value = '';
+      pturnoRender();
+      hint.textContent = '✔ Recado deixado para o '+(PTURNO_TURNO_LABEL[para]||para)+'!';
+      hint.className = 'pturno-hint ok';
+      setTimeout(()=>{ hint.textContent=''; }, 3000);
+    });
+  }
+
+  pturnoRender();
 })();
 </script>
 
