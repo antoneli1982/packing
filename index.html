@@ -218,7 +218,8 @@
   .pturno-featured .pturno-hint{min-height:0;margin-top:-2px}
   .pturno-featured .pturno-lista{flex-direction:row;flex-wrap:wrap;max-height:none;overflow:visible;margin-top:0;gap:6px}
   .pturno-featured .pturno-post{width:184px;flex:0 0 184px;padding:7px 8px 6px;transition:transform .16s ease,box-shadow .16s ease;z-index:1}
-  .pturno-featured .pturno-post:hover{transform:scale(2.5) rotate(0deg);z-index:40;box-shadow:0 20px 54px rgba(0,0,0,.5)}
+  .pturno-featured .pturno-post:hover,
+  .pturno-featured .pturno-post.pturno-auto-zoom{transform:scale(2.5) rotate(0deg);z-index:40;box-shadow:0 20px 54px rgba(0,0,0,.5)}
   [data-theme="light"] .pturno-featured{background:linear-gradient(135deg,rgba(47,90,224,.07),rgba(47,90,224,.01))}
 
   .grid{display:grid;grid-template-columns:382px minmax(0,1fr);gap:22px}
@@ -9599,6 +9600,20 @@ function pturnoFecharZoom(){
   if(overlay) overlay.style.display = 'none';
 }
 
+/* ---- Destaque automático: a cada 1min os post-its ficam grandes sozinhos
+   (até serem excluídos); ao mover o mouse pra longe, encolhem de novo ---- */
+var pturnoAutoInterval = null;
+function pturnoIniciarAutoDestaque(){
+  if(pturnoAutoInterval) clearInterval(pturnoAutoInterval);
+  pturnoAutoInterval = setInterval(()=>{
+    document.querySelectorAll('.pturno-post').forEach(c=>c.classList.add('pturno-auto-zoom'));
+  }, 60000);
+  document.addEventListener('mousemove', ()=>{
+    const grandes = document.querySelectorAll('.pturno-post.pturno-auto-zoom');
+    if(grandes.length) grandes.forEach(c=>c.classList.remove('pturno-auto-zoom'));
+  });
+}
+
 (function(){
   document.querySelectorAll('.pturno-cor').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -9647,6 +9662,7 @@ function pturnoFecharZoom(){
   });
 
   pturnoRender();
+  pturnoIniciarAutoDestaque();
 })();
 </script>
 
