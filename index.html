@@ -190,6 +190,21 @@
   .pturno-empty{font-size:10.5px;color:var(--txt-faint);text-align:center;padding:10px 4px}
   [data-theme="light"] .pturno-post{box-shadow:0 3px 8px rgba(0,0,0,.14)}
 
+  /* ===== PASSA TURNO EM DESTAQUE — banner logo abaixo do aviso, no topo do conteúdo ===== */
+  .pturno-featured{margin-bottom:20px;border:1px solid rgba(56,102,247,.45);
+    background:linear-gradient(135deg,rgba(56,102,247,.10),rgba(56,102,247,.015));
+    box-shadow:0 3px 16px rgba(56,102,247,.16)}
+  .pturno-featured .pturno-head{font-size:13.5px;letter-spacing:.6px}
+  .pturno-featured .pturno-head .pturno-icon{font-size:17px}
+  .pturno-form-row{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+  .pturno-form-controls{display:flex;flex-direction:column;gap:10px;flex:1 1 240px;min-width:220px}
+  .pturno-form-main{display:flex;flex-direction:column;gap:8px;flex:2 1 320px;min-width:260px}
+  .pturno-featured textarea{min-height:44px}
+  .pturno-featured .pturno-btn-salvar{align-self:flex-start;padding:9px 22px}
+  .pturno-featured .pturno-lista{flex-direction:row;flex-wrap:wrap;max-height:none;overflow:visible;margin-top:2px}
+  .pturno-featured .pturno-post{width:250px;flex:0 0 250px}
+  [data-theme="light"] .pturno-featured{background:linear-gradient(135deg,rgba(47,90,224,.07),rgba(47,90,224,.01))}
+
   .grid{display:grid;grid-template-columns:382px minmax(0,1fr);gap:22px}
   .grid>*{min-width:0}
   @media(max-width:840px){.grid{grid-template-columns:minmax(0,1fr)}}
@@ -1426,40 +1441,6 @@
     <div class="tab" data-view="cadEmb"><span class="dot"></span>Cadastro de Embalagens</div>
     <div class="tab" data-view="sim"><span class="dot"></span>PCEmb</div>
   </div>
-
-  <!-- ===== PASSA TURNO — recado entre turnos, em formato de post-it ===== -->
-  <div class="pturno-widget" id="pturno-widget">
-    <div class="pturno-head"><span class="pturno-icon">📌</span>Passa Turno</div>
-    <div class="pturno-turnos">
-      <select id="pturno-de" title="Turno que está deixando o recado">
-        <option value="1">1º Turno</option>
-        <option value="2">2º Turno</option>
-        <option value="3">3º Turno</option>
-      </select>
-      <span class="pturno-arrow">→</span>
-      <select id="pturno-para" title="Turno que vai receber o recado">
-        <option value="1">1º Turno</option>
-        <option value="2" selected>2º Turno</option>
-        <option value="3">3º Turno</option>
-      </select>
-    </div>
-    <div class="pturno-cores" id="pturno-cores">
-      <button type="button" class="pturno-cor on" data-cor="#fff59d" title="Amarelo" style="background:#fff59d"></button>
-      <button type="button" class="pturno-cor" data-cor="#f8bbd0" title="Rosa" style="background:#f8bbd0"></button>
-      <button type="button" class="pturno-cor" data-cor="#b3e5fc" title="Azul" style="background:#b3e5fc"></button>
-      <button type="button" class="pturno-cor" data-cor="#c8e6c9" title="Verde" style="background:#c8e6c9"></button>
-      <button type="button" class="pturno-cor" data-cor="#ffe0b2" title="Laranja" style="background:#ffe0b2"></button>
-    </div>
-    <div class="pturno-tamanhos" id="pturno-tamanhos">
-      <button type="button" class="pturno-tam" data-tam="p" title="Texto pequeno">A</button>
-      <button type="button" class="pturno-tam on" data-tam="m" title="Texto médio">A</button>
-      <button type="button" class="pturno-tam" data-tam="g" title="Texto grande">A</button>
-    </div>
-    <textarea id="pturno-texto" maxlength="280" placeholder="Recado para o próximo turno..."></textarea>
-    <button type="button" class="pturno-btn-salvar" id="pturno-salvar">Deixar recado</button>
-    <div class="pturno-hint" id="pturno-hint"></div>
-    <div class="pturno-lista" id="pturno-lista"></div>
-  </div>
   </aside>
 
   <main class="app-main">
@@ -1473,6 +1454,47 @@
     </div>
     <button type="button" class="ticker-edit-btn" id="ticker-edit-btn" title="Editar mensagem">✏️</button>
   </div>
+
+  <!-- ===== PASSA TURNO — recado entre turnos, em destaque logo abaixo do aviso ===== -->
+  <div class="pturno-widget pturno-featured" id="pturno-widget">
+    <div class="pturno-head"><span class="pturno-icon">📌</span>Passa Turno</div>
+    <div class="pturno-form-row">
+      <div class="pturno-form-controls">
+        <div class="pturno-turnos">
+          <select id="pturno-de" title="Turno que está deixando o recado">
+            <option value="1">1º Turno</option>
+            <option value="2">2º Turno</option>
+            <option value="3">3º Turno</option>
+          </select>
+          <span class="pturno-arrow">→</span>
+          <select id="pturno-para" title="Turno que vai receber o recado">
+            <option value="1">1º Turno</option>
+            <option value="2" selected>2º Turno</option>
+            <option value="3">3º Turno</option>
+          </select>
+        </div>
+        <div class="pturno-cores" id="pturno-cores">
+          <button type="button" class="pturno-cor on" data-cor="#fff59d" title="Amarelo" style="background:#fff59d"></button>
+          <button type="button" class="pturno-cor" data-cor="#f8bbd0" title="Rosa" style="background:#f8bbd0"></button>
+          <button type="button" class="pturno-cor" data-cor="#b3e5fc" title="Azul" style="background:#b3e5fc"></button>
+          <button type="button" class="pturno-cor" data-cor="#c8e6c9" title="Verde" style="background:#c8e6c9"></button>
+          <button type="button" class="pturno-cor" data-cor="#ffe0b2" title="Laranja" style="background:#ffe0b2"></button>
+        </div>
+        <div class="pturno-tamanhos" id="pturno-tamanhos">
+          <button type="button" class="pturno-tam" data-tam="p" title="Texto pequeno">A</button>
+          <button type="button" class="pturno-tam on" data-tam="m" title="Texto médio">A</button>
+          <button type="button" class="pturno-tam" data-tam="g" title="Texto grande">A</button>
+        </div>
+      </div>
+      <div class="pturno-form-main">
+        <textarea id="pturno-texto" maxlength="280" placeholder="Recado para o próximo turno..."></textarea>
+        <button type="button" class="pturno-btn-salvar" id="pturno-salvar">Deixar recado</button>
+        <div class="pturno-hint" id="pturno-hint"></div>
+      </div>
+    </div>
+    <div class="pturno-lista" id="pturno-lista"></div>
+  </div>
+
   <div class="view on" id="view-apont">
     <div class="apont-form-page">
 
