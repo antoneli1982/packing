@@ -9581,9 +9581,8 @@ function pturnoRender(){
   });
 }
 
-/* ---- Zoom do recado (clique, hover automático a cada 30s, ou toque para ver ampliado) ---- */
-var pturnoZoomAuto = false;
-function pturnoAbrirZoom(reg, auto){
+/* ---- Zoom do recado (clique, automático a cada 30s, ou toque para ver ampliado) ---- */
+function pturnoAbrirZoom(reg){
   const overlay = document.getElementById('pturno-zoom-overlay');
   const card = document.getElementById('pturno-zoom-card');
   if(!overlay || !card) return;
@@ -9594,17 +9593,15 @@ function pturnoAbrirZoom(reg, auto){
   document.getElementById('pturno-zoom-texto').textContent = reg.texto;
   document.getElementById('pturno-zoom-meta').textContent = pturnoTempoAtras(reg.ts);
   overlay.style.display = 'flex';
-  pturnoZoomAuto = !!auto;
 }
 function pturnoFecharZoom(){
   const overlay = document.getElementById('pturno-zoom-overlay');
   if(overlay) overlay.style.display = 'none';
-  pturnoZoomAuto = false;
 }
 
 /* ---- Destaque automático: a cada 30s o recado ocupa a tela toda sozinho
    (revezando entre os recados existentes, até serem excluídos);
-   ao mover o mouse, fecha e encolhe de novo ---- */
+   ao mover o mouse (ou tocar na tela), fecha e encolhe de novo ---- */
 var pturnoAutoInterval = null;
 var pturnoAutoIndex = 0;
 function pturnoIniciarAutoDestaque(){
@@ -9612,13 +9609,15 @@ function pturnoIniciarAutoDestaque(){
   pturnoAutoInterval = setInterval(()=>{
     if(!pturnoRegistros.length) return;
     if(pturnoAutoIndex >= pturnoRegistros.length) pturnoAutoIndex = 0;
-    pturnoAbrirZoom(pturnoRegistros[pturnoAutoIndex], true);
+    pturnoAbrirZoom(pturnoRegistros[pturnoAutoIndex]);
     pturnoAutoIndex++;
   }, 30000);
-  document.addEventListener('mousemove', ()=>{
+  const fecharAoMexer = ()=>{
     const overlay = document.getElementById('pturno-zoom-overlay');
-    if(overlay && overlay.style.display==='flex' && pturnoZoomAuto) pturnoFecharZoom();
-  });
+    if(overlay && overlay.style.display==='flex') pturnoFecharZoom();
+  };
+  document.addEventListener('mousemove', fecharAoMexer);
+  document.addEventListener('touchstart', fecharAoMexer, {passive:true});
 }
 
 (function(){
