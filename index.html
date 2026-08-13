@@ -9599,9 +9599,9 @@ function pturnoFecharZoom(){
   if(overlay) overlay.style.display = 'none';
 }
 
-/* ---- Destaque automático: a cada 30s o recado ocupa a tela toda sozinho
+/* ---- Destaque automático: a cada 20s o recado ocupa a tela toda sozinho
    (revezando entre os recados existentes, até serem excluídos);
-   ao mover o mouse (ou tocar na tela), fecha e encolhe de novo ---- */
+   fica na tela até o usuário clicar em Fechar ---- */
 var pturnoAutoInterval = null;
 var pturnoAutoIndex = 0;
 function pturnoIniciarAutoDestaque(){
@@ -9611,13 +9611,7 @@ function pturnoIniciarAutoDestaque(){
     if(pturnoAutoIndex >= pturnoRegistros.length) pturnoAutoIndex = 0;
     pturnoAbrirZoom(pturnoRegistros[pturnoAutoIndex]);
     pturnoAutoIndex++;
-  }, 30000);
-  const fecharAoMexer = ()=>{
-    const overlay = document.getElementById('pturno-zoom-overlay');
-    if(overlay && overlay.style.display==='flex') pturnoFecharZoom();
-  };
-  document.addEventListener('mousemove', fecharAoMexer);
-  document.addEventListener('touchstart', fecharAoMexer, {passive:true});
+  }, 20000);
 }
 
 (function(){
