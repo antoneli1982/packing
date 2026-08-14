@@ -9557,7 +9557,7 @@ function pturnoRender(){
   el.innerHTML = pturnoRegistros.map(r=>{
     const cor = r.cor || '#fff59d';
     const tam = r.tamanho || 'm';
-    return '<div class="pturno-post" data-id="'+r.id+'" style="background:'+cor+';color:#3a3220;cursor:pointer" title="Passe o mouse ou clique para ampliar">'
+    return '<div class="pturno-post" data-id="'+r.id+'" style="background:'+cor+';color:#3a3220" title="Passe o mouse para ampliar">'
       + '<div class="pturno-post-turnos">'+pturnoEsc(PTURNO_TURNO_LABEL[r.de]||r.de)+' → '+pturnoEsc(PTURNO_TURNO_LABEL[r.para]||r.para)+'</div>'
       + '<div class="pturno-post-texto tam-'+tam+'">'+pturnoEsc(r.texto)+'</div>'
       + '<div class="pturno-post-meta"><span>'+pturnoTempoAtras(r.ts)+'</span>'
@@ -9572,16 +9572,9 @@ function pturnoRender(){
       pturnoRender();
     });
   });
-  el.querySelectorAll('.pturno-post').forEach(card=>{
-    card.addEventListener('click', ()=>{
-      const id = Number(card.dataset.id);
-      const reg = pturnoRegistros.find(r=>r.id===id);
-      if(reg) pturnoAbrirZoom(reg);
-    });
-  });
 }
 
-/* ---- Zoom do recado (clique, automático a cada 30s, ou toque para ver ampliado) ---- */
+/* ---- Zoom do recado (mantido apenas como estrutura legada, sem acionamento automático) ---- */
 function pturnoAbrirZoom(reg){
   const overlay = document.getElementById('pturno-zoom-overlay');
   const card = document.getElementById('pturno-zoom-card');
@@ -9597,21 +9590,6 @@ function pturnoAbrirZoom(reg){
 function pturnoFecharZoom(){
   const overlay = document.getElementById('pturno-zoom-overlay');
   if(overlay) overlay.style.display = 'none';
-}
-
-/* ---- Destaque automático: a cada 20s o recado ocupa a tela toda sozinho
-   (revezando entre os recados existentes, até serem excluídos);
-   fica na tela até o usuário clicar em Fechar ---- */
-var pturnoAutoInterval = null;
-var pturnoAutoIndex = 0;
-function pturnoIniciarAutoDestaque(){
-  if(pturnoAutoInterval) clearInterval(pturnoAutoInterval);
-  pturnoAutoInterval = setInterval(()=>{
-    if(!pturnoRegistros.length) return;
-    if(pturnoAutoIndex >= pturnoRegistros.length) pturnoAutoIndex = 0;
-    pturnoAbrirZoom(pturnoRegistros[pturnoAutoIndex]);
-    pturnoAutoIndex++;
-  }, 20000);
 }
 
 (function(){
@@ -9662,7 +9640,6 @@ function pturnoIniciarAutoDestaque(){
   });
 
   pturnoRender();
-  pturnoIniciarAutoDestaque();
 })();
 </script>
 
