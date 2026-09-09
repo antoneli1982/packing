@@ -2178,19 +2178,20 @@
           <div class="range-field">
             <span class="range-lbl">De</span>
             <input type="date" id="d-fdata-de" style="color-scheme:dark">
-            <input type="time" id="d-fhora-de" style="color-scheme:dark;width:88px">
+            <input type="time" id="d-fhora-de" style="color-scheme:dark;width:88px" title="Opcional — em branco, começa às 06:00 da data inicial (início do dia operacional)">
           </div>
           <span class="range-sep">→</span>
           <div class="range-field">
             <span class="range-lbl">Até</span>
             <input type="date" id="d-fdata-ate" style="color-scheme:dark">
-            <input type="time" id="d-fhora-ate" style="color-scheme:dark;width:88px">
+            <input type="time" id="d-fhora-ate" style="color-scheme:dark;width:88px" title="Opcional — em branco, encerra às 06:00 do dia seguinte à data final (fim do 3º turno)">
           </div>
         </div>
         <div class="spacer"></div>
         <button class="btn-ghost" id="d-fglobal" title="Visão global — todos os apontamentos">↺ Global</button>
       </div>
       <div class="dash-filter-info" id="d-scope">Visão global · todos os apontamentos</div>
+      <div class="dash-filter-info" style="margin-top:6px;font-size:11px;opacity:.8">🕕 Sem hora preenchida, o período vai das <b>06:00 da data inicial</b> até as <b>06:00 do dia seguinte à data final</b> (dia operacional 06:00 → 06:00, fechando o 3º turno). O painel <b>Embalagens Lavadas Diariamente</b> acompanha essas datas.</div>
     </div>
     <div class="stats">
       <div class="stat big-kpi" data-c="lav"><div class="v" id="d-emb">0</div><div class="k">Embalagens Lavadas</div></div>
@@ -3837,6 +3838,92 @@ function proximoDia(s){
   return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 }
 function brData(s){ if(!s) return ""; const[y,m,d]=s.split("-"); return d+"/"+m+"/"+y; }
+function diaAnterior(s){
+  const d=new Date(s+"T12:00:00"); d.setDate(d.getDate()-1);
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+
+/* ===================================================================
+   JANELA DO PERÍODO — DIA OPERACIONAL 06:00 → 06:00
+   -------------------------------------------------------------------
+   O dia de produção começa às 06:00 (início do 1º turno) e termina às
+   06:00 do dia seguinte (fim do 3º turno). Por isso, quando o usuário
+   escolhe SÓ as datas (sem preencher as horas), o filtro considera:
+
+       06:00 da DATA INICIAL  →  06:00 do dia SEGUINTE à DATA FINAL
+
+   Assim a madrugada do 3º turno (00:00–06:00), que é lançada com a data
+   do dia seguinte, entra no dia correto. Se o usuário digitar a hora,
+   a hora digitada é respeitada (fim inclusivo).
+   =================================================================== */
+const DIA_OP_INI="06:00";                 /* início do dia operacional */
+const DIA_OP_INI_MIN=6*60;
+
+/* data+hora → minutos absolutos (comparável entre dias diferentes) */
+function tsDataHora(data,hora){
+  if(!data)return NaN;
+  const p=String(data).split("-").map(Number);
+  const h=String(hora||"00:00").split(":").map(Number);
+  return Date.UTC(p[0],(p[1]||1)-1,p[2]||1)/60000+((h[0]||0)*60)+(h[1]||0);
+}
+
+/* Monta a janela a partir dos 4 campos do filtro (data/hora De e Até) */
+function janelaPeriodo(dDe,hDe,dAte,hAte){
+  const j={ativa:false,ini:null,fim:null,fimIncl:false,
+           dDe:dDe||"",dAte:dAte||"",dFimReal:"",hDe:"",hAte:"",auto:!hDe&&!hAte};
+  if(dDe){
+    j.hDe=hDe||DIA_OP_INI;
+    j.ini=tsDataHora(dDe,j.hDe);
+    j.ativa=true;
+  }
+  if(dAte){
+    if(hAte){                                   /* hora digitada → fim inclusivo */
+      j.hAte=hAte; j.dFimReal=dAte;
+      j.fim=tsDataHora(dAte,hAte); j.fimIncl=true;
+    }else{                                      /* sem hora → 06:00 do dia seguinte (exclusivo) */
+      j.hAte=DIA_OP_INI; j.dFimReal=proximoDia(dAte);
+      j.fim=tsDataHora(j.dFimReal,DIA_OP_INI); j.fimIncl=false;
+    }
+    j.ativa=true;
+  }
+  return j;
+}
+
+/* Instante de início do registro. Sem hora inicial (ex.: divisória
+   danificada) usa 12:00, que cai sempre dentro do próprio dia operacional. */
+function tsRegistro(r){ return tsDataHora(r&&r.data,(r&&r.hi)?r.hi:"12:00"); }
+
+/* O registro pertence à janela? (classificado pelo INÍCIO do apontamento) */
+function noPeriodo(r,j){
+  if(!j||!j.ativa)return true;
+  const t=tsRegistro(r);
+  if(!isFinite(t))return true;
+  if(j.ini!=null&&t<j.ini)return false;
+  if(j.fim!=null){ if(j.fimIncl?(t>j.fim):(t>=j.fim))return false; }
+  return true;
+}
+
+/* Texto do período efetivamente considerado — mostrado no resumo do filtro */
+function janelaTexto(j){
+  if(!j||!j.ativa)return "";
+  const a=j.dDe?(brData(j.dDe)+" "+j.hDe):"início";
+  const b=j.dAte?(brData(j.dFimReal)+" "+j.hAte):"agora";
+  return a+" → "+b;
+}
+
+/* Lista de dias operacionais (YYYY-MM-DD) entre duas datas, com rótulo curto */
+function listaDiasPeriodo(ini,fim){
+  const out=[];
+  if(!ini||!fim)return out;
+  const mesmoMes=(ini.slice(0,7)===fim.slice(0,7));
+  let cur=ini,guard=0;
+  while(cur<=fim&&guard++<800){
+    const p=cur.split("-");
+    out.push({ds:cur,lbl:mesmoMes?String(Number(p[2])):(Number(p[2])+"/"+Number(p[1]))});
+    cur=proximoDia(cur);
+  }
+  return out;
+}
 function registroEmISO(r){
   if(r&&r.registradoEm){
     const gravado=new Date(r.registradoEm);
@@ -4314,14 +4401,13 @@ function gerarXLS(fdDe,fhDe,fdAte,fhAte){
   if(typeof XLSX==="undefined"){exportCSV();return;}
   const fp=document.getElementById("f-tipo").value;
   const ft=document.getElementById("f-turno").value;
-  const dtDe =fdDe  ? fdDe +"T"+(fhDe||"00:00")  : null;
-  const dtAte=fdAte ? fdAte+"T"+(fhAte||"23:59") : null;
+  /* Período: sem hora digitada, 06:00 da data inicial → 06:00 do dia seguinte à data final */
+  const janX=janelaPeriodo(fdDe,fhDe,fdAte,fhAte);
   const filtrado=[...registros].filter(r=>
-    (!fp||r.tipo===fp)&&(!ft||r.turno===ft)&&
-    (!dtDe||recDT(r)>=dtDe)&&(!dtAte||recDT(r)<=dtAte)
+    (!fp||r.tipo===fp)&&(!ft||r.turno===ft)&&noPeriodo(r,janX)
   ).reverse();
   if(!filtrado.length){alert("Nenhum apontamento no período selecionado.");return;}
-  const periodoLabel=(fdDe||fdAte)?` (${fdDe?fdDe.split("-").reverse().join("/"):"início"} a ${fdAte?fdAte.split("-").reverse().join("/"):"hoje"})`:"";
+  const periodoLabel=janX.ativa?(" ("+janelaTexto(janX)+")"):"";
   const dados=[["Data","Turno","Tipo","Embalagem / Motivo","Hora Inicial","Hora Final","Duração","Embalagens Lavadas","Divisórias Danif./Segr.","Ciclo Extra","Ciclos Extras (calc)","Virada (retroativo)","Registrado em"]];
   filtrado.forEach(r=>{
     const[y,m,d]=r.data.split("-");
@@ -6100,16 +6186,14 @@ document.getElementById("modal-metas").addEventListener("click",e=>{
 function exportCSV(){
   if(!registros.length)return alert("Não há apontamentos para exportar.");
   const fdDe=document.getElementById("f-data-de").value;
-  const fhDe=document.getElementById("f-hora-de").value||"00:00";
   const fdAte=document.getElementById("f-data-ate").value;
-  const fhAte=document.getElementById("f-hora-ate").value||"23:59";
-  const dtDe =fdDe  ? fdDe +"T"+fhDe  : null;
-  const dtAte=fdAte ? fdAte+"T"+fhAte : null;
+  /* Período: sem hora digitada, 06:00 da data inicial → 06:00 do dia seguinte à data final */
+  const janX=janelaPeriodo(fdDe,document.getElementById("f-hora-de").value,
+                           fdAte,document.getElementById("f-hora-ate").value);
   const fp=document.getElementById("f-tipo").value;
   const ft=document.getElementById("f-turno").value;
   const filtrado=[...registros].filter(r=>
-    (!fp||r.tipo===fp)&&(!ft||r.turno===ft)&&
-    (!dtDe||recDT(r)>=dtDe)&&(!dtAte||recDT(r)<=dtAte)
+    (!fp||r.tipo===fp)&&(!ft||r.turno===ft)&&noPeriodo(r,janX)
   ).reverse();
   if(!filtrado.length)return alert("Nenhum apontamento no período selecionado.");
   const head=["Data","Turno","Tipo","Embalagem/Motivo","Hora Inicial","Hora Final","Duracao","Embalagens Lavadas","Divisorias Danif./Segr.","Ciclo Extra","Ciclos Extras (calc)","Virada (retroativo)","Registrado em"];
@@ -6150,18 +6234,16 @@ function render(){
   const fp=document.getElementById("f-tipo").value;
   const ft=document.getElementById("f-turno").value;
   const feSet=new Set((typeof fEmbMS!=="undefined"&&fEmbMS)?fEmbMS.getValues():[]);
-  const fdDe=document.getElementById("f-data-de").value;
-  const fhDe=document.getElementById("f-hora-de").value||"00:00";
-  const fdAte=document.getElementById("f-data-ate").value;
-  const fhAte=document.getElementById("f-hora-ate").value||"23:59";
-  const dtDe =fdDe  ? fdDe +"T"+fhDe  : null;
-  const dtAte=fdAte ? fdAte+"T"+fhAte : null;
+  /* Período: sem hora digitada, 06:00 da data inicial → 06:00 do dia seguinte à data final */
+  const janH=janelaPeriodo(document.getElementById("f-data-de").value,
+                           document.getElementById("f-hora-de").value,
+                           document.getElementById("f-data-ate").value,
+                           document.getElementById("f-hora-ate").value);
   const view=[...registros].filter(r=>
     (!fp||r.tipo===fp)&&
     (!ft||r.turno===ft)&&
     (!feSet.size||(r.tipo==="lav"&&(feSet.has(r.emb)||(r.itens&&r.itens.some(it=>feSet.has(it.emb))))))&&
-    (!dtDe ||recDT(r)>=dtDe)&&
-    (!dtAte||recDT(r)<=dtAte)
+    noPeriodo(r,janH)
   ).sort((a,b)=>b.id-a.id);
 
   const lav=view.filter(r=>r.tipo==="lav");
@@ -6227,7 +6309,7 @@ function render(){
   });
 
   if(pagerEl){
-    const filtroAtivo=!!(fp||ft||feSet.size||dtDe||dtAte);
+    const filtroAtivo=!!(fp||ft||feSet.size||janH.ativa);
     pagerEl.innerHTML=rackPagerHtml("apont",apontHistPage,totalPages,view.length,startIdx+1,
       Math.min(startIdx+pageSize,view.length),pageSize,filtroAtivo?"Filtro aplicado":"Todos os apontamentos");
   }
@@ -6324,19 +6406,19 @@ function renderDash(){
   const fmSet=new Set(fmArr);
   const ftSet=new Set(ftArr);
   const fde=document.getElementById("d-fdata-de").value;
-  const fhde=document.getElementById("d-fhora-de").value||"00:00";
   const fate=document.getElementById("d-fdata-ate").value;
-  const fhate=document.getElementById("d-fhora-ate").value||"23:59";
 
-  /* Converte data+hora em número comparável YYYYMMDDHHMM */
-  function dt(data,hora){return parseInt(data.replace(/-/g,""))*10000+(parseInt((hora||"").replace(":",""))||0);}
+  /* Janela do período — sem hora digitada: 06:00 da data inicial até
+     06:00 do dia seguinte à data final (dia operacional 06:00 → 06:00). */
+  const jan=janelaPeriodo(fde,
+                          document.getElementById("d-fhora-de").value,
+                          fate,
+                          document.getElementById("d-fhora-ate").value);
 
   /* turno e intervalo filtram tudo; o modelo filtra somente as lavagens */
   const base=registros.filter(r=>{
     if(ftSet.size&&!ftSet.has(r.turno))return false;
-    if(fde){const rv=dt(r.data,r.hi);if(rv<dt(fde,fhde))return false;}
-    if(fate){const rv=dt(r.data,r.hf);if(rv>dt(fate,fhate))return false;}
-    return true;
+    return noPeriodo(r,jan);
   });
   const lav=base.filter(r=>r.tipo==="lav"&&(!fmSet.size||fmSet.has(r.emb)||( r.itens&&r.itens.some(it=>fmSet.has(it.emb)))));
   const par=base.filter(r=>r.tipo==="par");
@@ -6345,8 +6427,9 @@ function renderDash(){
   const partes=[];
   if(fmSet.size)partes.push("Modelo: "+fmArr.join(", "));
   if(ftSet.size)partes.push(ftArr.map(t=>TLABEL[t]).join(", "));
-  if(fde){const[y,m,d]=fde.split("-");partes.push("De "+d+"/"+m+"/"+y+" "+fhde);}
-  if(fate){const[y,m,d]=fate.split("-");partes.push("Até "+d+"/"+m+"/"+y+" "+fhate);}
+  if(jan.ativa){
+    partes.push("Período: "+janelaTexto(jan)+(jan.auto?" (dia operacional 06:00 → 06:00)":""));
+  }
   document.getElementById("d-scope").textContent=
     partes.length?("Filtro ativo · "+partes.join(" · ")):"Visão global · todos os apontamentos";
 
@@ -6422,11 +6505,27 @@ function renderDash(){
   /* ===== Painel 04: Horas Trabalhadas × Paradas por Turno ===== */
   renderTurnoHours(lav,par);
 
-  /* ===== Painel 05: Visão Mensal ===== */
+  /* ===== Painel 05: Visão Mensal =====
+     Se o período escolhido não cobre o mês selecionado aqui, o seletor
+     acompanha o mês da data inicial — assim a Visão Mensal não fica vazia. */
+  if(jan.ativa){
+    const selM=document.getElementById("d-fmes");
+    const ini=jan.dDe||jan.dAte, fim=jan.dAte||jan.dDe;
+    if(selM&&ini&&fim){
+      const meses=new Set(); let c=ini,g=0;
+      while(c<=fim&&g++<800){ meses.add(c.slice(0,7)); c=proximoDia(c); }
+      if(!meses.has(selM.value)){
+        const alvo=ini.slice(0,7);
+        if([...selM.options].some(o=>o.value===alvo)) selM.value=alvo;
+      }
+    }
+  }
   renderMonthChart(base);
 
-  /* ===== Painel: Embalagens Lavadas Diariamente (usa _monthRegsDoMes do painel 05) ===== */
-  renderEmbDiarias();
+  /* ===== Painel: Embalagens Lavadas Diariamente =====
+     Com período escolhido no filtro, segue as datas do período;
+     sem período, segue o mês do painel 05. */
+  renderEmbDiarias(jan,base);
 
   /* ===== Painel 06: Consistência Entrada vs Lavagem ===== */
   renderConsistencia(base);
@@ -6507,16 +6606,17 @@ function dataInicioTurno(r){
    * → Subtrai 1 dia para agrupar tudo no mesmo dia no gráfico.
    * Registros com hi >= 06:00 (início noturno, ex: 22:30) → usa r.data normalmente.
    */
-  if(r.turno==="3"){
-    const hiMin=parseInt(r.hi.split(":")[0])*60+parseInt(r.hi.split(":")[1]);
-    if(hiMin<360){ /* antes de 06:00 — madrugada, turno começou ontem */
-      const d=new Date(r.data+"T12:00:00");
-      d.setDate(d.getDate()-1);
-      return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-    }
+  if(!r||!r.data)return "";
+  if(!r.hi)return r.data;                 /* sem hora (ex.: divisória danificada) → própria data */
+  const p=String(r.hi).split(":");
+  const hiMin=(parseInt(p[0],10)||0)*60+(parseInt(p[1],10)||0);
+  if(hiMin<DIA_OP_INI_MIN){               /* antes de 06:00 — madrugada, o dia operacional começou ontem */
+    return diaAnterior(r.data);
   }
   return r.data;
 }
+/* Apelido legível: o "dia operacional" (06:00 → 06:00) a que o registro pertence */
+function diaOperacional(r){ return dataInicioTurno(r); }
 
 
 /* ===== Painel: Embalagens Lavadas Diariamente =====
@@ -6526,58 +6626,92 @@ function dataInicioTurno(r){
 const ED_CORES=['#3866f7','#00b8a3','#9a6cf0','#f0953f','#e0402b','#2c9a3e','#d94db0','#5b82ff','#0a9486','#c87718','#7c4fd0','#d8392a','#1f9e89','#e8a13a','#6a8caf','#b0508f','#4c9be8','#8a9a3a','#e06aa0','#3fa7a0'];
 function edEsc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 
-function renderEmbDiarias(){
+function renderEmbDiarias(jan,baseRegs){
   const sel=document.getElementById("d-fmes");
   const chartEl=document.getElementById("ed-chart");
   const tableEl=document.getElementById("ed-table");
-  if(!sel||!chartEl||!tableEl) return;
-  if(!sel.value){ chartEl.innerHTML=""; tableEl.innerHTML=""; return; }
-  const [ano,mes]=sel.value.split("-").map(Number);
-  const dias=new Date(ano,mes,0).getDate();
-  const MESES=["","Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
   const mesLbl=document.getElementById("ed-mes-lbl");
-  if(mesLbl) mesLbl.textContent=MESES[mes]+" / "+ano;
+  if(!chartEl||!tableEl) return;
+  const MESES=["","Janeiro","Fevereiro","Março","Abril","Maio","Junho","Julho","Agosto","Setembro","Outubro","Novembro","Dezembro"];
+  const vazio=()=>{ chartEl.innerHTML='<div class="empty"><div class="big">▦</div><div class="txt">SEM DADOS NO PERÍODO</div></div>'; tableEl.innerHTML=""; };
 
-  /* agregação: matrix[emb][dia] = quantidade lavada */
-  const lavMes=((typeof _monthRegsDoMes!=="undefined"&&_monthRegsDoMes)||[]).filter(r=>r.tipo==="lav");
+  /* ===== Quais colunas (dias) o painel vai mostrar =====
+     1) Se há data escolhida no filtro do dashboard → usa o período escolhido
+        (dias operacionais 06:00 → 06:00, já respeitados em baseRegs).
+     2) Sem data escolhida → mantém o comportamento antigo: mês do painel 05. */
+  const periodoAtivo=!!(jan&&jan.ativa);
+  let colunas=[], lavRegs=[], titulo="";
+
+  if(periodoAtivo){
+    lavRegs=(baseRegs||[]).filter(r=>r.tipo==="lav");
+    let ini=jan.dDe, fim=jan.dAte;
+    if(!ini||!fim){
+      /* filtro aberto de um lado só → completa com o que existe de registro */
+      const ds=lavRegs.map(r=>diaOperacional(r)).filter(Boolean).sort();
+      if(!ini) ini=ds[0]||fim;
+      if(!fim) fim=ds[ds.length-1]||ini;
+    }
+    if(!ini||!fim){ if(mesLbl)mesLbl.textContent=janelaTexto(jan); vazio(); return; }
+    if(fim<ini) fim=ini;
+    colunas=listaDiasPeriodo(ini,fim);
+    titulo=brData(ini)+" → "+brData(fim);
+  }else{
+    if(!sel||!sel.value){ if(mesLbl)mesLbl.textContent=""; chartEl.innerHTML=""; tableEl.innerHTML=""; return; }
+    const [ano,mes]=sel.value.split("-").map(Number);
+    const nd=new Date(ano,mes,0).getDate();
+    const pre=ano+"-"+String(mes).padStart(2,"0")+"-";
+    for(let d=1;d<=nd;d++) colunas.push({ds:pre+String(d).padStart(2,"0"),lbl:String(d)});
+    lavRegs=((typeof _monthRegsDoMes!=="undefined"&&_monthRegsDoMes)||[]).filter(r=>r.tipo==="lav");
+    titulo=MESES[mes]+" / "+ano;
+  }
+  if(mesLbl) mesLbl.textContent=titulo;
+  if(!colunas.length){ vazio(); return; }
+
+  /* agregação: matrix[emb][i] = quantidade lavada na coluna i */
+  const nD=colunas.length;
+  const idxDe={}; colunas.forEach((c,i)=>{ idxDe[c.ds]=i; });
   const matrix={}; const comDado=new Set();
-  function add(emb,dia,q){ if(!matrix[emb]) matrix[emb]=new Array(dias+1).fill(0); matrix[emb][dia]+=q; if(q>0) comDado.add(emb); }
-  lavMes.forEach(r=>{
-    const dia=parseInt(dataInicioTurno(r).split("-")[2],10);
-    if(!(dia>=1&&dia<=dias)) return;
-    if(r.itens&&r.itens.length){ r.itens.forEach(it=>add(it.emb,dia,it.total||0)); }
-    else { add(r.emb,dia,r.total||0); }
+  function add(emb,i,q){ if(!emb)return; if(!matrix[emb]) matrix[emb]=new Array(nD).fill(0); matrix[emb][i]+=q; if(q>0) comDado.add(emb); }
+  lavRegs.forEach(r=>{
+    const i=idxDe[diaOperacional(r)];
+    if(i===undefined) return;
+    if(r.itens&&r.itens.length){ r.itens.forEach(it=>add(it.emb,i,it.total||0)); }
+    else { add(r.emb,i,r.total||0); }
   });
 
   /* linhas: todas as metas primeiro, depois embalagens com dado sem meta */
   const metaKeys=Object.keys(METAS_EMBALAGENS);
   const extras=[...comDado].filter(e=>!METAS_EMBALAGENS.hasOwnProperty(e)).sort();
   const embs=[...metaKeys,...extras];
-  embs.forEach(e=>{ if(!matrix[e]) matrix[e]=new Array(dias+1).fill(0); });
+  embs.forEach(e=>{ if(!matrix[e]) matrix[e]=new Array(nD).fill(0); });
   const corDe={}; embs.forEach((e,i)=>corDe[e]=ED_CORES[i%ED_CORES.length]);
 
   /* totais */
   const metaDe=e=>METAS_EMBALAGENS[e]||0;
-  const totalDia=new Array(dias+1).fill(0);
+  const totalDia=new Array(nD).fill(0);
   const rowTotal={};
-  embs.forEach(e=>{ rowTotal[e]=0; for(let d=1;d<=dias;d++){ totalDia[d]+=matrix[e][d]; rowTotal[e]+=matrix[e][d]; } });
+  embs.forEach(e=>{ rowTotal[e]=0; for(let d=0;d<nD;d++){ totalDia[d]+=matrix[e][d]; rowTotal[e]+=matrix[e][d]; } });
   const metaTotal=embs.reduce((a,e)=>a+metaDe(e),0);
   const grandTotal=embs.reduce((a,e)=>a+rowTotal[e],0);
 
-  chartEl.innerHTML=edBuildSVG(embs,corDe,matrix,metaDe,totalDia,metaTotal,dias);
-  tableEl.innerHTML=edBuildTable(embs,corDe,matrix,metaDe,totalDia,metaTotal,rowTotal,grandTotal,dias);
+  chartEl.innerHTML=edBuildSVG(embs,corDe,matrix,metaDe,totalDia,metaTotal,colunas);
+  tableEl.innerHTML=edBuildTable(embs,corDe,matrix,metaDe,totalDia,metaTotal,rowTotal,grandTotal,colunas);
 }
 
-function edBuildSVG(embs,corDe,matrix,metaDe,totalDia,metaTotal,dias){
-  const nCat=1+dias, slotW=30, mL=46, mT=26, mB=26, mR=14;
+function edBuildSVG(embs,corDe,matrix,metaDe,totalDia,metaTotal,colunas){
+  const dias=colunas.length;
+  /* período longo → colunas mais estreitas e rótulos alternados, p/ caber melhor */
+  const slotW=dias>60?18:(dias>40?24:30);
+  const passoLbl=Math.ceil(dias/45);
+  const nCat=1+dias, mL=46, mT=26, mB=26, mR=14;
   const plotW=nCat*slotW, plotH=240, W=mL+plotW+mR, H=mT+plotH+mB;
   const rawMax=Math.max(metaTotal, ...totalDia, 1);
   let step=300; while(rawMax/step>7) step+=300;
   let niceMax=Math.ceil(rawMax/step)*step; if(niceMax<=rawMax) niceMax+=step;
   const y=v=>mT+plotH-(v/niceMax)*plotH;
   const catX=i=>mL+i*slotW+slotW/2;
-  const totalCat=i=> i===0?metaTotal:totalDia[i];
-  const valCat=(e,i)=> i===0?metaDe(e):matrix[e][i];
+  const totalCat=i=> i===0?metaTotal:totalDia[i-1];
+  const valCat=(e,i)=> i===0?metaDe(e):matrix[e][i-1];
   let s='<svg viewBox="0 0 '+W+' '+H+'" width="'+W+'" height="'+H+'" font-family="Poppins,sans-serif">';
   /* gridlines + rótulos Y */
   for(let g=0; g<=niceMax+0.5; g+=step){
@@ -6615,25 +6749,27 @@ function edBuildSVG(embs,corDe,matrix,metaDe,totalDia,metaTotal,dias){
   }
   /* rótulos X */
   for(let i=0;i<nCat;i++){
-    const xx=catX(i).toFixed(1), lbl=i===0?'Meta':String(i);
+    if(i>0&&passoLbl>1&&((i-1)%passoLbl!==0)) continue;
+    const xx=catX(i).toFixed(1), lbl=i===0?'Meta':colunas[i-1].lbl;
     s+='<text x="'+xx+'" y="'+(mT+plotH+13)+'" text-anchor="middle" font-size="8" font-weight="'+(i===0?'700':'600')+'" style="fill:'+(i===0?'var(--txt-dim)':'var(--txt-faint)')+'">'+lbl+'</text>';
   }
   s+='</svg>';
   return s;
 }
 
-function edBuildTable(embs,corDe,matrix,metaDe,totalDia,metaTotal,rowTotal,grandTotal,dias){
+function edBuildTable(embs,corDe,matrix,metaDe,totalDia,metaTotal,rowTotal,grandTotal,colunas){
+  const nD=colunas.length;
   let h='<table class="ed-table"><thead><tr><th class="ed-sticky ed-nome-h">Embalagem</th><th class="ed-meta-h">Meta</th>';
-  for(let d=1;d<=dias;d++) h+='<th>'+d+'</th>';
+  for(let d=0;d<nD;d++) h+='<th title="'+colunas[d].ds+'">'+colunas[d].lbl+'</th>';
   h+='<th class="ed-tot-h">Total</th></tr></thead><tbody>';
   embs.forEach(e=>{
     h+='<tr><td class="ed-sticky ed-nome"><span class="ed-sw" style="background:'+corDe[e]+'"></span>'+edEsc(e)+'</td>';
     h+='<td class="ed-meta">'+(metaDe(e)?metaDe(e).toLocaleString("pt-BR"):'')+'</td>';
-    for(let d=1;d<=dias;d++){ const v=matrix[e][d]; h+='<td>'+(v>0?v.toLocaleString("pt-BR"):'')+'</td>'; }
+    for(let d=0;d<nD;d++){ const v=matrix[e][d]; h+='<td>'+(v>0?v.toLocaleString("pt-BR"):'')+'</td>'; }
     h+='<td class="ed-tot">'+(rowTotal[e]>0?rowTotal[e].toLocaleString("pt-BR"):'')+'</td></tr>';
   });
   h+='<tr class="ed-total-row"><td class="ed-sticky ed-nome">TOTAL</td><td class="ed-meta">'+metaTotal.toLocaleString("pt-BR")+'</td>';
-  for(let d=1;d<=dias;d++) h+='<td>'+(totalDia[d]>0?totalDia[d].toLocaleString("pt-BR"):'')+'</td>';
+  for(let d=0;d<nD;d++) h+='<td>'+(totalDia[d]>0?totalDia[d].toLocaleString("pt-BR"):'')+'</td>';
   h+='<td class="ed-tot">'+grandTotal.toLocaleString("pt-BR")+'</td></tr></tbody></table>';
   return h;
 }
@@ -7858,9 +7994,10 @@ load().then(()=>{ loadVazia(); loadRack(); loadPcl(); loadPturno(); });
     document.querySelectorAll(".qs-btn").forEach(b=>b.classList.remove("on"));
   }
 
-  /* Botões de turno */
+  /* Botões de turno (atalhos opcionais — podem não existir na tela) */
   ["qt1","qt2","qt3"].forEach(id=>{
     const btn=document.getElementById(id);
+    if(!btn) return;                       /* sem o botão, ignora (antes quebrava o script daqui p/ baixo) */
     btn.addEventListener("click",()=>{
       const jaAtivo=btn.classList.contains("on");
       clearAll();
@@ -7888,7 +8025,8 @@ load().then(()=>{ loadVazia(); loadRack(); loadPcl(); loadPturno(); });
   });
 
   /* Limpar também desmarca tudo */
-  document.getElementById("f-clear").addEventListener("click",()=>{
+  const btnLimpar=document.getElementById("f-clear");
+  if(btnLimpar) btnLimpar.addEventListener("click",()=>{
     document.querySelectorAll(".qs-btn").forEach(b=>b.classList.remove("on"));
   });
 })();
