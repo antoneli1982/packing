@@ -79,9 +79,9 @@
       linear-gradient(90deg, rgba(255,255,255,.014) 1px, transparent 1px);
     background-size:auto,44px 44px,44px 44px;
     color:var(--txt);font-family:'Poppins',sans-serif;
-    min-height:100vh;padding:26px 20px 60px;overflow-x:hidden;max-width:100vw;
+    min-height:100vh;padding:26px clamp(14px,1.6vw,30px) 60px;overflow-x:hidden;max-width:100vw;
   }
-  .wrap{max-width:1140px;margin:0 auto}
+  .wrap{width:100%;max-width:1800px;margin:0 auto}
   header{display:flex;align-items:center;justify-content:space-between;gap:20px;
     flex-wrap:wrap;border-bottom:2px solid var(--line);padding-bottom:18px;margin-bottom:22px}
   .brand{display:flex;align-items:center;gap:18px}
@@ -137,7 +137,8 @@
   .app-sidebar .tabs{flex-direction:column;flex-wrap:nowrap;margin-bottom:0;gap:5px}
   .app-sidebar .tab{width:100%;justify-content:flex-start;padding:11px 14px}
   @media(max-width:840px){
-    .app-body{flex-direction:column}
+    .app-body{flex-direction:column;align-items:stretch}
+    .app-main{width:100%;max-width:100%;align-self:stretch}
     .app-sidebar{width:100%;flex:1 1 auto;position:static;top:auto}
     .app-sidebar .tabs{flex-direction:row;flex-wrap:wrap}
     .app-sidebar .tab{width:auto;justify-content:center}
@@ -223,7 +224,7 @@
 
   .grid{display:grid;grid-template-columns:382px minmax(0,1fr);gap:22px}
   .grid>*{min-width:0}
-  @media(max-width:840px){.grid{grid-template-columns:minmax(0,1fr)}}
+  @media(max-width:1000px){.grid{grid-template-columns:minmax(0,1fr)}}
   .apont-form-page{max-width:720px;margin:0 auto}
   .history-page{width:100%}
   .history-page-head{display:flex;align-items:center;justify-content:space-between;gap:18px;
@@ -479,23 +480,25 @@
   .loading{padding:40px;text-align:center;color:var(--txt-dim);
     font-family:'Poppins',sans-serif;font-size:12px}
 
-  .dash-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px}
+  .dash-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:22px;align-items:start}
   .dash-grid>*{min-width:0}
-  @media(max-width:840px){.dash-grid{grid-template-columns:minmax(0,1fr)}}
-  .chart{padding:16px}
+  @media(max-width:1000px){.dash-grid{grid-template-columns:minmax(0,1fr)}}
+  .chart{padding:16px;overflow:hidden}
   .bar-row{display:flex;align-items:center;gap:12px;margin:11px 0}
   .bar-lbl{font-family:'Poppins',sans-serif;font-size:11px;color:var(--txt-dim);
     width:150px;flex-shrink:0;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .bar-track{flex:1;background:var(--panel-2);border-radius:4px;height:22px;
+  .bar-track{flex:1 1 auto;min-width:36px;background:var(--panel-2);border-radius:4px;height:22px;
     position:relative;overflow:hidden}
   .bar-fill{height:100%;border-radius:4px;background:var(--blue);
     transition:width .6s cubic-bezier(.2,.7,.2,1);min-width:2px}
   .bar-val{font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;
-    width:62px;flex-shrink:0;color:var(--txt)}
-  .bar-val.with-sub{width:84px;line-height:1.05}
-  .bar-val-main{font-weight:600}
+    width:62px;flex-shrink:0;color:var(--txt);min-width:0}
+  .bar-val.with-sub{line-height:1.15}
+  .bars-sub .bar-val{width:176px;flex:0 0 176px;max-width:176px}
+  .bar-val-main{font-weight:600;overflow-wrap:anywhere}
   .bar-sub{font-family:'Poppins',sans-serif;font-size:9px;color:var(--txt-faint);
-    font-weight:500;margin-top:2px;letter-spacing:.2px;white-space:nowrap}
+    font-weight:500;margin-top:2px;letter-spacing:.2px;
+    white-space:normal;overflow-wrap:anywhere}
   .big-kpi .v{font-size:28px}
   footer{margin-top:30px;text-align:center;font-family:'Poppins',sans-serif;
     font-size:10px;color:var(--txt-faint);letter-spacing:1px}
@@ -581,7 +584,16 @@
     .toolbar-row{flex-wrap:wrap}
     .toolbar select,.toolbar input[type=date]{flex:1 1 46%;font-size:13px;padding:7px 9px}
     .toolbar input[type=time]{font-size:13px;padding:7px 9px;width:80px}
-    .dt-group{flex:1 1 auto}
+    .dt-group{flex:1 1 100%;min-width:0;flex-wrap:wrap;row-gap:6px}
+    /* periodo De/Ate quebra em duas linhas no celular */
+    .range-group{flex:1 1 100%;min-width:0;flex-wrap:wrap;row-gap:8px;padding:8px 9px}
+    .range-field{flex:1 1 100%;min-width:0}
+    .range-field input[type=date]{flex:1 1 auto;min-width:0;font-size:13px}
+    .range-field input[type=time]{flex:0 0 auto;font-size:13px}
+    .range-sep{display:none}
+    .dt-group input[type=date]{flex:1 1 44%;min-width:0}
+    .dt-group input[type=time]{flex:1 1 30%;min-width:0;width:auto}
+    .toolbar>*{min-width:0}
     .btn-ghost{flex:1 1 46%;text-align:center;padding:8px 5px;font-size:10px}
     .dash-grid{gap:12px}
     .chart{padding:11px}
@@ -589,7 +601,8 @@
     .bar-lbl{width:100%;text-align:left;font-size:10.5px}
     .bar-track{height:20px}
     .bar-val{width:auto;min-width:46px;font-size:10.5px}
-    .bar-val.with-sub{width:auto;min-width:72px}
+    .bar-val.with-sub{width:auto;min-width:72px;max-width:100%}
+    .bars-sub .bar-val{width:auto;flex:0 1 auto;min-width:72px;max-width:56%}
     table{table-layout:auto}
     thead th{font-size:8.5px;padding:7px 8px}
     tbody td{font-size:11.5px;padding:7px 8px}
@@ -646,10 +659,25 @@
   .qs-per:not(.on):hover{border-color:var(--blue-soft);color:var(--blue-soft)}
 
   /* ===== Grupo de datas De→Até numa linha ===== */
+  /* cabeçalho do dashboard: os botões quebram para a linha de baixo em telas estreitas */
+  @media(max-width:860px){
+    #view-dash .panel-head{flex-wrap:wrap;row-gap:8px}
+    #btn-print{margin-left:auto}
+    #btn-print,#btn-pptx{flex:1 1 auto;min-width:0;white-space:nowrap}
+  }
+  @media(max-width:600px){
+    #view-dash .panel-head h2{flex:1 1 100%}
+    #btn-print,#btn-pptx{flex:1 1 46%;margin-left:0;text-align:center;font-size:10px;padding:8px 5px}
+  }
+  .btn-pptx{border-color:rgba(224,97,61,.55);color:#e2694a}
+  .btn-pptx:hover{border-color:#e2694a;color:#ff8a66;background:rgba(224,97,61,.10)}
+  [data-theme="light"] .btn-pptx{color:#c2410c;border-color:rgba(194,65,12,.45)}
+  [data-theme="light"] .btn-pptx:hover{background:rgba(194,65,12,.08);color:#9a3412}
+  .btn-pptx:disabled{opacity:.6;cursor:progress}
   .range-group{
-    display:flex;align-items:center;gap:6px;
+    display:flex;align-items:center;gap:6px;flex-wrap:wrap;
     background:var(--panel-2);border:1px solid var(--line);
-    border-radius:7px;padding:5px 10px;flex-shrink:0;
+    border-radius:7px;padding:5px 10px;flex-shrink:1;min-width:0;max-width:100%;
   }
   .range-field{display:flex;align-items:center;gap:5px}
   .range-lbl{font-size:9px;font-weight:700;text-transform:uppercase;
@@ -942,6 +970,7 @@
   /* ===== Painel Embalagens Lavadas Diariamente ===== */
   .ed-mes-lbl{margin-left:auto;font-family:'Poppins',sans-serif;font-size:11px;font-weight:700;color:var(--txt-dim);text-transform:uppercase;letter-spacing:.5px}
   .ed-chart-wrap{overflow-x:auto;padding:14px 16px 6px}
+  .ed-chart svg{display:block;width:100%;min-width:var(--ed-w,auto);height:auto}
   .ed-chart svg{display:block}
   .ed-table-wrap{padding:6px 16px 12px}
   table.ed-table{border-collapse:collapse;font-family:'Poppins',sans-serif;font-size:10px;white-space:nowrap}
@@ -973,7 +1002,7 @@
   }
   .detail-overlay.on{display:block}
   @keyframes detailSlideIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}
-  .detail-wrap{max-width:1140px;margin:0 auto;padding:26px 20px 60px}
+  .detail-wrap{width:100%;max-width:1800px;margin:0 auto;padding:26px clamp(14px,1.6vw,30px) 60px}
   .detail-topbar{display:flex;align-items:center;gap:14px;margin-bottom:22px;
     border-bottom:2px solid var(--line);padding-bottom:16px}
   .detail-back{cursor:pointer;background:var(--panel);border:1px solid var(--line);
@@ -1366,6 +1395,67 @@
     .ms-panel{max-width:min(86vw,320px)}
     .ms-label,.ms-search input{font-size:14px}
   }
+
+  /* ===== APROVEITAMENTO DE TELA — escalonamento em monitores largos ===== */
+  /* Laptop largo / monitor 1366-1500 */
+  @media(min-width:1180px){
+    .stats{grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+    /* Apontamento: Ciclo Extra e Data lado a lado */
+    .apont-form-page{max-width:1000px}
+    .apont-form-page #form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+      column-gap:22px;row-gap:0;align-items:start}
+    .apont-form-page #form>*{grid-column:1/-1;min-width:0}
+    .apont-form-page #form>#f-cicloextra,
+    .apont-form-page #form>#f-data{grid-column:auto}
+    .bar-lbl{width:160px}
+    .dia-emb-grid{grid-template-columns:repeat(auto-fill,minmax(196px,1fr))}
+    .consist-grid{grid-template-columns:repeat(auto-fill,minmax(290px,1fr))}
+  }
+  /* Full HD */
+  @media(min-width:1500px){
+    .app-body{gap:24px}
+    .app-sidebar{flex:0 0 234px;width:234px}
+    .grid{grid-template-columns:412px minmax(0,1fr);gap:26px}
+    .dash-grid{gap:26px}
+    /* Apontamento: formulario em 2 colunas, aproveitando a largura */
+    .apont-form-page{max-width:100%}
+    .apont-form-page #form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));
+      column-gap:22px;row-gap:0;align-items:start}
+    .apont-form-page #form>*{grid-column:1/-1;min-width:0}
+    .apont-form-page #form>#f-turno,
+    .apont-form-page #form>#f-cicloextra,
+    .apont-form-page #form>#f-data{grid-column:auto}
+    .stats{gap:14px}
+    .stat{padding:15px 17px}
+    .stat .v{font-size:25px}
+    .stat .k{font-size:10px}
+    .bar-lbl{width:224px}
+    .bar-track{height:24px}
+    .bar-row{margin:13px 0}
+    .chart{padding:20px}
+    .dia-emb-grid{grid-template-columns:repeat(auto-fill,minmax(210px,1fr))}
+    .consist-grid{grid-template-columns:repeat(auto-fill,minmax(310px,1fr))}
+    .detail-stats-row{gap:14px}
+    .pturno-featured .pturno-post{width:206px;flex:0 0 206px}
+  }
+  /* 2K e acima */
+  @media(min-width:1750px){
+    .app-sidebar{flex:0 0 250px;width:250px}
+    .grid{grid-template-columns:440px minmax(0,1fr)}
+    .bar-lbl{width:264px}
+    .stat .v{font-size:27px}
+    .dia-emb-grid{grid-template-columns:repeat(auto-fill,minmax(228px,1fr))}
+    .consist-grid{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
+  }
+  /* Faixa intermediaria: 2 colunas antes de empilhar */
+  @media(min-width:841px) and (max-width:1179px){
+    .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .bar-lbl{width:120px}
+    .bars-sub .bar-val{width:132px;flex:0 0 132px;max-width:132px}
+  }
+  @media(max-width:840px) and (min-width:601px){
+    .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+  }
 </style>
 </head>
 <body>
@@ -1542,7 +1632,7 @@
             </div>
           </div>
 
-          <div class="field">
+          <div class="field" id="f-turno">
             <label>Turno <span class="req">*</span></label>
             <div class="seg c3" id="turnos">
               <div class="seg-btn turno-btn" data-t="1"><div class="n">1º</div><div class="l">Turno</div></div>
@@ -1559,7 +1649,7 @@
             </div>
           </div>
 
-          <div class="field"><label>Data</label><div class="data-wrap" id="data-wrap"><input type="date" id="data" readonly><div class="data-lock-overlay" id="data-lock" title="Para realizar a alteração, solicite ao seu Gestor | KPI | Qualidade"><span class="data-lock-ico">🔒</span></div></div></div>
+          <div class="field" id="f-data"><label>Data</label><div class="data-wrap" id="data-wrap"><input type="date" id="data" readonly><div class="data-lock-overlay" id="data-lock" title="Para realizar a alteração, solicite ao seu Gestor | KPI | Qualidade"><span class="data-lock-ico">🔒</span></div></div></div>
 
           <div class="field hide" id="f-embalagem">
             <label>Embalagens do Ciclo <span class="req">*</span></label>
@@ -2170,7 +2260,7 @@
   <!-- ============ VIEW: DASHBOARD ============ -->
   <div class="view" id="view-dash">
     <div class="panel" style="margin-bottom:22px">
-      <div class="panel-head"><span class="tag">FILTRO</span><h2>Filtros do Dashboard</h2><button type="button" class="btn-ghost" id="btn-print" style="margin-left:auto;flex:0 0 auto">🖨 Relatório completo</button></div>
+      <div class="panel-head"><span class="tag">FILTRO</span><h2>Filtros do Dashboard</h2><button type="button" class="btn-ghost" id="btn-print" style="margin-left:auto;flex:0 0 auto">🖨 Relatório completo</button><button type="button" class="btn-ghost btn-pptx" id="btn-pptx" style="flex:0 0 auto" title="Gerar apresentação PowerPoint com todos os gráficos do dashboard">📊 Apresentação PPTX</button></div>
       <div class="toolbar">
         <div class="ms" id="d-fmodelo-ms"></div>
         <div class="ms" id="d-fturno-ms"></div>
@@ -2592,7 +2682,7 @@
   <!-- ===== SIMULAÇÃO ===== -->
   <div class="view" id="view-sim">
     <style>
-      #view-sim .sim-grid{max-width:920px;margin:0 auto}
+      #view-sim .sim-grid{width:100%;max-width:clamp(920px,86vw,1380px);margin:0 auto}
       #view-sim .sim-rows{display:flex;flex-direction:column;gap:10px}
       #view-sim .sim-row{display:flex;flex-direction:column;gap:0;
         background:var(--panel-2);border:1px solid var(--line-soft);border-radius:12px;padding:10px 11px}
@@ -2611,6 +2701,15 @@
       #view-sim .sim-row select.sim-grp{width:auto;min-width:56px;padding:4px 22px 4px 9px;font-size:12px;font-weight:700}
       #view-sim .sim-chip.grp{border-color:rgba(154,108,240,.45);color:var(--purple-txt)}
       @media(max-width:560px){#view-sim .sim-grp-wrap{margin-left:0;padding-left:0;border-left:0}}
+      @media(max-width:700px){
+        #view-sim .sim-grid{max-width:100%}
+        #view-sim .panel-head{flex-wrap:wrap;row-gap:8px}
+        #view-sim .sim-fonte{flex-wrap:wrap;row-gap:5px}
+        #view-sim .sim-fonte-btn{flex:1 1 auto}
+        #view-sim .btn-ghost{flex:1 1 46%;text-align:center}
+        #view-sim .sim-tbl{max-width:100%}
+        #view-sim select,#view-sim input{max-width:100%;min-width:0}
+      }
       #view-sim .sim-seq{flex:0 0 26px;display:flex;flex-direction:column;align-items:center;gap:2px}
       #view-sim .sim-seq-n{font-size:12px;font-weight:800;color:var(--txt);line-height:1;font-variant-numeric:tabular-nums}
       #view-sim .sim-seq-btn{width:22px;height:15px;border:1px solid var(--line);background:var(--bg);color:var(--txt-faint);
@@ -5884,14 +5983,15 @@ function gerarRelatorioDashboardImpressao(){
         .report-dashboard .bar-lbl{font-size:9px!important;width:132px!important;color:#536276!important}
         .report-dashboard .bar-track{height:16px!important;background:#edf1f5!important}
         .report-dashboard .bar-val{font-size:9px!important;color:#1d2a3b!important}
-        .report-dashboard .bar-sub{font-size:7.5px!important}
+        .report-dashboard .bar-sub{font-size:7.5px!important;white-space:normal!important}
+        .report-dashboard .bar-val.with-sub{max-width:132px!important}
         .report-dashboard .turno-hours-grid{padding:11px!important;gap:8px!important}
         .report-dashboard .turno-hours-card{padding:10px!important;background:#f7f9fc!important;border-color:#e1e7ee!important}
         .report-dashboard .month-summary-row{padding:0 11px 10px!important}
         .report-dashboard .month-day-chart,.report-dashboard .ed-chart-wrap{overflow:visible!important;padding:10px 11px!important}
         .report-dashboard .day-bars-wrap{min-height:170px!important;gap:2px!important}
         .report-dashboard .day-col{min-width:26px!important}
-        .report-dashboard .ed-chart svg{max-width:100%!important;height:auto!important}
+        .report-dashboard .ed-chart svg{max-width:100%!important;min-width:0!important;width:100%!important;height:auto!important}
         .report-dashboard .consist-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px!important}
         .report-dashboard .consist-card{padding:9px 10px!important;background:#f7f9fc!important}
         .report-dashboard .ed-foot{grid-template-columns:1fr 1fr!important}
@@ -6323,6 +6423,7 @@ function bars(el,rows,opts){
     return;
   }
   el.innerHTML="";
+  el.classList.toggle("bars-sub", rows.some(r=>r.sub));
   rows.forEach(r=>{
     const row=document.createElement("div");row.className="bar-row";
     if(opts.clickable)row.classList.add("clickable");
@@ -6695,6 +6796,7 @@ function renderEmbDiarias(jan,baseRegs){
   const grandTotal=embs.reduce((a,e)=>a+rowTotal[e],0);
 
   chartEl.innerHTML=edBuildSVG(embs,corDe,matrix,metaDe,totalDia,metaTotal,colunas);
+  (function(){var _sv=chartEl.querySelector('svg');if(_sv)chartEl.style.setProperty('--ed-w',(parseFloat(_sv.getAttribute('width'))||0)+'px');})();
   tableEl.innerHTML=edBuildTable(embs,corDe,matrix,metaDe,totalDia,metaTotal,rowTotal,grandTotal,colunas);
 }
 
@@ -6965,7 +7067,7 @@ function renderMonthChart(base){
     function addSeg(h,bg,cls,minutos){
       const seg=document.createElement("div");
       seg.className="day-seg "+(cls||"");
-      seg.style.height="0px";seg.dataset.h=h;
+      seg.style.height="0px";seg.dataset.h=h;seg.dataset.min=(minutos||0);
       seg.style.background=bg;
       seg.style.borderRadius="2px";
       /* Lâmpada piscante na parada */
@@ -6987,7 +7089,7 @@ function renderMonthChart(base){
     addSeg(h1,"var(--t1)","t1",dd.porTurno["1"].min);
     addSeg(h2,"var(--t2)","t2",dd.porTurno["2"].min);
     addSeg(h3,"var(--t3)","t3",dd.porTurno["3"].min);
-    if(hPar>0) addSeg(hPar,"var(--c-par)","par");
+    if(hPar>0) addSeg(hPar,"var(--c-par)","par",dd.mPar);
 
     col.appendChild(stack);
 
@@ -9838,6 +9940,494 @@ function salvarRackMotivo(){
   var o=document.getElementById("virada-modal-overlay");
   if(o) o.addEventListener("click",function(e){ if(e.target.id==="virada-modal-overlay") fecharModalVirada(); });
 })();
+</script>
+
+<!-- ===== Apresentação PPTX do Dashboard ===== -->
+<script>
+/* =========================================================================
+   APRESENTAÇÃO PPTX — Dashboard da Lavadora de Embalagem
+   Gera um .pptx 16:9 com faixa azul, logo SESÉ e todos os gráficos do painel.
+   ========================================================================= */
+(function(){
+  "use strict";
+
+  /* ---------- Identidade visual ---------- */
+  var PX={
+    azul:"3866F7", azulEsc:"1B3FA8", navy:"0E1F3C", navy2:"17315C",
+    texto:"16202E", suave:"6B7A8D", linha:"DCE4EF", branco:"FFFFFF", trilho:"E4EBF6",
+    t1:"3866F7", t2:"00B8A3", t3:"9A6CF0",
+    par:"F0533F", verde:"3FB950", laranja:"F0953F", vermelho:"E5484D", roxo:"9A6CF0"
+  };
+  var FONT="Arial";
+  var W=13.333, H=7.5, M=0.52;
+  var BAND=0.92, TOP=BAND+0.30, BOT=6.90;
+  var CW=W-2*M, CH=BOT-TOP-0.10;
+  var FMT_N='#,##0;-#,##0;';      /* oculta zeros */
+  var FMT_H='0.0"h";;';
+
+  var _n=0, _logo="", _shape=null;
+  var _rodape="SESÉ · SAS — Lavadora de Embalagem · Departamento de Lavagem";
+
+  /* ---------- Utilidades ---------- */
+  function txt(el){ return el? (el.textContent||"").trim() : ""; }
+  function num(t){
+    t=(t||"").trim();
+    var m=t.match(/^(\d{1,5})[:h](\d{2})$/);
+    if(m) return (+m[1])+(+m[2])/60;
+    var n=parseFloat(t.replace(/\./g,"").replace(",","."));
+    return isFinite(n)?n:0;
+  }
+  function inteiro(t){
+    var n=parseFloat(String(t||"").replace(/[^\d.,-]/g,"").replace(/\./g,"").replace(",","."));
+    return isFinite(n)?n:0;
+  }
+  function barras(id){
+    var el=document.getElementById(id);
+    if(!el) return [];
+    return Array.prototype.slice.call(el.querySelectorAll(".bar-row")).map(function(r){
+      var l=r.querySelector(".bar-lbl");
+      return {
+        k:((l&&l.getAttribute("title"))||txt(l)||"").trim(),
+        v:num(txt(r.querySelector(".bar-val-main"))),
+        disp:txt(r.querySelector(".bar-val-main"))
+      };
+    }).filter(function(r){ return r.k && r.k!=="undefined" && r.k!=="null"; });
+  }
+  function fatia(a,i,q){ return a.slice(i,i+q); }
+  function cabe(w,h,mw,mh){ var r=Math.min(mw/w,mh/h); return {w:w*r,h:h*r}; }
+  function corta(t,max){ t=String(t||""); return t.length>max? t.slice(0,max-1)+"…" : t; }
+
+  /* ---------- Biblioteca ---------- */
+  function script(url){
+    return new Promise(function(ok,err){
+      var s=document.createElement("script");
+      s.src=url; s.async=true;
+      s.onload=function(){ window.PptxGenJS?ok():err(new Error("vazio")); };
+      s.onerror=function(){ err(new Error("falhou")); };
+      document.head.appendChild(s);
+    });
+  }
+  function carregarLib(){
+    if(window.PptxGenJS) return Promise.resolve();
+    return [
+      "https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js",
+      "https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js",
+      "https://cdn.jsdelivr.net/gh/gitbrent/pptxgenjs/dist/pptxgen.bundle.js"
+    ].reduce(function(p,u){ return p.catch(function(){ return script(u); }); },
+      Promise.reject(new Error("init")));
+  }
+
+  /* ---------- Blocos ---------- */
+  function slide(pptx,o){
+    o=o||{};
+    var s=pptx.addSlide();
+    s.background={color:PX.branco};
+    s.addShape(_shape.rect,{x:0,y:0,w:W,h:BAND,fill:{color:PX.azul},line:{type:"none"}});
+    s.addShape(_shape.rect,{x:0,y:BAND-0.055,w:W,h:0.055,fill:{color:PX.azulEsc},line:{type:"none"}});
+    if(o.kicker)
+      s.addText(o.kicker,{x:M,y:0.13,w:8.4,h:0.24,fontFace:FONT,fontSize:9,bold:true,color:"CBD9FF",charSpacing:1.6});
+    s.addText(o.titulo||"",{x:M,y:o.kicker?0.35:0.24,w:8.9,h:0.46,fontFace:FONT,fontSize:19,bold:true,color:PX.branco,valign:"middle"});
+    s.addShape(_shape.roundRect,{x:W-M-1.52,y:0.16,w:1.52,h:0.60,fill:{color:PX.branco},line:{type:"none"},rectRadius:0.07});
+    if(_logo) s.addImage({data:_logo,x:W-M-1.40,y:0.27,w:1.28,h:0.38,sizing:{type:"contain",w:1.28,h:0.38}});
+    _n++;
+    s.addShape(_shape.rect,{x:M,y:BOT,w:CW,h:0.014,fill:{color:PX.linha},line:{type:"none"}});
+    s.addText(_rodape,{x:M,y:BOT+0.07,w:9.4,h:0.26,fontFace:FONT,fontSize:8,color:PX.suave});
+    s.addText(String(_n),{x:W-M-1,y:BOT+0.07,w:1,h:0.26,fontFace:FONT,fontSize:8,color:PX.suave,align:"right"});
+    return s;
+  }
+  function subtitulo(s,t){
+    if(t) s.addText(t,{x:M,y:TOP-0.08,w:CW,h:0.26,fontFace:FONT,fontSize:9.5,color:PX.suave});
+  }
+  function cartao(s,o){
+    s.addShape(_shape.roundRect,{x:o.x,y:o.y,w:o.w,h:o.h,fill:{color:PX.branco},
+      line:{color:PX.linha,width:1},rectRadius:0.06,
+      shadow:{type:"outer",blur:7,offset:1,angle:90,color:"AFC0D6",opacity:0.22}});
+    s.addShape(_shape.rect,{x:o.x,y:o.y+0.07,w:0.055,h:o.h-0.14,fill:{color:o.cor||PX.azul},line:{type:"none"}});
+    s.addText(o.valor,{x:o.x+0.20,y:o.y+0.11,w:o.w-0.32,h:0.42,fontFace:FONT,
+      fontSize:o.fs||17,bold:true,color:o.corValor||PX.texto,valign:"middle",shrinkText:true});
+    s.addText(o.rotulo,{x:o.x+0.20,y:o.y+0.54,w:o.w-0.32,h:0.38,fontFace:FONT,
+      fontSize:7.5,color:PX.suave,charSpacing:0.5,valign:"top",wrap:true});
+  }
+  function painel(s,o){
+    s.addShape(_shape.roundRect,{x:o.x,y:o.y,w:o.w,h:o.h,fill:{color:"F7F9FD"},
+      line:{color:PX.linha,width:1},rectRadius:0.06});
+    s.addText(o.titulo,{x:o.x+0.22,y:o.y+0.13,w:o.w-0.44,h:0.26,fontFace:FONT,
+      fontSize:9,bold:true,color:PX.suave,charSpacing:1.1});
+  }
+  /* lista compacta com barra proporcional */
+  function miniLista(s,o){
+    painel(s,o);
+    var linhas=o.rows.slice(0,o.max||5);
+    var max=Math.max.apply(null,linhas.map(function(r){return r.v;}).concat([1]));
+    var y=o.y+0.46, alt=(o.h-0.60)/Math.max(1,linhas.length);
+    var lw=o.w*0.40, vw=0.86, bw=o.w-0.44-lw-vw-0.16;
+    linhas.forEach(function(r){
+      s.addText(corta(r.k,34),{x:o.x+0.22,y:y,w:lw,h:alt-0.06,fontFace:FONT,fontSize:8.5,color:PX.texto,valign:"middle"});
+      s.addShape(_shape.roundRect,{x:o.x+0.22+lw+0.08,y:y+(alt-0.06)/2-0.065,w:bw,h:0.13,
+        fill:{color:PX.trilho},line:{type:"none"},rectRadius:0.03});
+      var p=Math.max(0.04,bw*(r.v/max));
+      s.addShape(_shape.roundRect,{x:o.x+0.22+lw+0.08,y:y+(alt-0.06)/2-0.065,w:p,h:0.13,
+        fill:{color:o.cor||PX.azul},line:{type:"none"},rectRadius:0.03});
+      s.addText(r.disp,{x:o.x+o.w-0.22-vw,y:y,w:vw,h:alt-0.06,fontFace:FONT,fontSize:8.5,
+        bold:true,color:o.cor||PX.azul,align:"right",valign:"middle"});
+      y+=alt;
+    });
+  }
+  /* poucas categorias => barra mais fina, para não virar bloco */
+  function vao(n){ return n<=3?170 : n<=5?120 : n<=8?72 : n<=11?52 : 40; }
+  function grafico(pptx,s,series,o){
+    var nCat=(series[0]&&series[0].labels||[]).length;
+    var gap=(o.gap!=null)?o.gap:vao(nCat);
+    var op={
+      x:o.x,y:o.y,w:o.w,h:o.h,
+      barDir:o.dir||"bar",
+      barGrouping:o.grupo||"clustered",
+      barGapWidthPct:gap,
+      chartColors:o.cores||[PX.azul],
+      showValue:o.valores!==false,
+      dataLabelColor:PX.texto, dataLabelFontSize:o.rotuloFs||8, dataLabelFontFace:FONT,
+      dataLabelFormatCode:o.fmt||FMT_N, dataLabelPosition:"outEnd",
+      catAxisLabelFontFace:FONT, catAxisLabelFontSize:o.catFs||8.5, catAxisLabelColor:PX.suave,
+      valAxisHidden:true, catAxisLineShow:false, valAxisLineShow:false,
+      valGridLine:{style:"none"}, catGridLine:{style:"none"},
+      showLegend:!!o.legenda, legendPos:"b", legendFontFace:FONT, legendFontSize:8.5, legendColor:PX.suave,
+      border:{pt:0,color:PX.branco}
+    };
+    if(op.barGrouping==="stacked"){ op.showValue=false; }
+    s.addChart(pptx.ChartType.bar,series,op);
+  }
+  function semDados(s,x,y,w,h,msg){
+    s.addText(msg||"Sem dados no período selecionado",
+      {x:x,y:y,w:w,h:h,fontFace:FONT,fontSize:11,color:PX.suave,align:"center",valign:"middle"});
+  }
+
+  /* ---------- Imagens ---------- */
+  function svgParaPng(el,escala){
+    return new Promise(function(ok){
+      if(!el||!el.querySelector("svg")) return ok(null);
+      var svg=el.innerHTML;
+      if(svg.indexOf("xmlns")===-1) svg=svg.replace("<svg",'<svg xmlns="http://www.w3.org/2000/svg"');
+      svg=svg.replace(/var\(--line-soft\)/g,"#e4e9f0").replace(/var\(--txt-faint\)/g,"#7a8694")
+             .replace(/var\(--txt-dim\)/g,"#505b69").replace(/var\(--txt\)/g,"#16202e")
+             .replace(/var\(--red\)/g,"#d8392a").replace(/var\(--line\)/g,"#d3dae3");
+      var img=new Image();
+      img.onload=function(){
+        var k=escala||2, c=document.createElement("canvas");
+        c.width=Math.max(1,Math.round(img.width*k)); c.height=Math.max(1,Math.round(img.height*k));
+        var g=c.getContext("2d");
+        g.fillStyle="#ffffff"; g.fillRect(0,0,c.width,c.height);
+        g.drawImage(img,0,0,c.width,c.height);
+        try{ ok({data:c.toDataURL("image/png"),w:img.width||1,h:img.height||1}); }catch(e){ ok(null); }
+      };
+      img.onerror=function(){ ok(null); };
+      img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(svg);
+    });
+  }
+  /* tabela da produção diária, renderizada em tema claro */
+  function tabelaParaPng(){
+    return new Promise(function(ok){
+      var t=document.getElementById("ed-table");
+      if(!t||!t.querySelector("table")||typeof html2canvas==="undefined") return ok(null);
+      var tmp=document.createElement("div");
+      tmp.setAttribute("data-theme","light");
+      tmp.style.cssText="position:fixed;left:-99999px;top:0;background:#ffffff;padding:6px;"+
+                        "width:max-content;font-family:'Poppins',sans-serif";
+      tmp.innerHTML=t.innerHTML;
+      document.body.appendChild(tmp);
+      tmp.querySelectorAll("table.ed-table th, .ed-sticky").forEach(function(el){ el.style.position="static"; });
+      var w=tmp.offsetWidth, h=tmp.offsetHeight;
+      var limpa=function(){ if(tmp.parentNode) tmp.parentNode.removeChild(tmp); };
+      if(!w||!h){ limpa(); return ok(null); }
+      html2canvas(tmp,{backgroundColor:"#ffffff",scale:2,logging:false,width:w,height:h,windowWidth:w,windowHeight:h})
+        .then(function(cv){ limpa(); try{ ok({data:cv.toDataURL("image/png"),w:w,h:h}); }catch(e){ ok(null); } })
+        .catch(function(){ limpa(); ok(null); });
+    });
+  }
+
+  /* ---------- Montagem ---------- */
+  function montar(img){
+    var pptx=new window.PptxGenJS();
+    _shape=pptx.ShapeType; _n=0;
+    pptx.defineLayout({name:"SESE169",width:W,height:H});
+    pptx.layout="SESE169";
+    pptx.author="SAS · Lavadora de Embalagem";
+    pptx.company="SESÉ";
+    pptx.title="Dashboard — Lavadora de Embalagem";
+    pptx.subject="Indicadores operacionais do departamento de lavagem";
+
+    _logo=(document.querySelector(".logo-chip img")||{}).src||"";
+    var escopo=txt(document.getElementById("d-scope"))||"Visão global · todos os apontamentos";
+    var emitido=new Date().toLocaleString("pt-BR",{dateStyle:"long",timeStyle:"short"});
+    var trabTxt=txt(document.getElementById("d-trab"))||"00:00";
+    var parTxt=txt(document.getElementById("d-par"))||"00:00";
+    var trab=num(trabTxt), par=num(parTxt);
+    var disp=(trab+par)>0?Math.round(trab/(trab+par)*1000)/10:0;
+
+    var turno=barras("chart-turno");
+    var motivo=barras("chart-motivo").filter(function(r){return r.v>0;});
+    var emb=barras("chart-emb");
+    var dan=barras("chart-danif").filter(function(r){return r.v>0;});
+    var rkI=barras("chart-rack-itens"), rkT=barras("chart-rack-turno");
+
+    /* ============ 1. CAPA ============ */
+    var c=pptx.addSlide();
+    c.background={color:PX.navy};
+    c.addShape(_shape.rect,{x:0,y:0,w:W,h:0.30,fill:{color:PX.azul},line:{type:"none"}});
+    c.addShape(_shape.rect,{x:0,y:H-0.26,w:W,h:0.26,fill:{color:PX.azul},line:{type:"none"}});
+    c.addShape(_shape.rect,{x:W-4.6,y:0.30,w:4.6,h:H-0.56,fill:{color:PX.navy2},line:{type:"none"}});
+    c.addShape(_shape.roundRect,{x:M+0.08,y:1.10,w:2.30,h:0.86,fill:{color:PX.branco},line:{type:"none"},rectRadius:0.09});
+    if(_logo) c.addImage({data:_logo,x:M+0.26,y:1.28,w:1.94,h:0.50,sizing:{type:"contain",w:1.94,h:0.50}});
+    c.addText("SAS · SISTEMA DE APONTAMENTO",{x:M+0.08,y:2.20,w:7.6,h:0.28,fontFace:FONT,fontSize:10,bold:true,color:"8FB0FF",charSpacing:2.4});
+    c.addText("Dashboard da Lavadora\nde Embalagem",{x:M+0.02,y:2.52,w:7.9,h:1.46,fontFace:FONT,fontSize:36,bold:true,color:PX.branco,lineSpacingMultiple:1.05});
+    c.addShape(_shape.rect,{x:M+0.08,y:4.10,w:1.5,h:0.05,fill:{color:PX.azul},line:{type:"none"}});
+    c.addText("Departamento de Lavagem · Indicadores operacionais",{x:M+0.08,y:4.28,w:7.6,h:0.32,fontFace:FONT,fontSize:13,color:"C3D4F5"});
+    /* números de destaque preenchem a base da capa */
+    var destaques=[
+      {k:"EMBALAGENS LAVADAS", v:txt(document.getElementById("d-emb"))||"0"},
+      {k:"TEMPO TRABALHADO",   v:trabTxt},
+      {k:"TEMPO PARADO",       v:parTxt},
+      {k:"DISPONIBILIDADE",    v:disp.toLocaleString("pt-BR")+"%"}
+    ];
+    var dw=(8.0-3*0.16)/4;
+    destaques.forEach(function(d,i){
+      var dx=M+0.02+i*(dw+0.16);
+      c.addShape(_shape.roundRect,{x:dx,y:5.02,w:dw,h:1.00,fill:{color:PX.navy2},line:{type:"none"},rectRadius:0.06});
+      c.addShape(_shape.rect,{x:dx,y:5.02,w:dw,h:0.045,fill:{color:PX.azul},line:{type:"none"}});
+      c.addText(d.v,{x:dx+0.16,y:5.18,w:dw-0.32,h:0.40,fontFace:FONT,fontSize:16,bold:true,color:PX.branco,valign:"middle",shrinkText:true});
+      c.addText(d.k,{x:dx+0.16,y:5.58,w:dw-0.32,h:0.30,fontFace:FONT,fontSize:7.5,color:"9FBBF0",charSpacing:0.8});
+    });
+    c.addShape(_shape.roundRect,{x:W-4.18,y:1.10,w:3.62,h:2.30,fill:{color:PX.navy2},line:{type:"none"},rectRadius:0.08});
+    c.addText("PERÍODO / ESCOPO",{x:W-3.98,y:1.30,w:3.2,h:0.24,fontFace:FONT,fontSize:8,bold:true,color:"9FBBF0",charSpacing:1.4});
+    c.addText(escopo,{x:W-3.98,y:1.58,w:3.22,h:1.64,fontFace:FONT,fontSize:11,color:PX.branco,valign:"top",wrap:true,shrinkText:true});
+    c.addText("EMITIDO EM",{x:W-3.98,y:3.64,w:3.2,h:0.24,fontFace:FONT,fontSize:8,bold:true,color:"9FBBF0",charSpacing:1.4});
+    c.addText(emitido,{x:W-3.98,y:3.90,w:3.22,h:0.30,fontFace:FONT,fontSize:11,bold:true,color:PX.branco});
+    c.addText("Documento gerado automaticamente pelo sistema SAS.",
+      {x:M+0.08,y:H-0.92,w:8.2,h:0.28,fontFace:FONT,fontSize:9,color:"8FA4C8"});
+    _n=1;
+
+    /* ============ 2. INDICADORES ============ */
+    var stats=Array.prototype.slice.call(document.querySelectorAll("#view-dash > .stats .stat"));
+    if(stats.length){
+      var s2=slide(pptx,{kicker:"VISÃO GERAL",titulo:"Indicadores-chave do período"});
+      subtitulo(s2,escopo);
+      var cols=5, gap=0.18, cw=(CW-gap*(cols-1))/cols, ch=1.00, y0=TOP+0.34;
+      stats.forEach(function(st,i){
+        var col=i%cols, lin=Math.floor(i/cols), vEl=st.querySelector(".v");
+        var inline=(vEl&&vEl.style&&vEl.style.color)||"";
+        var m=inline.match(/#([0-9a-f]{6})/i);
+        var corV=m?m[1].toUpperCase():null;
+        if(!corV && /var\(--green\)/.test(inline)) corV=PX.verde;
+        if(!corV && /var\(--orange\)/.test(inline)) corV=PX.laranja;
+        cartao(s2,{
+          x:M+col*(cw+gap), y:y0+lin*(ch+0.18), w:cw, h:ch,
+          valor:txt(vEl)||"—", rotulo:txt(st.querySelector(".k")),
+          cor:(st.getAttribute("style")||"").indexOf("--before-bg")>=0
+              ? ((st.getAttribute("style").match(/--before-bg:\s*([^;]+)/)||[])[1]||"").indexOf("red")>=0?PX.vermelho
+                : (st.getAttribute("style").indexOf("9a6cf0")>=0?PX.roxo:PX.laranja)
+              : (st.getAttribute("data-c")==="par"?PX.par:(st.getAttribute("data-c")==="ref"?PX.laranja:PX.azul)),
+          corValor:corV||PX.texto,
+          fs:(txt(vEl).length>10?11:17)
+        });
+      });
+      /* disponibilidade */
+      var yb=y0+2*(ch+0.18)+0.20;
+      s2.addShape(_shape.roundRect,{x:M,y:yb,w:CW,h:0.82,fill:{color:"F2F6FD"},line:{color:"D8E3F7",width:1},rectRadius:0.06});
+      s2.addText("DISPONIBILIDADE DA MÁQUINA",{x:M+0.26,y:yb+0.12,w:4.2,h:0.24,fontFace:FONT,fontSize:8.5,bold:true,color:PX.suave,charSpacing:1.2});
+      s2.addText(disp.toLocaleString("pt-BR")+"%",{x:M+0.26,y:yb+0.36,w:2.2,h:0.34,fontFace:FONT,fontSize:19,bold:true,color:PX.azul});
+      var bx=M+3.0, bw=CW-3.4;
+      s2.addText("Trabalhada "+trabTxt+"   ·   Parada "+parTxt,
+        {x:bx,y:yb+0.10,w:bw,h:0.24,fontFace:FONT,fontSize:8.5,color:PX.suave,align:"right"});
+      s2.addShape(_shape.roundRect,{x:bx,y:yb+0.40,w:bw,h:0.24,fill:{color:PX.trilho},line:{type:"none"},rectRadius:0.06});
+      if(disp>0) s2.addShape(_shape.roundRect,{x:bx,y:yb+0.40,w:Math.max(0.12,bw*disp/100),h:0.24,fill:{color:PX.azul},line:{type:"none"},rectRadius:0.06});
+      /* destaques ocupam a base do slide */
+      var yd=yb+1.00, hd=BOT-yd-0.06, pw=(CW-0.26)/2;
+      if(emb.length) miniLista(s2,{x:M,y:yd,w:pw,h:hd,titulo:"TOP 5 EMBALAGENS LAVADAS",rows:emb,cor:PX.azul});
+      else           painel(s2,{x:M,y:yd,w:pw,h:hd,titulo:"TOP 5 EMBALAGENS LAVADAS"});
+      if(motivo.length) miniLista(s2,{x:M+pw+0.26,y:yd,w:pw,h:hd,titulo:"PRINCIPAIS MOTIVOS DE PARADA",rows:motivo,cor:PX.par});
+      else{ painel(s2,{x:M+pw+0.26,y:yd,w:pw,h:hd,titulo:"PRINCIPAIS MOTIVOS DE PARADA"});
+            semDados(s2,M+pw+0.26,yd+0.4,pw,hd-0.5,"Nenhuma parada registrada"); }
+    }
+
+    /* ============ 3. TURNO + PARADAS ============ */
+    if(turno.length||motivo.length){
+      var s3=slide(pptx,{kicker:"PRODUÇÃO E DISPONIBILIDADE",titulo:"Embalagens por turno e paradas de máquina"});
+      var meia=(CW-0.34)/2;
+      s3.addText("Embalagens lavadas por turno",{x:M,y:TOP,w:meia,h:0.28,fontFace:FONT,fontSize:11,bold:true,color:PX.texto});
+      if(turno.length)
+        grafico(pptx,s3,[{name:"Embalagens",labels:turno.map(function(r){return r.k;}),values:turno.map(function(r){return r.v;})}],
+          {x:M-0.06,y:TOP+0.32,w:meia+0.12,h:CH-0.42,dir:"col",cores:[PX.t1,PX.t2,PX.t3],catFs:10,rotuloFs:10});
+      else semDados(s3,M,TOP+0.32,meia,CH-0.42);
+      var x2=M+meia+0.34;
+      s3.addText("Parada de máquina por motivo (horas)",{x:x2,y:TOP,w:meia,h:0.28,fontFace:FONT,fontSize:11,bold:true,color:PX.texto});
+      if(motivo.length){
+        var mv=fatia(motivo,0,9).slice().reverse();
+        grafico(pptx,s3,[{name:"Horas paradas",labels:mv.map(function(r){return r.k;}),values:mv.map(function(r){return Math.round(r.v*100)/100;})}],
+          {x:x2-0.06,y:TOP+0.32,w:meia+0.12,h:CH-0.42,dir:"bar",cores:[PX.par],fmt:FMT_H,catFs:8.5});
+      } else semDados(s3,x2,TOP+0.32,meia,CH-0.42,"Nenhuma parada registrada no período");
+    }
+
+    /* ============ 4. EMBALAGENS POR TIPO ============ */
+    if(emb.length){
+      var porPag=13, tot=Math.ceil(emb.length/porPag);
+      for(var p=0;p<tot;p++){
+        var bloco=fatia(emb,p*porPag,porPag);
+        var se=slide(pptx,{kicker:"MIX DE PRODUÇÃO",
+          titulo:"Embalagens lavadas por tipo"+(tot>1?" ("+(p+1)+" de "+tot+")":"")});
+        var rv=bloco.slice().reverse();
+        grafico(pptx,se,[{name:"Embalagens",labels:rv.map(function(r){return r.k;}),values:rv.map(function(r){return r.v;})}],
+          {x:M-0.06,y:TOP,w:CW+0.12,h:CH,dir:"bar",cores:[PX.azul],catFs:9,rotuloFs:9});
+      }
+    }
+
+    /* ============ 5. DIVISÓRIAS DANIFICADAS ============ */
+    if(dan.length){
+      var sd=slide(pptx,{kicker:"QUALIDADE",titulo:"Divisórias danificadas / segregadas por tipo"});
+      var dv=fatia(dan,0,13).slice().reverse();
+      grafico(pptx,sd,[{name:"Divisórias",labels:dv.map(function(r){return r.k;}),values:dv.map(function(r){return r.v;})}],
+        {x:M-0.06,y:TOP,w:CW+0.12,h:CH,dir:"bar",cores:[PX.vermelho],catFs:9,rotuloFs:9});
+    }
+
+    /* ============ 6. HORAS TRABALHADAS x PARADAS ============ */
+    var cards=Array.prototype.slice.call(document.querySelectorAll("#turno-hours-grid .turno-hours-card"));
+    if(cards.length){
+      var sh=slide(pptx,{kicker:"OCUPAÇÃO DA MÁQUINA",titulo:"Horas trabalhadas × paradas por turno"});
+      var labs=[],vt=[],vp=[];
+      cards.forEach(function(cd){
+        labs.push(txt(cd.querySelector(".th-turno")));
+        vt.push(Math.round(num(txt(cd.querySelector(".th-value.trab")))*100)/100);
+        vp.push(Math.round(num(txt(cd.querySelector(".th-value.par")))*100)/100);
+      });
+      grafico(pptx,sh,[{name:"Trabalhadas",labels:labs,values:vt},{name:"Paradas",labels:labs,values:vp}],
+        {x:M-0.06,y:TOP,w:CW*0.60,h:CH,dir:"col",cores:[PX.azul,PX.par],fmt:FMT_H,catFs:10,rotuloFs:9,legenda:true});
+      var rx=M+CW*0.60+0.26, rw=CW-CW*0.60-0.26, ry=TOP+0.02;
+      sh.addText("Resumo por turno",{x:rx,y:ry,w:rw,h:0.28,fontFace:FONT,fontSize:11,bold:true,color:PX.texto});
+      ry+=0.36;
+      var altC=Math.min(1.28,(BOT-ry-0.10)/cards.length-0.14);
+      cards.forEach(function(cd,i){
+        var t=[PX.t1,PX.t2,PX.t3][i]||PX.azul;
+        sh.addShape(_shape.roundRect,{x:rx,y:ry,w:rw,h:altC,fill:{color:"F7F9FD"},line:{color:PX.linha,width:1},rectRadius:0.06});
+        sh.addShape(_shape.rect,{x:rx,y:ry+0.08,w:0.05,h:altC-0.16,fill:{color:t},line:{type:"none"}});
+        sh.addText(txt(cd.querySelector(".th-turno")),{x:rx+0.18,y:ry+0.10,w:rw-0.36,h:0.26,fontFace:FONT,fontSize:9.5,bold:true,color:PX.texto});
+        sh.addText("Trabalhadas",{x:rx+0.18,y:ry+0.42,w:1.4,h:0.24,fontFace:FONT,fontSize:9,color:PX.suave});
+        sh.addText(txt(cd.querySelector(".th-value.trab")),{x:rx+0.18,y:ry+0.42,w:rw-0.36,h:0.24,fontFace:FONT,fontSize:9.5,bold:true,color:PX.azul,align:"right"});
+        sh.addText("Paradas",{x:rx+0.18,y:ry+0.72,w:1.4,h:0.24,fontFace:FONT,fontSize:9,color:PX.suave});
+        sh.addText(txt(cd.querySelector(".th-value.par")),{x:rx+0.18,y:ry+0.72,w:rw-0.36,h:0.24,fontFace:FONT,fontSize:9.5,bold:true,color:PX.par,align:"right"});
+        ry+=altC+0.14;
+      });
+    }
+
+    /* ============ 7. VISÃO MENSAL ============ */
+    var dias=Array.prototype.slice.call(document.querySelectorAll("#month-day-chart .day-col"));
+    var mesLbl=txt(document.querySelector("#d-fmes option:checked"))||"";
+    if(dias.filter(function(d){return d.classList.contains("has-data");}).length){
+      var sm=slide(pptx,{kicker:"EVOLUÇÃO MENSAL",titulo:"Visão mensal — horas por dia"});
+      subtitulo(sm,mesLbl);
+      var lab=[],a1=[],a2=[],a3=[],ap=[];
+      dias.forEach(function(d){
+        lab.push(d.dataset.dia||"");
+        var g=function(cls){ var e=d.querySelector(".day-seg."+cls);
+          return e?Math.round((+(e.dataset.min||0))/60*100)/100:0; };
+        a1.push(g("t1")); a2.push(g("t2")); a3.push(g("t3")); ap.push(g("par"));
+      });
+      grafico(pptx,sm,[
+        {name:"1º Turno",labels:lab,values:a1},{name:"2º Turno",labels:lab,values:a2},
+        {name:"3º Turno",labels:lab,values:a3},{name:"Paradas",labels:lab,values:ap}
+      ],{x:M-0.06,y:TOP+0.26,w:CW+0.12,h:CH-0.30,dir:"col",grupo:"stacked",
+         cores:[PX.t1,PX.t2,PX.t3,PX.par],gap:28,catFs:7.5,legenda:true});
+    }
+
+    /* ============ 8. PRODUÇÃO DIÁRIA (imagens) ============ */
+    if(img&&img.diaria){
+      var lblD=txt(document.getElementById("ed-mes-lbl"));
+      var sD=slide(pptx,{kicker:"ACOMPANHAMENTO DIÁRIO",titulo:"Embalagens lavadas diariamente"});
+      var yT=TOP; if(lblD){ subtitulo(sD,lblD); yT=TOP+0.24; }
+      var livre=BOT-yT-0.12;
+      var d1=cabe(img.diaria.w,img.diaria.h,CW,livre);
+      sD.addImage({data:img.diaria.data,x:M+(CW-d1.w)/2,y:yT+(livre-d1.h)/2,w:d1.w,h:d1.h});
+      /* a tabela ganha um slide próprio: assim ocupa quase toda a página e fica legível */
+      if(img.tabela){
+        var sT=slide(pptx,{kicker:"ACOMPANHAMENTO DIÁRIO",titulo:"Produção diária por embalagem"});
+        var yT2=TOP; if(lblD){ subtitulo(sT,lblD); yT2=TOP+0.24; }
+        var livre2=BOT-yT2-0.12;
+        var d2=cabe(img.tabela.w,img.tabela.h,CW,livre2);
+        sT.addImage({data:img.tabela.data,x:M+(CW-d2.w)/2,y:yT2+(livre2-d2.h)/2,w:d2.w,h:d2.h});
+      }
+    }
+
+    /* ============ 9. CONSISTÊNCIA ============ */
+    var cons=Array.prototype.slice.call(document.querySelectorAll("#chart-consistencia .consist-card"));
+    if(cons.length){
+      var cl=[],ce=[],cLav=[],cDan=[],temDan=false;
+      fatia(cons,0,12).forEach(function(cd){
+        var vals=Array.prototype.slice.call(cd.querySelectorAll(".consist-val")).map(function(v){ return inteiro(txt(v)); });
+        cl.push(txt(cd.querySelector(".consist-nome")));
+        ce.push(vals[0]||0); cLav.push(vals[1]||0);
+        var d=vals[2]||0; cDan.push(d); if(d>0) temDan=true;
+      });
+      var sc=slide(pptx,{kicker:"CONTROLE DE FLUXO",titulo:"Consistência — embalagem vazia × lavagem"});
+      var series=[{name:"Entrada (vazia)",labels:cl,values:ce},{name:"Lavado",labels:cl,values:cLav}];
+      var cores=[PX.laranja,PX.azul];
+      if(temDan){ series.push({name:"Danif./Segr.",labels:cl,values:cDan}); cores.push(PX.vermelho); }
+      grafico(pptx,sc,series,{x:M-0.06,y:TOP,w:CW+0.12,h:CH,dir:"bar",cores:cores,catFs:8.5,rotuloFs:8,legenda:true});
+    }
+
+    /* ============ 10. LAVAGEM DE RACK ============ */
+    if(rkI.length||rkT.length){
+      var sr=slide(pptx,{kicker:"LAVAGEM DE RACK",titulo:"Itens mais lavados e distribuição por turno"});
+      var mw=(CW-0.34)/2;
+      sr.addText("Itens mais lavados",{x:M,y:TOP,w:mw,h:0.28,fontFace:FONT,fontSize:11,bold:true,color:PX.texto});
+      if(rkI.length){
+        var ri=fatia(rkI,0,10).slice().reverse();
+        grafico(pptx,sr,[{name:"Lavagens",labels:ri.map(function(r){return r.k;}),values:ri.map(function(r){return r.v;})}],
+          {x:M-0.06,y:TOP+0.32,w:mw+0.12,h:CH-0.42,dir:"bar",cores:[PX.roxo],catFs:8.5});
+      } else semDados(sr,M,TOP+0.32,mw,CH-0.42);
+      var rx2=M+mw+0.34;
+      sr.addText("Registros por turno",{x:rx2,y:TOP,w:mw,h:0.28,fontFace:FONT,fontSize:11,bold:true,color:PX.texto});
+      if(rkT.length)
+        grafico(pptx,sr,[{name:"Registros",labels:rkT.map(function(r){return r.k;}),values:rkT.map(function(r){return r.v;})}],
+          {x:rx2-0.06,y:TOP+0.32,w:mw+0.12,h:CH-0.42,dir:"col",cores:[PX.t1,PX.t2,PX.t3],catFs:10,rotuloFs:10});
+      else semDados(sr,rx2,TOP+0.32,mw,CH-0.42);
+    }
+    return pptx;
+  }
+
+  /* ---------- Ação ---------- */
+  function exportar(){
+    var btn=document.getElementById("btn-pptx");
+    var orig=btn?btn.textContent:"";
+    if(btn){ btn.disabled=true; btn.textContent="⏳ Montando..."; }
+    var fim=function(){ if(btn){ btn.disabled=false; btn.textContent=orig; } };
+
+    carregarLib()
+      .then(function(){
+        return Promise.all([svgParaPng(document.getElementById("ed-chart"),2),tabelaParaPng()]);
+      })
+      .then(function(r){
+        var pptx=montar({diaria:r[0],tabela:r[1]});
+        var hoje=new Date().toISOString().slice(0,10);
+        return pptx.writeFile({fileName:"dashboard-lavadora-embalagem-"+hoje+".pptx"});
+      })
+      .then(fim)
+      .catch(function(e){
+        fim();
+        var msg=String((e&&e.message)||e);
+        setTimeout(function(){
+          alert(/falhou|init|vazio/i.test(msg)
+            ? "Não foi possível carregar a biblioteca de apresentação. Verifique a conexão com a internet e tente novamente."
+            : "Não foi possível gerar o PPTX: "+msg);
+        },30);
+      });
+  }
+
+  function ligar(){
+    var b=document.getElementById("btn-pptx");
+    if(b&&!b._lig){ b._lig=true; b.addEventListener("click",exportar); }
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",ligar);
+  else ligar();
+  window.dashExportPPTX=exportar;
+})();
+
 </script>
 </body>
 </html>
