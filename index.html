@@ -9964,6 +9964,10 @@ function salvarRackMotivo(){
   var CW=W-2*M, CH=BOT-TOP-0.10;
   var FMT_N='#,##0;-#,##0;';      /* oculta zeros */
   var FMT_H='0.0"h";;';
+  var FMT_HM='[h]:mm;;';   /* rótulo em h:mm, igual ao painel 05 (valor = fração de dia) */
+  /* Mesma ideia do painel, que só escreve o valor quando o segmento tem altura:
+     abaixo de 45 min (45/1440) o rótulo é omitido para não invadir o segmento vizinho. */
+  var FMT_HM_MIN='[>=0.03125][h]:mm;;';
 
   var _n=0, _logo="", _shape=null;
   var _rodape="SESÉ · SAS — Lavadora de Embalagem · Departamento de Lavagem";
@@ -10093,7 +10097,13 @@ function salvarRackMotivo(){
       showLegend:!!o.legenda, legendPos:"b", legendFontFace:FONT, legendFontSize:8.5, legendColor:PX.suave,
       border:{pt:0,color:PX.branco}
     };
-    if(op.barGrouping==="stacked"){ op.showValue=false; }
+    /* Barras empilhadas: o PowerPoint só aceita dLblPos "ctr"/"inEnd"/"inBase".
+       Com "outEnd" ele rejeita a parte do gráfico e o slide sai em branco.
+       Como o rótulo fica desligado aqui, a posição é simplesmente removida. */
+    if(String(op.barGrouping||"").indexOf("tacked")>=0){
+      op.showValue=false;
+      delete op.dataLabelPosition;
+    }
     s.addChart(pptx.ChartType.bar,series,op);
   }
   function semDados(s,x,y,w,h,msg){
@@ -10135,6 +10145,30 @@ function salvarRackMotivo(){
       tmp.innerHTML=t.innerHTML;
       document.body.appendChild(tmp);
       tmp.querySelectorAll("table.ed-table th, .ed-sticky").forEach(function(el){ el.style.position="static"; });
+      var w=tmp.offsetWidth, h=tmp.offsetHeight;
+      var limpa=function(){ if(tmp.parentNode) tmp.parentNode.removeChild(tmp); };
+      if(!w||!h){ limpa(); return ok(null); }
+      html2canvas(tmp,{backgroundColor:"#ffffff",scale:2,logging:false,width:w,height:h,windowWidth:w,windowHeight:h})
+        .then(function(cv){ limpa(); try{ ok({data:cv.toDataURL("image/png"),w:w,h:h}); }catch(e){ ok(null); } })
+        .catch(function(){ limpa(); ok(null); });
+    });
+  }
+
+  /* Painel 05 (Visão Mensal) rasterizado em tema claro — usado como
+     alternativa quando a leitura das barras do DOM não devolve minutos. */
+  function mensalParaPng(){
+    return new Promise(function(ok){
+      var wrap=document.querySelector("#month-day-chart .day-bars-wrap");
+      if(!wrap||typeof html2canvas==="undefined") return ok(null);
+      var tmp=document.createElement("div");
+      tmp.setAttribute("data-theme","light");
+      tmp.style.cssText="position:fixed;left:-99999px;top:0;background:#ffffff;padding:10px 12px 4px;"+
+                        "width:max-content;font-family:'Poppins',sans-serif";
+      var copia=wrap.cloneNode(true);
+      copia.classList.remove("hide-paradas");
+      copia.style.width=Math.max(wrap.scrollWidth,wrap.offsetWidth)+"px";
+      tmp.appendChild(copia);
+      document.body.appendChild(tmp);
       var w=tmp.offsetWidth, h=tmp.offsetHeight;
       var limpa=function(){ if(tmp.parentNode) tmp.parentNode.removeChild(tmp); };
       if(!w||!h){ limpa(); return ok(null); }
@@ -10248,8 +10282,117 @@ function salvarRackMotivo(){
             semDados(s2,M+pw+0.26,yd+0.4,pw,hd-0.5,"Nenhuma parada registrada"); }
     }
 
-    /* ============ 3. TURNO + PARADAS ============ */
-    if(turno.length||motivo.length){
+    /* =====================================================================
+       ORDEM DA APRESENTAÇÃO (definida pelo usuário)
+         1) Capa
+         2) Indicadores-chave
+         3) Visão Mensal — Horas por Dia   (painel 05)
+         4) Embalagens Lavadas Diariamente (gráfico)
+         5) Produção diária por embalagem  (tabela do mesmo painel)
+         6..) Demais painéis, na sequência do dashboard.
+       Todos os painéis entram SEMPRE. Quando não há dados, o slide traz o
+       aviso "Sem dados no período" — nunca um slide em branco.
+       ===================================================================== */
+
+    /* ---- Visão Mensal — horas por dia (painel 05) ---- */
+    function secMensal(){
+      var dias=Array.prototype.slice.call(document.querySelectorAll("#month-day-chart .day-col"));
+      var mesLbl=txt(document.querySelector("#d-fmes option:checked"))||"";
+      var sm=slide(pptx,{kicker:"EVOLUÇÃO MENSAL",titulo:"Visão mensal — horas por dia"});
+      subtitulo(sm,mesLbl);
+
+      /* Meta lida do próprio painel (linha tracejada "20h00"). */
+      var metaTxt=txt(document.querySelector("#month-day-chart .meta-label-left"))||"20h00";
+      var metaHoras=num(metaTxt)||20;
+
+      /* Minutos lidos direto dos segmentos. Não depende da classe .has-data:
+         basta um segmento com data-min > 0 para o gráfico ser montado.
+         Os valores vão como FRAÇÃO DE DIA para que o rótulo saia em h:mm,
+         exatamente como o painel mostra na tela. */
+      var lab=[],a1=[],a2=[],a3=[],ap=[],tot=[],meta=[],totalMin=0;
+      dias.forEach(function(d){
+        var dia=d.dataset.dia||d.getAttribute("data-dia")||"";
+        var g=function(cls){
+          var e=d.querySelector(".day-seg."+cls);
+          var m=e?(+(e.dataset.min||e.getAttribute("data-min")||0)):0;
+          if(!isFinite(m)) m=0;
+          totalMin+=m;
+          return m;
+        };
+        var m1=g("t1"), m2=g("t2"), m3=g("t3"), mp=g("par");
+        lab.push(dia);
+        a1.push(m1/1440); a2.push(m2/1440); a3.push(m3/1440); ap.push(mp/1440);
+        tot.push((m1+m2+m3+mp)/1440);
+        meta.push(metaHoras/24);
+      });
+
+      if(totalMin>0){
+        var metaNome="Meta "+metaTxt;
+        sm.addChart([
+          { type:pptx.ChartType.bar,
+            data:[
+              {name:"1º Turno",labels:lab,values:a1},{name:"2º Turno",labels:lab,values:a2},
+              {name:"3º Turno",labels:lab,values:a3},{name:"Paradas",labels:lab,values:ap}
+            ],
+            options:{ barDir:"col", barGrouping:"stacked", barGapWidthPct:28,
+              chartColors:[PX.t1,PX.t2,PX.t3,PX.par],
+              /* em barras empilhadas o PowerPoint só aceita ctr/inEnd/inBase */
+              showValue:true, dataLabelPosition:"ctr", dataLabelFormatCode:FMT_HM_MIN,
+              dataLabelFontFace:FONT, dataLabelFontSize:6, dataLabelColor:PX.branco } },
+          { type:pptx.ChartType.line,
+            data:[{name:metaNome,labels:lab,values:meta}],
+            options:{ chartColors:[PX.verde], lineSize:2, lineDash:"dash",
+              lineDataSymbol:"none", showValue:false } },
+          /* linha invisível só para imprimir o total do dia acima da coluna */
+          { type:pptx.ChartType.line,
+            data:[{name:"Total do dia",labels:lab,values:tot}],
+            options:{ chartColors:[PX.branco], lineSize:0, lineDataSymbol:"none",
+              showValue:true, dataLabelPosition:"t", dataLabelFormatCode:FMT_HM,
+              dataLabelFontFace:FONT, dataLabelFontSize:6.5, dataLabelColor:PX.texto } }
+        ],{ x:M-0.06, y:TOP+0.26, w:CW+0.12, h:CH-0.30,
+            catAxisLabelFontFace:FONT, catAxisLabelFontSize:7.5, catAxisLabelColor:PX.suave,
+            valAxisHidden:true, catAxisLineShow:false, valAxisLineShow:false,
+            valGridLine:{style:"none"}, catGridLine:{style:"none"},
+            showLegend:true, legendPos:"b", legendFontFace:FONT, legendFontSize:8.5,
+            legendColor:PX.suave, border:{pt:0,color:PX.branco} });
+        return;
+      }
+      /* Nada legível no DOM: usa a imagem do painel, exatamente como na tela. */
+      if(img&&img.mensal){
+        var yM=TOP+0.26, livreM=BOT-yM-0.12;
+        var dm=cabe(img.mensal.w,img.mensal.h,CW,livreM);
+        sm.addImage({data:img.mensal.data,x:M+(CW-dm.w)/2,y:yM+(livreM-dm.h)/2,w:dm.w,h:dm.h});
+        return;
+      }
+      semDados(sm,M,TOP+0.26,CW,CH-0.30,"Sem horas lançadas no mês selecionado");
+    }
+
+    /* ---- Embalagens lavadas diariamente (gráfico do painel) ---- */
+    function secDiaria(){
+      var lblD=txt(document.getElementById("ed-mes-lbl"));
+      var sD=slide(pptx,{kicker:"ACOMPANHAMENTO DIÁRIO",titulo:"Embalagens lavadas diariamente"});
+      var yT=TOP; if(lblD){ subtitulo(sD,lblD); yT=TOP+0.24; }
+      var livre=BOT-yT-0.12;
+      if(img&&img.diaria){
+        var d1=cabe(img.diaria.w,img.diaria.h,CW,livre);
+        sD.addImage({data:img.diaria.data,x:M+(CW-d1.w)/2,y:yT+(livre-d1.h)/2,w:d1.w,h:d1.h});
+      } else semDados(sD,M,yT,CW,livre,"Sem embalagens lavadas no período selecionado");
+    }
+
+    /* ---- Produção diária por embalagem (tabela, slide próprio) ---- */
+    function secDiariaTabela(){
+      var lblD=txt(document.getElementById("ed-mes-lbl"));
+      var sT=slide(pptx,{kicker:"ACOMPANHAMENTO DIÁRIO",titulo:"Produção diária por embalagem"});
+      var yT2=TOP; if(lblD){ subtitulo(sT,lblD); yT2=TOP+0.24; }
+      var livre2=BOT-yT2-0.12;
+      if(img&&img.tabela){
+        var d2=cabe(img.tabela.w,img.tabela.h,CW,livre2);
+        sT.addImage({data:img.tabela.data,x:M+(CW-d2.w)/2,y:yT2+(livre2-d2.h)/2,w:d2.w,h:d2.h});
+      } else semDados(sT,M,yT2,CW,livre2,"Sem dados para a tabela no período selecionado");
+    }
+
+    /* ---- Embalagens por turno + paradas por motivo ---- */
+    function secTurnoParadas(){
       var s3=slide(pptx,{kicker:"PRODUÇÃO E DISPONIBILIDADE",titulo:"Embalagens por turno e paradas de máquina"});
       var meia=(CW-0.34)/2;
       s3.addText("Embalagens lavadas por turno",{x:M,y:TOP,w:meia,h:0.28,fontFace:FONT,fontSize:11,bold:true,color:PX.texto});
@@ -10266,8 +10409,13 @@ function salvarRackMotivo(){
       } else semDados(s3,x2,TOP+0.32,meia,CH-0.42,"Nenhuma parada registrada no período");
     }
 
-    /* ============ 4. EMBALAGENS POR TIPO ============ */
-    if(emb.length){
+    /* ---- Embalagens lavadas por tipo ---- */
+    function secTipo(){
+      if(!emb.length){
+        var sv=slide(pptx,{kicker:"MIX DE PRODUÇÃO",titulo:"Embalagens lavadas por tipo"});
+        semDados(sv,M,TOP,CW,CH,"Sem embalagens lavadas no período selecionado");
+        return;
+      }
       var porPag=13, tot=Math.ceil(emb.length/porPag);
       for(var p=0;p<tot;p++){
         var bloco=fatia(emb,p*porPag,porPag);
@@ -10279,18 +10427,20 @@ function salvarRackMotivo(){
       }
     }
 
-    /* ============ 5. DIVISÓRIAS DANIFICADAS ============ */
-    if(dan.length){
+    /* ---- Divisórias danificadas / segregadas ---- */
+    function secDanificadas(){
       var sd=slide(pptx,{kicker:"QUALIDADE",titulo:"Divisórias danificadas / segregadas por tipo"});
+      if(!dan.length){ semDados(sd,M,TOP,CW,CH,"Nenhuma divisória danificada ou segregada no período"); return; }
       var dv=fatia(dan,0,13).slice().reverse();
       grafico(pptx,sd,[{name:"Divisórias",labels:dv.map(function(r){return r.k;}),values:dv.map(function(r){return r.v;})}],
         {x:M-0.06,y:TOP,w:CW+0.12,h:CH,dir:"bar",cores:[PX.vermelho],catFs:9,rotuloFs:9});
     }
 
-    /* ============ 6. HORAS TRABALHADAS x PARADAS ============ */
-    var cards=Array.prototype.slice.call(document.querySelectorAll("#turno-hours-grid .turno-hours-card"));
-    if(cards.length){
+    /* ---- Horas trabalhadas x paradas por turno ---- */
+    function secHoras(){
+      var cards=Array.prototype.slice.call(document.querySelectorAll("#turno-hours-grid .turno-hours-card"));
       var sh=slide(pptx,{kicker:"OCUPAÇÃO DA MÁQUINA",titulo:"Horas trabalhadas × paradas por turno"});
+      if(!cards.length){ semDados(sh,M,TOP,CW,CH,"Sem horas lançadas no período selecionado"); return; }
       var labs=[],vt=[],vp=[];
       cards.forEach(function(cd){
         labs.push(txt(cd.querySelector(".th-turno")));
@@ -10316,47 +10466,11 @@ function salvarRackMotivo(){
       });
     }
 
-    /* ============ 7. VISÃO MENSAL ============ */
-    var dias=Array.prototype.slice.call(document.querySelectorAll("#month-day-chart .day-col"));
-    var mesLbl=txt(document.querySelector("#d-fmes option:checked"))||"";
-    if(dias.filter(function(d){return d.classList.contains("has-data");}).length){
-      var sm=slide(pptx,{kicker:"EVOLUÇÃO MENSAL",titulo:"Visão mensal — horas por dia"});
-      subtitulo(sm,mesLbl);
-      var lab=[],a1=[],a2=[],a3=[],ap=[];
-      dias.forEach(function(d){
-        lab.push(d.dataset.dia||"");
-        var g=function(cls){ var e=d.querySelector(".day-seg."+cls);
-          return e?Math.round((+(e.dataset.min||0))/60*100)/100:0; };
-        a1.push(g("t1")); a2.push(g("t2")); a3.push(g("t3")); ap.push(g("par"));
-      });
-      grafico(pptx,sm,[
-        {name:"1º Turno",labels:lab,values:a1},{name:"2º Turno",labels:lab,values:a2},
-        {name:"3º Turno",labels:lab,values:a3},{name:"Paradas",labels:lab,values:ap}
-      ],{x:M-0.06,y:TOP+0.26,w:CW+0.12,h:CH-0.30,dir:"col",grupo:"stacked",
-         cores:[PX.t1,PX.t2,PX.t3,PX.par],gap:28,catFs:7.5,legenda:true});
-    }
-
-    /* ============ 8. PRODUÇÃO DIÁRIA (imagens) ============ */
-    if(img&&img.diaria){
-      var lblD=txt(document.getElementById("ed-mes-lbl"));
-      var sD=slide(pptx,{kicker:"ACOMPANHAMENTO DIÁRIO",titulo:"Embalagens lavadas diariamente"});
-      var yT=TOP; if(lblD){ subtitulo(sD,lblD); yT=TOP+0.24; }
-      var livre=BOT-yT-0.12;
-      var d1=cabe(img.diaria.w,img.diaria.h,CW,livre);
-      sD.addImage({data:img.diaria.data,x:M+(CW-d1.w)/2,y:yT+(livre-d1.h)/2,w:d1.w,h:d1.h});
-      /* a tabela ganha um slide próprio: assim ocupa quase toda a página e fica legível */
-      if(img.tabela){
-        var sT=slide(pptx,{kicker:"ACOMPANHAMENTO DIÁRIO",titulo:"Produção diária por embalagem"});
-        var yT2=TOP; if(lblD){ subtitulo(sT,lblD); yT2=TOP+0.24; }
-        var livre2=BOT-yT2-0.12;
-        var d2=cabe(img.tabela.w,img.tabela.h,CW,livre2);
-        sT.addImage({data:img.tabela.data,x:M+(CW-d2.w)/2,y:yT2+(livre2-d2.h)/2,w:d2.w,h:d2.h});
-      }
-    }
-
-    /* ============ 9. CONSISTÊNCIA ============ */
-    var cons=Array.prototype.slice.call(document.querySelectorAll("#chart-consistencia .consist-card"));
-    if(cons.length){
+    /* ---- Consistência: embalagem vazia x lavagem ---- */
+    function secConsistencia(){
+      var cons=Array.prototype.slice.call(document.querySelectorAll("#chart-consistencia .consist-card"));
+      var sc=slide(pptx,{kicker:"CONTROLE DE FLUXO",titulo:"Consistência — embalagem vazia × lavagem"});
+      if(!cons.length){ semDados(sc,M,TOP,CW,CH,"Sem entradas de embalagem vazia no período"); return; }
       var cl=[],ce=[],cLav=[],cDan=[],temDan=false;
       fatia(cons,0,12).forEach(function(cd){
         var vals=Array.prototype.slice.call(cd.querySelectorAll(".consist-val")).map(function(v){ return inteiro(txt(v)); });
@@ -10364,15 +10478,14 @@ function salvarRackMotivo(){
         ce.push(vals[0]||0); cLav.push(vals[1]||0);
         var d=vals[2]||0; cDan.push(d); if(d>0) temDan=true;
       });
-      var sc=slide(pptx,{kicker:"CONTROLE DE FLUXO",titulo:"Consistência — embalagem vazia × lavagem"});
       var series=[{name:"Entrada (vazia)",labels:cl,values:ce},{name:"Lavado",labels:cl,values:cLav}];
       var cores=[PX.laranja,PX.azul];
       if(temDan){ series.push({name:"Danif./Segr.",labels:cl,values:cDan}); cores.push(PX.vermelho); }
       grafico(pptx,sc,series,{x:M-0.06,y:TOP,w:CW+0.12,h:CH,dir:"bar",cores:cores,catFs:8.5,rotuloFs:8,legenda:true});
     }
 
-    /* ============ 10. LAVAGEM DE RACK ============ */
-    if(rkI.length||rkT.length){
+    /* ---- Lavagem de rack ---- */
+    function secRack(){
       var sr=slide(pptx,{kicker:"LAVAGEM DE RACK",titulo:"Itens mais lavados e distribuição por turno"});
       var mw=(CW-0.34)/2;
       sr.addText("Itens mais lavados",{x:M,y:TOP,w:mw,h:0.28,fontFace:FONT,fontSize:11,bold:true,color:PX.texto});
@@ -10380,14 +10493,26 @@ function salvarRackMotivo(){
         var ri=fatia(rkI,0,10).slice().reverse();
         grafico(pptx,sr,[{name:"Lavagens",labels:ri.map(function(r){return r.k;}),values:ri.map(function(r){return r.v;})}],
           {x:M-0.06,y:TOP+0.32,w:mw+0.12,h:CH-0.42,dir:"bar",cores:[PX.roxo],catFs:8.5});
-      } else semDados(sr,M,TOP+0.32,mw,CH-0.42);
+      } else semDados(sr,M,TOP+0.32,mw,CH-0.42,"Nenhuma lavagem de rack no período");
       var rx2=M+mw+0.34;
       sr.addText("Registros por turno",{x:rx2,y:TOP,w:mw,h:0.28,fontFace:FONT,fontSize:11,bold:true,color:PX.texto});
       if(rkT.length)
         grafico(pptx,sr,[{name:"Registros",labels:rkT.map(function(r){return r.k;}),values:rkT.map(function(r){return r.v;})}],
           {x:rx2-0.06,y:TOP+0.32,w:mw+0.12,h:CH-0.42,dir:"col",cores:[PX.t1,PX.t2,PX.t3],catFs:10,rotuloFs:10});
-      else semDados(sr,rx2,TOP+0.32,mw,CH-0.42);
+      else semDados(sr,rx2,TOP+0.32,mw,CH-0.42,"Nenhuma lavagem de rack no período");
     }
+
+    /* ============ SEQUÊNCIA DOS SLIDES ============ */
+    [ secMensal,          /* 1º gráfico — Visão Mensal (05) */
+      secDiaria,          /* 2º gráfico — Embalagens Lavadas Diariamente */
+      secDiariaTabela,
+      secTurnoParadas,
+      secTipo,
+      secDanificadas,
+      secHoras,
+      secConsistencia,
+      secRack
+    ].forEach(function(fn){ fn(); });
     return pptx;
   }
 
@@ -10400,10 +10525,10 @@ function salvarRackMotivo(){
 
     carregarLib()
       .then(function(){
-        return Promise.all([svgParaPng(document.getElementById("ed-chart"),2),tabelaParaPng()]);
+        return Promise.all([svgParaPng(document.getElementById("ed-chart"),2),tabelaParaPng(),mensalParaPng()]);
       })
       .then(function(r){
-        var pptx=montar({diaria:r[0],tabela:r[1]});
+        var pptx=montar({diaria:r[0],tabela:r[1],mensal:r[2]});
         var hoje=new Date().toISOString().slice(0,10);
         return pptx.writeFile({fileName:"dashboard-lavadora-embalagem-"+hoje+".pptx"});
       })
